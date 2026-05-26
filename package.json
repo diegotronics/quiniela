@@ -6,19 +6,19 @@
   "scripts": {
     "dev": "vite",
     "migrate": "node scripts/migrate.mjs",
-    "prebuild": "node scripts/migrate.mjs",
-    "build": "vite build",
+    "build": "node scripts/migrate.mjs && vite build",
+    "vercel-build": "node scripts/migrate.mjs && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
+    "pg": "^8.13.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
-    "pg": "^8.13.1",
     "vite": "^5.4.0"
   }
 }

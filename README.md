@@ -20,11 +20,13 @@ npm install
 
 ### 3) Crear tablas y cargar datos
 
-**Automático en cada deploy.** Los archivos `.sql` de `/supabase/` se aplican solos antes del build (script `prebuild` → `node scripts/migrate.mjs`). Cada archivo corre una sola vez; el registro vive en la tabla `schema_migrations`.
+**Automático en cada deploy.** Los archivos `.sql` de `/supabase/` se aplican solos al inicio del build (`node scripts/migrate.mjs && vite build`). Cada archivo corre una sola vez; el registro vive en la tabla `schema_migrations`.
 
 Para activarlo necesitas la variable `SUPABASE_DB_URL` (la cadena de conexión Postgres directa, no la URL del API):
 
 > Supabase → **Project Settings → Database → Connection string → URI** → cópiala y reemplaza `[YOUR-PASSWORD]` por la contraseña de la BD.
+
+> ⚠️ **Para Vercel usa el POOLER (puerto 6543), no la conexión directa.** La conexión directa (`db.PROYECTO.supabase.co:5432`) es IPv6-only en proyectos nuevos y los build hosts de Vercel son IPv4-only, así que falla silenciosamente. En Supabase → Database → Connection string elige **"Transaction"** o **"Session"** (pooler) y copia esa URL. Debe verse como `postgresql://postgres.PROYECTO:PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres`.
 
 Si prefieres correrlo a mano una vez en local:
 
@@ -79,10 +81,19 @@ git push -u origin main
 4. En **Environment Variables** agrega:
    - `VITE_SUPABASE_URL` = `https://TU-PROYECTO.supabase.co`
    - `VITE_SUPABASE_ANON_KEY` = `eyJ...`
-   - `SUPABASE_DB_URL` = `postgresql://postgres:...@db.TU-PROYECTO.supabase.co:5432/postgres` (para que las migraciones SQL corran solas en cada build)
+   - `SUPABASE_DB_URL` = `postgresql://postgres.TU-PROYECTO:PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres` (usa el **pooler** — la conexión directa falla en Vercel por IPv6)
 5. **Deploy** → en ~2 min tendrás `copa-familiar-2026.vercel.app`
 
 > Cada `git push` redespliega automáticamente.
+
+#### ¿Las tablas no aparecen después del deploy?
+
+Revisa los logs del build en Vercel y busca las líneas con prefijo `[migrate]`:
+
+- `[migrate] ERROR: SUPABASE_DB_URL no está configurada en Vercel.` → falta la variable, agrégala en Project Settings.
+- `[migrate] ERROR: ... ENETUNREACH` o timeout → estás usando la conexión directa (`db.xxx.supabase.co:5432`). Cambia a la URL del **pooler** (puerto 6543).
+- `[migrate] ERROR: password authentication failed` → la contraseña del URL está mal. Resetéala en Supabase → Database → Reset database password.
+- Sin líneas `[migrate]` en el log → Vercel no está corriendo el script. Verifica que `vercel.json` tenga `"buildCommand": "npm run build"`.
 
 ### 8) Agregar jugadores
 

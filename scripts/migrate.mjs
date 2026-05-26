@@ -1,11 +1,15 @@
 // Aplica los archivos SQL de /supabase contra la base de datos de Supabase.
-// Se ejecuta automáticamente en cada build (prebuild). Cada archivo se
-// aplica una sola vez; el registro vive en la tabla schema_migrations.
+// Se ejecuta automáticamente en cada build. Cada archivo se aplica una sola
+// vez; el registro vive en la tabla schema_migrations.
 //
 // Requiere la variable de entorno SUPABASE_DB_URL con la cadena de conexión
-// directa de Postgres (Supabase → Project Settings → Database → Connection
-// string → URI). Si no está definida, el script no hace nada y termina ok,
-// para que `npm run build` siga funcionando en local sin credenciales.
+// directa de Postgres. En Vercel se recomienda el pooler (puerto 6543) porque
+// los build hosts son IPv4-only y la conexión directa de Supabase es
+// IPv6-only en proyectos nuevos.
+//
+// En local, si la variable no está definida, el script no hace nada y termina
+// ok para que `npm run build` siga funcionando sin credenciales. En Vercel,
+// si la variable falta, el build falla a propósito para que se note.
 
 import pg from "pg";
 import { readdir, readFile } from "node:fs/promises";
@@ -16,10 +20,31 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsDir = join(__dirname, "..", "supabase");
 
 const url = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+const onVercel = !!process.env.VERCEL;
+
+console.log("==================================================");
+console.log("[migrate] Iniciando migraciones de Supabase");
+console.log(`[migrate] entorno: ${onVercel ? "Vercel" : "local"}`);
+console.log("==================================================");
+
 if (!url) {
-  console.log("[migrate] SUPABASE_DB_URL no está configurado — saltando migraciones.");
+  if (onVercel) {
+    console.error("[migrate] ERROR: SUPABASE_DB_URL no está configurada en Vercel.");
+    console.error("[migrate] Configurala en Project Settings → Environment Variables.");
+    console.error("[migrate] Usa el pooler (puerto 6543) para evitar problemas IPv4/IPv6:");
+    console.error("[migrate]   postgresql://postgres.PROJECT:PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres");
+    process.exit(1);
+  }
+  console.log("[migrate] SUPABASE_DB_URL no está configurada — saltando migraciones (modo local).");
   process.exit(0);
 }
+
+let host = "(desconocido)";
+try {
+  const parsed = new URL(url);
+  host = `${parsed.hostname}:${parsed.port || "5432"}`;
+} catch {}
+console.log(`[migrate] conectando a ${host}...`);
 
 const client = new pg.Client({
   connectionString: url,
@@ -28,6 +53,7 @@ const client = new pg.Client({
 
 try {
   await client.connect();
+  console.log("[migrate] conexión OK");
 
   await client.query(`
     create table if not exists schema_migrations (
@@ -73,6 +99,10 @@ try {
       ? "[migrate] sin cambios."
       : `[migrate] listo, ${pendientes} archivo(s) aplicado(s).`,
   );
+} catch (err) {
+  console.error(`[migrate] ERROR: ${err.message}`);
+  if (err.code) console.error(`[migrate] código: ${err.code}`);
+  process.exit(1);
 } finally {
-  await client.end();
+  await client.end().catch(() => {});
 }
