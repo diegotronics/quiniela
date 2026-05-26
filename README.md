@@ -20,13 +20,19 @@ npm install
 
 ### 3) Crear tablas y cargar datos
 
-En **SQL Editor** de Supabase, ejecuta en orden:
+**Automático en cada deploy.** Los archivos `.sql` de `/supabase/` se aplican solos antes del build (script `prebuild` → `node scripts/migrate.mjs`). Cada archivo corre una sola vez; el registro vive en la tabla `schema_migrations`.
 
-1. `supabase/01_schema.sql` — crea tablas + RLS abierto
-2. `supabase/02_seed_fases_admin.sql` — inserta las 7 fases y al usuario `admin / admin123`
-3. `supabase/03_seed_partidos.sql` — inserta los 72 partidos de la fase de grupos
+Para activarlo necesitas la variable `SUPABASE_DB_URL` (la cadena de conexión Postgres directa, no la URL del API):
 
-> Los partidos de eliminatorias (1/16, octavos, etc.) se insertan después, cuando se conozcan los clasificados.
+> Supabase → **Project Settings → Database → Connection string → URI** → cópiala y reemplaza `[YOUR-PASSWORD]` por la contraseña de la BD.
+
+Si prefieres correrlo a mano una vez en local:
+
+```bash
+SUPABASE_DB_URL="postgresql://postgres:..." npm run migrate
+```
+
+> Los partidos de eliminatorias (1/16, octavos, etc.) se insertan después, cuando se conozcan los clasificados — basta con agregar un nuevo `05_*.sql` y desplegar.
 
 ### 4) Configurar variables de entorno
 
@@ -73,6 +79,7 @@ git push -u origin main
 4. En **Environment Variables** agrega:
    - `VITE_SUPABASE_URL` = `https://TU-PROYECTO.supabase.co`
    - `VITE_SUPABASE_ANON_KEY` = `eyJ...`
+   - `SUPABASE_DB_URL` = `postgresql://postgres:...@db.TU-PROYECTO.supabase.co:5432/postgres` (para que las migraciones SQL corran solas en cada build)
 5. **Deploy** → en ~2 min tendrás `copa-familiar-2026.vercel.app`
 
 > Cada `git push` redespliega automáticamente.
@@ -138,7 +145,10 @@ src/
 supabase/
 ├── 01_schema.sql
 ├── 02_seed_fases_admin.sql
-└── 03_seed_partidos.sql
+├── 03_seed_partidos.sql
+└── 04_add_email_y_registro.sql
+scripts/
+└── migrate.mjs            # corre las migraciones en cada deploy
 ```
 
 ## 🔐 Notas de seguridad
