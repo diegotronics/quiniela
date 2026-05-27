@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { setResultadoPartido } from "@/api/partidos";
+import { clearResultadoPartido, setResultadoPartido } from "@/api/partidos";
 import { useFases } from "@/hooks/useFases";
 import { usePartidosByFase } from "@/hooks/usePartidos";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
@@ -59,6 +59,21 @@ export default function AdminPartidos() {
     setBusy(true);
     try {
       await setResultadoPartido(selected.id, draft.local, draft.visitante);
+      await refresh();
+      setSelected(null);
+    } catch (e) {
+      alert("Error: " + e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const eliminarResultado = async () => {
+    if (!selected) return;
+    if (!confirm(`¿Eliminar el resultado de ${selected.equipo_local} vs ${selected.equipo_visitante}? Se recalcularán los puntos de todas las predicciones.`)) return;
+    setBusy(true);
+    try {
+      await clearResultadoPartido(selected.id);
       await refresh();
       setSelected(null);
     } catch (e) {
@@ -262,7 +277,12 @@ export default function AdminPartidos() {
             <div style={{ fontSize: 12, color: "var(--ink-3)", display: "inline-flex", alignItems: "center", gap: 6 }}>
               <Icon.Lock /> Recalcula puntos automáticamente
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {selected.resultado_ingresado && (
+                <Button variant="danger" onClick={eliminarResultado} disabled={busy}>
+                  <Icon.Trash /> Eliminar resultado
+                </Button>
+              )}
               <Button variant="ghost" onClick={() => setSelected(null)}>
                 Cancelar
               </Button>

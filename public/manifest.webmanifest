@@ -1,0 +1,21 @@
+{
+  "name": "La Copa Familiar",
+  "short_name": "Copa Familiar",
+  "description": "Quiniela en familia · Mundial 2026",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F3EC",
+  "theme_color": "#1B2A52",
+  "lang": "es",
+  "categories": ["sports", "entertainment", "social"],
+  "icons": [
+    { "src": "/favicon.svg",            "type": "image/svg+xml", "sizes": "any",  "purpose": "any" },
+    { "src": "/icon-192.png",           "type": "image/png",     "sizes": "192x192", "purpose": "any" },
+    { "src": "/icon-512.png",           "type": "image/png",     "sizes": "512x512", "purpose": "any" },
+    { "src": "/icon-512-maskable.png",  "type": "image/png",     "sizes": "512x512", "purpose": "maskable" },
+    { "src": "/apple-touch-icon.png",   "type": "image/png",     "sizes": "180x180", "purpose": "any" }
+  ]
+}

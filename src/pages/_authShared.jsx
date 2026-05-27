@@ -1,3 +1,5 @@
+import { Logo } from "@/components/ui";
+
 export function AuthLayout({ title, subtitle, children }) {
   return (
     <div
@@ -13,24 +15,8 @@ export function AuthLayout({ title, subtitle, children }) {
     >
       <div style={{ width: "100%", maxWidth: 360 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 16,
-              background: "var(--ink)",
-              color: "var(--bg)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 700,
-              fontSize: 22,
-              fontFamily: "var(--font-sans)",
-              letterSpacing: -0.5,
-              marginBottom: 16,
-            }}
-          >
-            LC
+          <div style={{ marginBottom: 16 }}>
+            <Logo size={64} rounded />
           </div>
           <h1
             style={{

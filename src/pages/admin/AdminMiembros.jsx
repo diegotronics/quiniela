@@ -3,12 +3,15 @@ import { createUsuario, deleteUsuario, updateUsuario } from "@/api/usuarios";
 import { useUsuariosAdmin } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
 import { listPuntajesGlobales } from "@/api/predicciones";
+import { useAuth } from "@/context/AuthContext";
 import { Avatar, Button, Card, Icon, Pill } from "@/components/ui";
 
-const EMPTY = { nombre: "", email: "", password: "1234", avatar: "", color: "#553C9A", es_admin: false };
+const EMPTY = { nombre: "", email: "", password: "1234", avatar: "", color: "#553C9A", es_admin: false, pagado: false };
 const FILTERS = ["Todos", "Activos", "Admins"];
+const COLORS = ["#553C9A", "#C53030", "#2C7A7B", "#B7791F", "#2B6CB0", "#D53F8C", "#38A169", "#DD6B20"];
 
 export default function AdminMiembros() {
+  const { user: currentUser } = useAuth();
   const { usuarios, refresh } = useUsuariosAdmin();
   const { data: puntajes } = useAsync(listPuntajesGlobales, []);
   const [form, setForm] = useState(EMPTY);
@@ -36,11 +39,12 @@ export default function AdminMiembros() {
 
   const guardar = async (e) => {
     e?.preventDefault();
-    if (!form.nombre || !form.email || !form.password) return;
+    if (!form.nombre || !form.email) return;
     setBusy(true);
     try {
       if (editing) {
-        await updateUsuario(editing, form);
+        const { password: _omit, ...patch } = form;
+        await updateUsuario(editing, patch);
       } else {
         const avatar = form.avatar || form.nombre.slice(0, 2).toUpperCase();
         await createUsuario({ ...form, avatar });
@@ -59,19 +63,48 @@ export default function AdminMiembros() {
     setForm({
       nombre: u.nombre,
       email: u.email,
-      password: u.password,
+      password: "",
       avatar: u.avatar || "",
       color: u.color || "#553C9A",
       es_admin: u.es_admin,
+      pagado: !!u.pagado,
     });
     setModalOpen(true);
   };
 
   const eliminar = async (u) => {
-    if (u.es_admin) return alert("No se puede eliminar al admin");
+    if (currentUser && u.id === currentUser.id) {
+      return alert("No puedes eliminar tu propia cuenta de administrador.");
+    }
     if (!confirm(`¿Eliminar a ${u.nombre}? Sus predicciones también se borrarán.`)) return;
-    await deleteUsuario(u.id);
-    refresh();
+    try {
+      await deleteUsuario(u.id);
+      await refresh();
+    } catch (e) {
+      alert("Error: " + e.message);
+    }
+  };
+
+  const eliminarDesdeModal = async () => {
+    if (!editing) return;
+    const u = usuarios.find((x) => x.id === editing);
+    if (!u) return;
+    if (currentUser && u.id === currentUser.id) {
+      return alert("No puedes eliminar tu propia cuenta de administrador.");
+    }
+    if (!confirm(`¿Eliminar a ${u.nombre}? Sus predicciones también se borrarán.`)) return;
+    setBusy(true);
+    try {
+      await deleteUsuario(u.id);
+      setForm(EMPTY);
+      setEditing(null);
+      setModalOpen(false);
+      await refresh();
+    } catch (e) {
+      alert("Error: " + e.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const togglePagado = async (u) => {
@@ -247,7 +280,7 @@ export default function AdminMiembros() {
               >
                 <Icon.Edit />
               </button>
-              {!u.es_admin && (
+              {(!currentUser || u.id !== currentUser.id) && (
                 <button
                   onClick={() => eliminar(u)}
                   title="Eliminar"
@@ -270,15 +303,68 @@ export default function AdminMiembros() {
           <form onSubmit={guardar} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Input label="Nombre" value={form.nombre} onChange={(v) => setForm({ ...form, nombre: v })} />
             <Input label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
-            <Input label="Contraseña" value={form.password} onChange={(v) => setForm({ ...form, password: v })} />
             <Input label="Avatar (2 letras)" value={form.avatar} maxLength={3} onChange={(v) => setForm({ ...form, avatar: v.toUpperCase() })} />
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 6 }}>
-              <Button type="button" variant="ghost" onClick={() => { setModalOpen(false); setEditing(null); setForm(EMPTY); }}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={busy}>
-                {busy ? "Guardando…" : editing ? "Actualizar" : "Crear miembro"}
-              </Button>
+
+            <div>
+              <span style={{ display: "block", fontSize: 12, fontWeight: 500, color: "var(--ink-2)", marginBottom: 6 }}>
+                Color
+              </span>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setForm({ ...form, color: c })}
+                    title={c}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: c,
+                      border: form.color === c ? "2px solid var(--ink)" : "0.5px solid var(--line)",
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  />
+                ))}
+                <input
+                  type="color"
+                  value={form.color || "#553C9A"}
+                  onChange={(e) => setForm({ ...form, color: e.target.value })}
+                  style={{ width: 36, height: 28, border: "0.5px solid var(--line)", borderRadius: 6, background: "transparent", cursor: "pointer", padding: 0 }}
+                />
+              </div>
+            </div>
+
+            <Toggle
+              label="Administrador"
+              hint="Puede gestionar miembros, partidos y reglas."
+              checked={!!form.es_admin}
+              onChange={(v) => setForm({ ...form, es_admin: v })}
+            />
+            <Toggle
+              label="Pago confirmado"
+              hint="Marcar cuando el miembro pagó la inscripción."
+              checked={!!form.pagado}
+              onChange={(v) => setForm({ ...form, pagado: v })}
+            />
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+              <div>
+                {editing && (!currentUser || editing !== currentUser.id) && (
+                  <Button type="button" variant="danger" onClick={eliminarDesdeModal} disabled={busy}>
+                    <Icon.Trash /> Eliminar miembro
+                  </Button>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <Button type="button" variant="ghost" onClick={() => { setModalOpen(false); setEditing(null); setForm(EMPTY); }}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={busy}>
+                  {busy ? "Guardando…" : editing ? "Actualizar" : "Crear miembro"}
+                </Button>
+              </div>
             </div>
           </form>
         </Modal>
@@ -307,6 +393,63 @@ function Kpi({ label, val, sub }) {
       </div>
       <div style={{ marginTop: 4, fontSize: 12, color: "var(--ink-3)" }}>{sub}</div>
     </div>
+  );
+}
+
+function Toggle({ label, hint, checked, onChange }) {
+  return (
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        padding: "10px 12px",
+        borderRadius: "var(--r-md)",
+        border: "0.5px solid var(--line)",
+        background: "var(--surface-2)",
+        cursor: "pointer",
+      }}
+    >
+      <span style={{ minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>{label}</span>
+        {hint && (
+          <span style={{ display: "block", fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>{hint}</span>
+        )}
+      </span>
+      <span
+        role="switch"
+        aria-checked={checked}
+        style={{
+          position: "relative",
+          width: 36,
+          height: 20,
+          borderRadius: 999,
+          background: checked ? "var(--ink)" : "var(--line)",
+          transition: "background 120ms ease",
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            position: "absolute",
+            top: 2,
+            left: checked ? 18 : 2,
+            width: 16,
+            height: 16,
+            borderRadius: "50%",
+            background: "var(--bg)",
+            transition: "left 120ms ease",
+          }}
+        />
+      </span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        style={{ position: "absolute", opacity: 0, pointerEvents: "none" }}
+      />
+    </label>
   );
 }
 

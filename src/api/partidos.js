@@ -20,3 +20,12 @@ export async function setResultadoPartido(id, goles_local, goles_visitante) {
     .eq("id", id);
   if (error) throw error;
 }
+
+export async function clearResultadoPartido(id) {
+  // El trigger en BD recalcula puntos_obtenidos de todas las predicciones.
+  const { error } = await supabase
+    .from("partidos")
+    .update({ goles_local: null, goles_visitante: null, resultado_ingresado: false })
+    .eq("id", id);
+  if (error) throw error;
+}

@@ -6,3 +6,4 @@ export { Pill } from "./Pill.jsx";
 export { SectionTitle } from "./SectionTitle.jsx";
 export { MobileShell, MobileHeader, TabBar, iconBtn } from "./MobileShell.jsx";
 export { Button } from "./Button.jsx";
+export { Logo } from "./Logo.jsx";

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="La Copa Familiar">
+  <title>La Copa Familiar</title>
+
+  <defs>
+    <linearGradient id="fvCup" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#F2C75A"/>
+      <stop offset="100%" stop-color="#D08A28"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo redondeado navy -->
+  <rect width="64" height="64" rx="14" fill="#1B2A52"/>
+
+  <!-- Asas -->
+  <path d="M18,20 C9,20 9,33 18,35"
+        fill="none" stroke="url(#fvCup)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M46,20 C55,20 55,33 46,35"
+        fill="none" stroke="url(#fvCup)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Copa -->
+  <path d="M17,16 L47,16
+           L 45,34
+           C 44.5,40 39,44 32,44
+           C 25,44 19.5,40 19,34 Z"
+        fill="url(#fvCup)" stroke="#8A5A14" stroke-width="1.4" stroke-linejoin="round"/>
+
+  <!-- Pelota de fútbol al centro de la copa -->
+  <g transform="translate(32 29)">
+    <circle r="9" fill="#FFFFFF" stroke="#1B2A52" stroke-width="1.2"/>
+    <!-- Pentágono central -->
+    <path d="M0,-3.4 L3.2,-1.1 L2,2.8 L-2,2.8 L-3.2,-1.1 Z" fill="#1B2A52"/>
+    <!-- Cuñas exteriores -->
+    <path d="M  0,-9   L  2.4,-5.8 L -2.4,-5.8 Z" fill="#1B2A52"/>
+    <path d="M  8.2,-3.4 L  5.6,-1   L  5.6,-5.2 Z" fill="#1B2A52"/>
+    <path d="M -8.2,-3.4 L -5.6,-1   L -5.6,-5.2 Z" fill="#1B2A52"/>
+    <path d="M  5.4, 7   L  2.4, 4.4 L  5.6, 2.6 Z" fill="#1B2A52"/>
+    <path d="M -5.4, 7   L -2.4, 4.4 L -5.6, 2.6 Z" fill="#1B2A52"/>
+  </g>
+
+  <!-- Cuello + base -->
+  <rect x="28" y="44" width="8" height="4" fill="url(#fvCup)"/>
+  <path d="M22,48 L42,48 L39,54 L25,54 Z"
+        fill="url(#fvCup)" stroke="#8A5A14" stroke-width="1.2" stroke-linejoin="round"/>
+</svg>

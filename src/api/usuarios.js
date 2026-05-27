@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
 const PUBLIC_COLS = "id, nombre, email, avatar, color, es_admin, pagado";
-const ADMIN_COLS = "id, nombre, email, password, avatar, color, es_admin, pagado, created_at";
+const ADMIN_COLS = "id, nombre, email, avatar, color, es_admin, pagado, created_at";
 
 export async function listUsuariosPublic() {
   const { data, error } = await supabase.from("usuarios").select(PUBLIC_COLS);

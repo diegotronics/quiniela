@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Avatar, Icon } from "@/components/ui";
+import { Avatar, Icon, Logo } from "@/components/ui";
 import { GROUP_NAME } from "@/lib/constants";
 
 const NAV = [
@@ -44,22 +44,7 @@ export default function Admin() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 16px" }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 10,
-                background: "var(--ink)",
-                color: "var(--bg)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 700,
-                fontSize: 14,
-              }}
-            >
-              LC
-            </div>
+            <Logo size={32} rounded />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.1 }}>
                 La Copa Familiar
@@ -246,6 +231,7 @@ export default function Admin() {
           >
             <Icon.ChevronL />
           </button>
+          <Logo size={28} rounded />
           <div>
             <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>
               Admin
