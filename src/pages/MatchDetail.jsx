@@ -508,7 +508,10 @@ function formatDateTime(iso) {
     const d = new Date(iso);
     const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
     const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    const h = d.getHours();
+    const ampm = h >= 12 ? "p. m." : "a. m.";
+    const h12 = h % 12 || 12;
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, "0")} ${ampm}`;
   } catch {
     return iso;
   }

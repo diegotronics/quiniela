@@ -1,4 +1,4 @@
-const HORA_FMT = new Intl.DateTimeFormat("es", { hour: "2-digit", minute: "2-digit" });
+const HORA_FMT = new Intl.DateTimeFormat("es", { hour: "numeric", minute: "2-digit", hour12: true });
 const DIA_FMT = new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit" });
 
 function esMismoDia(a, b) {

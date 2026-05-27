@@ -285,7 +285,7 @@ export default function ApuestasEspeciales() {
               )}
               {savedAt && (
                 <div style={{ marginTop: 10, fontSize: 12, color: "var(--accent-ink)", fontWeight: 600 }}>
-                  Guardado · {new Date(savedAt).toLocaleTimeString()}
+                  Guardado · {new Date(savedAt).toLocaleTimeString("es", { hour: "numeric", minute: "2-digit", hour12: true })}
                 </div>
               )}
             </Card>
@@ -418,7 +418,10 @@ function formatDate(d) {
       "Ene", "Feb", "Mar", "Abr", "May", "Jun",
       "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
     ];
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    const h = d.getHours();
+    const ampm = h >= 12 ? "p. m." : "a. m.";
+    const h12 = h % 12 || 12;
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, "0")} ${ampm}`;
   } catch {
     return "";
   }
