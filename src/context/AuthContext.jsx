@@ -3,11 +3,11 @@ import {
   createUsuario,
   findUsuarioByCredenciales,
   findUsuarioByEmail,
-  findUsuarioByUsername,
 } from "@/api/usuarios";
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = "copa_familiar_user";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -21,10 +21,14 @@ export function AuthProvider({ children }) {
     setLoaded(true);
   }, []);
 
-  const login = useCallback(async (usuario, password) => {
+  const login = useCallback(async (email, password) => {
+    const emailLimpio = (email || "").trim().toLowerCase();
+    if (!EMAIL_RE.test(emailLimpio)) return { ok: false, error: "Email inválido" };
+    if (!password) return { ok: false, error: "Escribe tu contraseña" };
+
     try {
-      const data = await findUsuarioByCredenciales(usuario, password);
-      if (!data) return { ok: false, error: "Usuario o contraseña incorrectos" };
+      const data = await findUsuarioByCredenciales(emailLimpio, password);
+      if (!data) return { ok: false, error: "Email o contraseña incorrectos" };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       setUser(data);
       return { ok: true };
@@ -38,8 +42,7 @@ export function AuthProvider({ children }) {
     const emailLimpio = (email || "").trim().toLowerCase();
 
     if (!nombreLimpio) return { ok: false, error: "Escribe tu nombre" };
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpio))
-      return { ok: false, error: "Email inválido" };
+    if (!EMAIL_RE.test(emailLimpio)) return { ok: false, error: "Email inválido" };
     if (!password || password.length < 4)
       return { ok: false, error: "La contraseña debe tener al menos 4 caracteres" };
 
@@ -48,16 +51,8 @@ export function AuthProvider({ children }) {
         return { ok: false, error: "Ese email ya está registrado" };
       }
 
-      const base = emailLimpio.split("@")[0].replace(/[^a-z0-9_.-]/gi, "").toLowerCase() || "user";
-      let usuario = base;
-      for (let i = 1; i < 50; i++) {
-        if (!(await findUsuarioByUsername(usuario))) break;
-        usuario = `${base}${i}`;
-      }
-
       const nuevo = await createUsuario({
         nombre: nombreLimpio,
-        usuario,
         email: emailLimpio,
         password,
         avatar: nombreLimpio.charAt(0).toUpperCase(),

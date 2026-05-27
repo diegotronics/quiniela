@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function Login() {
   const navigate = useNavigate();
   const { user, login } = useAuth();
-  const [form, setForm] = useState({ usuario: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -17,7 +17,7 @@ export default function Login() {
     if (busy) return;
     setBusy(true);
     setError("");
-    const res = await login(form.usuario.trim(), form.password);
+    const res = await login(form.email.trim(), form.password);
     setBusy(false);
     if (!res.ok) setError(res.error);
     else navigate("/app", { replace: true });
@@ -33,12 +33,13 @@ export default function Login() {
 
       <div style={S.card}>
         <div style={{ marginBottom: "1.2rem" }}>
-          <label style={S.label}>👤 Usuario</label>
+          <label style={S.label}>📧 Email</label>
           <input
-            type="text"
-            placeholder="Escribe tu usuario"
-            value={form.usuario}
-            onChange={e => setForm(p => ({ ...p, usuario: e.target.value }))}
+            type="email"
+            placeholder="tu@email.com"
+            autoComplete="email"
+            value={form.email}
+            onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
             onKeyDown={e => e.key === "Enter" && handleLogin()}
             style={S.input}
           />

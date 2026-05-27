@@ -3,13 +3,15 @@ import { createUsuario, deleteUsuario, updateUsuario } from "@/api/usuarios";
 import { useUsuariosAdmin } from "@/hooks/useUsuarios";
 import { styles, color, radius } from "@/styles/theme";
 
-const EMPTY = { nombre: "", usuario: "", password: "1234", avatar: "", color: "#553C9A" };
+const EMPTY = { nombre: "", email: "", password: "1234", avatar: "", color: "#553C9A" };
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function AdminUsuarios() {
   const { usuarios, refresh } = useUsuariosAdmin();
   const [form, setForm] = useState(EMPTY);
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   const togglePagado = async (u) => {
     await updateUsuario(u.id, { pagado: !u.pagado });
@@ -18,18 +20,28 @@ export default function AdminUsuarios() {
 
   const guardar = async (e) => {
     e?.preventDefault();
-    if (!form.nombre || !form.usuario || !form.password) return;
+    setError("");
+    const nombre = form.nombre.trim();
+    const email = form.email.trim().toLowerCase();
+    if (!nombre || !email || !form.password) return;
+    if (!EMAIL_RE.test(email)) {
+      setError("Email inválido");
+      return;
+    }
     setBusy(true);
     try {
+      const payload = { ...form, nombre, email };
       if (editing) {
-        await updateUsuario(editing, form);
+        await updateUsuario(editing, payload);
       } else {
-        const avatar = form.avatar || form.nombre.slice(0, 2).toUpperCase();
-        await createUsuario({ ...form, avatar });
+        const avatar = form.avatar || nombre.slice(0, 2).toUpperCase();
+        await createUsuario({ ...payload, avatar });
       }
       setForm(EMPTY);
       setEditing(null);
       await refresh();
+    } catch (err) {
+      setError(err.message);
     } finally {
       setBusy(false);
     }
@@ -37,9 +49,10 @@ export default function AdminUsuarios() {
 
   const editar = (u) => {
     setEditing(u.id);
+    setError("");
     setForm({
       nombre: u.nombre,
-      usuario: u.usuario,
+      email: u.email || "",
       password: u.password,
       avatar: u.avatar || "",
       color: u.color || "#553C9A",
@@ -61,11 +74,12 @@ export default function AdminUsuarios() {
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
           <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} style={styles.inputForm} />
-          <input placeholder="usuario" value={form.usuario} onChange={e => setForm({ ...form, usuario: e.target.value })} style={styles.inputForm} />
+          <input type="email" placeholder="email" autoComplete="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={styles.inputForm} />
           <input placeholder="contraseña" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} style={styles.inputForm} />
           <input placeholder="avatar (2 letras)" maxLength={3} value={form.avatar} onChange={e => setForm({ ...form, avatar: e.target.value.toUpperCase() })} style={styles.inputForm} />
           <input type="color" value={form.color} onChange={e => setForm({ ...form, color: e.target.value })} style={{ ...styles.inputForm, height: 38, padding: "0.2rem" }} />
         </div>
+        {error && <p style={{ color: "#c53030", margin: "0.6rem 0 0", fontSize: "0.8rem" }}>⚠️ {error}</p>}
         <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.6rem" }}>
           <button type="submit" disabled={busy} style={{ ...styles.btnPrimary, flex: 1 }}>
             {busy ? "Guardando..." : editing ? "Actualizar" : "Crear jugador"}
@@ -73,7 +87,7 @@ export default function AdminUsuarios() {
           {editing && (
             <button
               type="button"
-              onClick={() => { setEditing(null); setForm(EMPTY); }}
+              onClick={() => { setEditing(null); setForm(EMPTY); setError(""); }}
               style={{ padding: "0.6rem 1rem", borderRadius: radius.sm, border: `1px solid ${color.border}`, background: color.surface, cursor: "pointer" }}
             >
               Cancelar
@@ -95,7 +109,7 @@ export default function AdminUsuarios() {
               )}
             </p>
             <p style={{ margin: 0, fontSize: "0.75rem", color: color.mutedSoft }}>
-              @{u.usuario} · {u.pagado ? "💚 pagado" : "💸 pendiente"}
+              {u.email} · {u.pagado ? "💚 pagado" : "💸 pendiente"}
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.3rem" }}>

@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
-const PUBLIC_COLS = "id, nombre, usuario, avatar, color, es_admin, pagado";
-const ADMIN_COLS = "id, nombre, usuario, password, avatar, color, es_admin, pagado, created_at";
+const PUBLIC_COLS = "id, nombre, email, avatar, color, es_admin, pagado";
+const ADMIN_COLS = "id, nombre, email, password, avatar, color, es_admin, pagado, created_at";
 
 export async function listUsuariosPublic() {
   const { data, error } = await supabase.from("usuarios").select(PUBLIC_COLS);
@@ -18,11 +18,11 @@ export async function listUsuariosAdmin() {
   return data || [];
 }
 
-export async function findUsuarioByCredenciales(usuario, password) {
+export async function findUsuarioByCredenciales(email, password) {
   const { data, error } = await supabase
     .from("usuarios")
     .select(PUBLIC_COLS)
-    .eq("usuario", usuario)
+    .ilike("email", email)
     .eq("password", password)
     .maybeSingle();
   if (error) throw error;
@@ -34,16 +34,6 @@ export async function findUsuarioByEmail(email) {
     .from("usuarios")
     .select("id")
     .ilike("email", email)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-export async function findUsuarioByUsername(usuario) {
-  const { data, error } = await supabase
-    .from("usuarios")
-    .select("id")
-    .eq("usuario", usuario)
     .maybeSingle();
   if (error) throw error;
   return data;
