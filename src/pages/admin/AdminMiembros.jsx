@@ -6,7 +6,7 @@ import { listPuntajesGlobales } from "@/api/predicciones";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, Button, Card, Icon, Pill } from "@/components/ui";
 
-const EMPTY = { nombre: "", email: "", password: "1234", avatar: "", color: "#553C9A", es_admin: false, pagado: false };
+const EMPTY = { nombre: "", email: "", password: "", avatar: "", color: "#553C9A", es_admin: false, pagado: false };
 const FILTERS = ["Todos", "Activos", "Admins"];
 const COLORS = ["#553C9A", "#C53030", "#2C7A7B", "#B7791F", "#2B6CB0", "#D53F8C", "#38A169", "#DD6B20"];
 
@@ -40,10 +40,18 @@ export default function AdminMiembros() {
   const guardar = async (e) => {
     e?.preventDefault();
     if (!form.nombre || !form.email) return;
+    if (editing) {
+      if (form.password && form.password.length < 4) {
+        return alert("La contraseña debe tener al menos 4 caracteres.");
+      }
+    } else if (!form.password || form.password.length < 4) {
+      return alert("La contraseña debe tener al menos 4 caracteres.");
+    }
     setBusy(true);
     try {
       if (editing) {
-        const { password: _omit, ...patch } = form;
+        const { password, ...rest } = form;
+        const patch = password ? { ...rest, password } : rest;
         await updateUsuario(editing, patch);
       } else {
         const avatar = form.avatar || form.nombre.slice(0, 2).toUpperCase();
@@ -303,6 +311,14 @@ export default function AdminMiembros() {
           <form onSubmit={guardar} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Input label="Nombre" value={form.nombre} onChange={(v) => setForm({ ...form, nombre: v })} />
             <Input label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
+            <Input
+              label={editing ? "Nueva contraseña" : "Contraseña"}
+              type="text"
+              autoComplete="new-password"
+              placeholder={editing ? "Dejar vacío para no cambiar" : "Mínimo 4 caracteres"}
+              value={form.password}
+              onChange={(v) => setForm({ ...form, password: v })}
+            />
             <Input label="Avatar (2 letras)" value={form.avatar} maxLength={3} onChange={(v) => setForm({ ...form, avatar: v.toUpperCase() })} />
 
             <div>
@@ -453,7 +469,7 @@ function Toggle({ label, hint, checked, onChange }) {
   );
 }
 
-function Input({ label, value, onChange, type = "text", maxLength }) {
+function Input({ label, value, onChange, type = "text", maxLength, placeholder, autoComplete }) {
   return (
     <label style={{ display: "block" }}>
       <span style={{ display: "block", fontSize: 12, fontWeight: 500, color: "var(--ink-2)", marginBottom: 6 }}>
@@ -464,6 +480,8 @@ function Input({ label, value, onChange, type = "text", maxLength }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         maxLength={maxLength}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
         style={{
           width: "100%",
           padding: "10px 12px",
