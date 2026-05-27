@@ -1,13 +1,6 @@
-export const PUNTOS_POR_FASE = {
-  grupos:        { exacto: 3,  ganador: 1 },
-  dieciseisavos: { exacto: 4,  ganador: 2 },
-  octavos:       { exacto: 5,  ganador: 2 },
-  cuartos:       { exacto: 6,  ganador: 3 },
-  semifinal:     { exacto: 8,  ganador: 4 },
-  tercerpuesto:  { exacto: 6,  ganador: 3 },
-  final:         { exacto: 15, ganador: 7 },
-};
-
+// Texto descriptivo por fase para la pantalla de "Fases".
+// Los puntos por fase viven en la tabla `fases` (columnas pts_exacto/pts_ganador)
+// y el cálculo se hace en el trigger SQL `recalcular_puntos_por_partido`.
 export const FASES_INFO = {
   grupos:        "48 equipos · 12 grupos · 72 partidos · Jun 11–24",
   dieciseisavos: "32 equipos · 16 partidos · Jun 28 – Jul 3",
@@ -35,30 +28,4 @@ export const FLAGS = {
 
 export function flag(equipo) {
   return FLAGS[equipo] || "🏳";
-}
-
-// Cuanto vale una prediccion comparada con el resultado real
-export function calcularPuntos(faseId, pred, real) {
-  if (
-    pred == null ||
-    real == null ||
-    pred.goles_local == null ||
-    pred.goles_visitante == null ||
-    real.goles_local == null ||
-    real.goles_visitante == null
-  ) {
-    return 0;
-  }
-  const pts = PUNTOS_POR_FASE[faseId];
-  if (!pts) return 0;
-  const exacto =
-    pred.goles_local === real.goles_local &&
-    pred.goles_visitante === real.goles_visitante;
-  if (exacto) return pts.exacto;
-
-  const signo = (a, b) => (a > b ? 1 : a < b ? -1 : 0);
-  if (signo(pred.goles_local, pred.goles_visitante) === signo(real.goles_local, real.goles_visitante)) {
-    return pts.ganador;
-  }
-  return 0;
 }

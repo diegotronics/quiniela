@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-import MainApp from "./pages/MainApp.jsx";
-import Admin from "./pages/Admin.jsx";
-import { useAuth } from "./context/AuthContext.jsx";
+import Login from "@/pages/Login.jsx";
+import Register from "@/pages/Register.jsx";
+import MainApp from "@/pages/MainApp.jsx";
+import Admin from "@/pages/Admin.jsx";
+import { useAuth } from "@/context/AuthContext";
 
 function Protected({ children, adminOnly }) {
   const { user, loaded } = useAuth();
