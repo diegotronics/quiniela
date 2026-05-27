@@ -14,6 +14,7 @@ import {
   Flag,
   Icon,
   Pill,
+  ScoreStepper,
 } from "@/components/ui";
 import { code } from "@/lib/constants";
 import { ChatPanel } from "@/components/chat/ChatPanel";
@@ -287,47 +288,6 @@ export default function MatchDetail() {
     </div>
   );
 }
-
-function ScoreStepper({ label, value, onChange }) {
-  const v = value == null ? 0 : value;
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-      <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 500, textAlign: "center" }}>
-        {(label || "").length > 10 ? label.slice(0, 10) + "…" : label}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          background: "var(--surface)",
-          border: "0.5px solid var(--line)",
-          borderRadius: 10,
-        }}
-      >
-        <button onClick={() => onChange(Math.max(0, v - 1))} style={qtyBtn} aria-label="Bajar">
-          –
-        </button>
-        <span className="mono" style={{ width: 36, textAlign: "center", fontSize: 22, fontWeight: 600 }}>
-          {value == null ? 0 : value}
-        </span>
-        <button onClick={() => onChange(v + 1)} style={qtyBtn} aria-label="Subir">
-          +
-        </button>
-      </div>
-    </div>
-  );
-}
-
-const qtyBtn = {
-  width: 32,
-  height: 38,
-  background: "none",
-  border: "none",
-  color: "var(--ink-2)",
-  fontSize: 18,
-  fontWeight: 500,
-  cursor: "pointer",
-};
 
 function FamilyPicks({ usuarios, picksByUser, mePartial }) {
   const players = (usuarios || []).filter((u) => !u.es_admin);

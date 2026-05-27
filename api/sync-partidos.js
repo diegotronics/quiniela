@@ -1,46 +1,47 @@
 // ============================================================
 // /api/sync-partidos
 //
-// Función serverless de Vercel (Node 18+). Consulta API-Football
-// (league=1, season=2026) y trae los fixtures terminados del
-// Mundial 2026. Para cada fixture FT/AET/PEN actualiza el partido
-// correspondiente en Supabase con goles_local, goles_visitante y
+// Función serverless de Vercel (Node 18+). Consulta el endpoint
+// público de ESPN para el Mundial 2026 y, para cada partido
+// terminado (STATUS_FINAL*), actualiza el partido correspondiente
+// en Supabase con goles_local, goles_visitante y
 // resultado_ingresado=true. El trigger `trg_partido_recalc`
 // recalcula los puntos de todas las predicciones en cascada.
 //
-// Variables de entorno requeridas (Vercel → Project Settings →
-// Environment Variables):
+// ¿Por qué ESPN y no API-Football?
+//   El plan free de API-Football solo cubre temporadas 2022-2024;
+//   el Mundial 2026 requeriría plan pago. ESPN expone su endpoint
+//   interno sin autenticación, cubre los 100 partidos en una sola
+//   llamada y no tiene cuota documentada. Riesgo: es un endpoint
+//   no oficial; puede romper sin aviso. Si rompe, hay que cambiar
+//   de fuente (TheSportsDB o pagar API-Football).
+//
+// Variables de entorno requeridas:
 //   SUPABASE_URL              — https://TUPROYECTO.supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY — service role key (NUNCA en el frontend)
-//   API_FOOTBALL_KEY          — key de https://www.api-football.com
 //   CRON_SECRET               — string aleatorio largo (32+ caracteres)
 //
-// Auth:
-//   - Vercel Cron envía automáticamente `Authorization: Bearer ${CRON_SECRET}`.
-//   - Crons externos (cron-job.org, etc.) y disparo manual deben enviar
-//     el mismo header. Cualquier otra llamada → 401.
+// Auth: header `Authorization: Bearer ${CRON_SECRET}`.
 //
 // La primera ejecución hace match por nombre de equipos y guarda
-// `api_fixture_id` en cada partido para acelerar futuras corridas.
+// `api_fixture_id` (el id de ESPN) en cada partido para acelerar
+// futuras corridas.
 // ============================================================
 
 import { createClient } from '@supabase/supabase-js'
 
-const API_BASE = 'https://v3.football.api-sports.io'
-const LEAGUE_ID = 1 // FIFA World Cup en API-Football
-const SEASON = 2026
+const ESPN_URL =
+    'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260601-20260720'
 
-// Mapeo de nombres de API-Football (inglés) → nombres en nuestra BD (español)
+// Mapeo de nombres de ESPN (inglés) → nombres en nuestra BD (español).
+// Las claves van normalizadas (lowercase + sin acentos + sin guiones).
 const TEAM_MAP = {
     mexico: 'México',
     'south africa': 'Sudáfrica',
     'south korea': 'Corea del Sur',
-    'korea republic': 'Corea del Sur',
-    'czech republic': 'Chequia',
     czechia: 'Chequia',
     canada: 'Canadá',
-    'bosnia and herzegovina': 'Bosnia y Herzegovina',
-    bosnia: 'Bosnia y Herzegovina',
+    'bosnia herzegovina': 'Bosnia y Herzegovina',
     qatar: 'Qatar',
     switzerland: 'Suiza',
     brazil: 'Brasil',
@@ -56,7 +57,7 @@ const TEAM_MAP = {
     germany: 'Alemania',
     curacao: 'Curazao',
     'ivory coast': 'Costa de Marfil',
-    "cote d'ivoire": 'Costa de Marfil',
+    "cote d ivoire": 'Costa de Marfil',
     ecuador: 'Ecuador',
     netherlands: 'Holanda',
     japan: 'Japón',
@@ -92,14 +93,19 @@ const TEAM_MAP = {
     panama: 'Panamá',
 }
 
-// Estados de API-Football que indican partido terminado
-const STATUS_FINISHED = new Set(['FT', 'AET', 'PEN'])
+// ESPN devuelve varios status. Tratamos como "terminado" todo lo que
+// empiece con STATUS_FINAL (FINAL, FINAL_AET, FINAL_PEN, etc).
+function isFinished(statusName) {
+    return typeof statusName === 'string' && statusName.startsWith('STATUS_FINAL')
+}
 
 function normalize(s) {
     return (s || '')
         .normalize('NFD')
         .replace(/[̀-ͯ]/g, '') // quita diacríticos combinantes
         .toLowerCase()
+        .replace(/[-_'.]/g, ' ') // unifica separadores
+        .replace(/\s+/g, ' ')
         .trim()
 }
 
@@ -120,19 +126,18 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'unauthorized' })
     }
 
-    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, API_FOOTBALL_KEY } =
-        process.env
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !API_FOOTBALL_KEY) {
-        return res
-            .status(500)
-            .json({ error: 'missing env vars (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / API_FOOTBALL_KEY)' })
+    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        return res.status(500).json({
+            error: 'missing env vars (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)',
+        })
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
         auth: { persistSession: false },
     })
 
-    // 1) Bajar todos los partidos de nuestra BD (solo grupos por ahora)
+    // 1) Bajar partidos actuales
     const { data: partidos, error: errPartidos } = await supabase
         .from('partidos')
         .select(
@@ -142,38 +147,40 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: `supabase: ${errPartidos.message}` })
     }
 
-    // 2) Consultar API-Football
-    const apiUrl = `${API_BASE}/fixtures?league=${LEAGUE_ID}&season=${SEASON}`
-    const apiRes = await fetch(apiUrl, {
-        headers: { 'x-apisports-key': API_FOOTBALL_KEY },
-    })
-    if (!apiRes.ok) {
-        return res
-            .status(502)
-            .json({ error: `api-football: HTTP ${apiRes.status}` })
+    // 2) Consultar ESPN
+    const espnRes = await fetch(ESPN_URL)
+    if (!espnRes.ok) {
+        return res.status(502).json({ error: `espn: HTTP ${espnRes.status}` })
     }
-    const apiJson = await apiRes.json()
-    const fixtures = apiJson.response || []
+    const espnJson = await espnRes.json()
+    const events = espnJson.events || []
 
     // 3) Cruzar y actualizar
     const actualizados = []
     const ignorados = []
     const noEncontrados = []
 
-    for (const fx of fixtures) {
-        const apiId = fx.fixture?.id
-        const status = fx.fixture?.status?.short
-        const home = fx.teams?.home?.name
-        const away = fx.teams?.away?.name
-        const golesL = fx.goals?.home
-        const golesV = fx.goals?.away
+    for (const ev of events) {
+        const apiId = Number(ev.id)
+        const comp = ev.competitions?.[0]
+        if (!comp) continue
+        const statusName = comp.status?.type?.name
+        const competitors = comp.competitors || []
+        const homeC = competitors.find((c) => c.homeAway === 'home')
+        const awayC = competitors.find((c) => c.homeAway === 'away')
+        if (!homeC || !awayC) continue
 
-        if (!STATUS_FINISHED.has(status)) {
-            ignorados.push({ apiId, status, motivo: 'no terminado' })
+        const home = homeC.team?.displayName
+        const away = awayC.team?.displayName
+        const golesL = homeC.score == null ? null : Number(homeC.score)
+        const golesV = awayC.score == null ? null : Number(awayC.score)
+
+        if (!isFinished(statusName)) {
+            ignorados.push({ apiId, statusName, motivo: 'no terminado' })
             continue
         }
-        if (golesL == null || golesV == null) {
-            ignorados.push({ apiId, status, motivo: 'goles null' })
+        if (Number.isNaN(golesL) || Number.isNaN(golesV) || golesL == null || golesV == null) {
+            ignorados.push({ apiId, statusName, motivo: 'goles invalidos' })
             continue
         }
 
@@ -185,8 +192,7 @@ export default async function handler(req, res) {
         if (!partido) {
             partido = partidos.find(
                 (p) =>
-                    p.equipo_local === homeEs &&
-                    p.equipo_visitante === awayEs,
+                    p.equipo_local === homeEs && p.equipo_visitante === awayEs,
             )
         }
         if (!partido) {
@@ -229,7 +235,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
         ok: true,
-        totalFixtures: fixtures.length,
+        totalFixtures: events.length,
         actualizados: actualizados.length,
         ignorados: ignorados.length,
         noEncontrados: noEncontrados.length,

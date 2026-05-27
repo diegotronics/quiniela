@@ -162,65 +162,73 @@ scripts/
 └── migrate.mjs            # corre las migraciones en cada deploy
 ```
 
-## 🤖 Sincronización automática de resultados (API-Football)
+## 🤖 Sincronización automática de resultados (ESPN)
 
 Los partidos del Mundial 2026 reales se cargan vía la migración [`supabase/09_partidos_reales_mundial_2026.sql`](supabase/09_partidos_reales_mundial_2026.sql) (todas las horas en UTC-4 Caracas).
 
-La función serverless [`api/sync-partidos.js`](api/sync-partidos.js) consulta API-Football, identifica los partidos terminados (`FT`/`AET`/`PEN`) y los guarda en Supabase. El trigger `trg_partido_recalc` se encarga del resto.
+La función serverless [`api/sync-partidos.js`](api/sync-partidos.js) consulta el endpoint público de **ESPN** (`site.api.espn.com/.../soccer/fifa.world/scoreboard`), identifica los partidos terminados (`STATUS_FINAL`/`STATUS_FINAL_AET`/`STATUS_FINAL_PEN`) y los guarda en Supabase. El trigger `trg_partido_recalc` recalcula los puntos automáticamente.
 
-### 1) Obtener API key gratuita
+> Probado el 27 may 2026 — ESPN devuelve los 100 partidos del Mundial (72 grupos + 28 eliminatorias) en una sola llamada, sin auth y sin cuota documentada.
 
-1. Crear cuenta en [https://www.api-football.com/](https://www.api-football.com/) (plan Free, 100 requests/día).
-2. Dashboard → **API Key** → copiar.
+> **Por qué ESPN y no API-Football:** el plan Free de API-Football solo cubre temporadas 2022–2024 (la 2026 requiere plan pago). ESPN es gratis y cubre 2026 ya. Contrapartida: es un endpoint no oficial, podría romper sin aviso — si pasa, hay que cambiar a TheSportsDB o pagar API-Football.
 
-### 2) Variables de entorno (Vercel → Project Settings → Environment Variables)
+### 1) Variables de entorno (Vercel → Project Settings → Environment Variables)
 
 | Variable | Valor |
 |---|---|
 | `SUPABASE_URL` | `https://TU-PROYECTO.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key (Supabase → Settings → API). **NO** la anon. |
-| `API_FOOTBALL_KEY` | La key obtenida en el paso 1. |
 | `CRON_SECRET` | Cualquier string aleatorio largo (32+ caracteres). Ejemplo: `openssl rand -hex 32`. |
 
 > ⚠️ `SUPABASE_SERVICE_ROLE_KEY` permite bypass de RLS. **Nunca** la pongas en código del frontend, solo como env var del backend.
 
-### 3) Probar manualmente
+### 2) Probar manualmente
 
 ```bash
 curl -H "Authorization: Bearer TU_CRON_SECRET" \
   https://lacopafamiliar.vercel.app/api/sync-partidos
 ```
 
-Respuesta esperada (JSON):
+Respuesta esperada antes del torneo (todos `STATUS_SCHEDULED`):
 
 ```json
 {
   "ok": true,
-  "totalFixtures": 72,
-  "actualizados": 3,
-  "ignorados": 69,
-  "noEncontrados": 0,
-  "detalleActualizados": [{"id":"A1","marcador":"México 2-1 Sudáfrica"}, ...]
+  "totalFixtures": 100,
+  "actualizados": 0,
+  "ignorados": 100,
+  "noEncontrados": 0
 }
 ```
 
-### 4) Disparo automático
+Cuando empiecen a terminar partidos, `actualizados` reflejará los nuevos resultados ingresados y `detalleActualizados` listará marcadores tipo `"México 2-1 Sudáfrica"`.
 
-- **Vercel Cron** (ya configurado en [`vercel.json`](vercel.json), una vez al día a las 04:00 UTC) — útil como respaldo.
-- **Cron externo gratuito** (recomendado para tiempo real durante días de partido):
-  1. Crear cuenta en [cron-job.org](https://cron-job.org).
-  2. **Create cronjob** con URL `https://lacopafamiliar.vercel.app/api/sync-partidos` y schedule cada 5 minutos.
-  3. En **Notifications → Advanced** agregar header `Authorization: Bearer TU_CRON_SECRET`.
+### 3) Disparo automático
 
-### 5) Si la API devuelve nombres distintos
+Como el proyecto está en plan **Hobby** de Vercel (los crons solo corren 1 vez/día), usamos **cron-job.org** (gratis, ilimitado) para la frecuencia real y dejamos el cron de Vercel como respaldo diario.
 
-El job loggea en `detalleNoEncontrados` los equipos que no pudo emparejar. Si aparece algo como `{ home: "Korea Republic", homeEs: "Korea Republic" }`, agregar el alias al mapping `TEAM_MAP` en `api/sync-partidos.js` y re-desplegar.
+**Setup principal — cron-job.org (cada 15 min):**
 
-### 6) Plan free de API-Football: 100 req/día
+1. Crear cuenta gratis en [cron-job.org](https://cron-job.org).
+2. **Cronjobs → Create cronjob**:
+   - **Title:** `Sync Mundial 2026`
+   - **URL:** `https://lacopafamiliar.vercel.app/api/sync-partidos`
+   - **Schedule:** `Every 15 minutes`
+3. Pestaña **Advanced**:
+   - **Request method:** `GET`
+   - **Headers** → add:
+     - Header name: `Authorization`
+     - Header value: `Bearer TU_CRON_SECRET` (el mismo valor que pusiste en Vercel env var)
+4. Pestaña **Notifications** (opcional): activar email si falla 3 veces seguidas para enterarte si ESPN cambia el endpoint.
+5. **Save** → el job queda activo.
 
-Llamar cada 5 min serían 288 req/día → excede el plan free. Estrategias:
-- Llamar cada 15 min durante el día (96 req/día) — cabe con holgura.
-- O usar cron-job.org con horarios condicionales (solo durante ventanas de partidos).
+**Respaldo — Vercel Cron** (ya configurado, 04:00 UTC diario):
+
+Configurado en [`vercel.json`](vercel.json) como `0 4 * * *`. Sirve por si cron-job.org se cae.
+
+### 4) Si ESPN devuelve un nombre nuevo
+
+El job loggea en `detalleNoEncontrados` los equipos que no pudo emparejar. Si aparece algo así, agregar el alias al mapping `TEAM_MAP` en [`api/sync-partidos.js`](api/sync-partidos.js) y re-desplegar.
 
 ---
 

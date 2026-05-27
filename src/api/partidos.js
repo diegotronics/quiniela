@@ -12,6 +12,17 @@ export async function listPartidosByFase(faseId) {
   return data || [];
 }
 
+// Los 72 partidos de grupos en orden A1..L6 (orden del seed).
+export async function listPartidosGrupos() {
+  const { data, error } = await supabase
+    .from("partidos")
+    .select(COLS)
+    .eq("fase_id", "grupos")
+    .order("id", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
 export async function setResultadoPartido(id, goles_local, goles_visitante) {
   // El trigger en BD recalcula puntos_obtenidos de todas las predicciones.
   const { error } = await supabase
