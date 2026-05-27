@@ -80,6 +80,7 @@ export default function Partidos() {
           title="Partidos"
           subtitle={fase ? `${fase.nombre} · ${guardados}/${partidosVista.length} pronosticados` : ""}
           leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
+          onLeadingClick={() => navigate("/app/perfil")}
         />
       }
     >

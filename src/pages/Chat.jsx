@@ -1,15 +1,17 @@
+import { useNavigate } from "react-router-dom";
 import { MobileHeader, MobileShell } from "@/components/ui";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { GROUP_NAME } from "@/lib/constants";
 
 export default function Chat() {
+  const navigate = useNavigate();
   return (
     <MobileShell
       header={
         <MobileHeader
           title="Picadas familiares"
           subtitle={GROUP_NAME}
-          trailing={false}
+          onBack={() => navigate(-1)}
         />
       }
     >

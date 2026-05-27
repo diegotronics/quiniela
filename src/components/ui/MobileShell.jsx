@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { Icon } from "./Icon.jsx";
-import { Avatar } from "./Avatar.jsx";
 
 const iconBtn = {
   width: 36,
@@ -13,40 +12,117 @@ const iconBtn = {
   justifyContent: "center",
   position: "relative",
   color: "var(--ink)",
+  padding: 0,
+  cursor: "pointer",
 };
 
-export function MobileHeader({ title, subtitle, leading, trailing = true, big = true, sticky = true }) {
+const leadingBtnReset = {
+  background: "transparent",
+  border: "none",
+  padding: 0,
+  margin: 0,
+  cursor: "pointer",
+  borderRadius: 999,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "inherit",
+};
+
+export function HeaderIconButton({ label, onClick, badge = 0, children }) {
+  const showBadge = Number(badge) > 0;
+  const badgeLabel = badge > 9 ? "9+" : String(badge);
+  return (
+    <button
+      type="button"
+      style={iconBtn}
+      className="icon-tap header-icon-btn"
+      aria-label={label}
+      onClick={onClick}
+    >
+      {children}
+      {showBadge && (
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 4,
+            right: 4,
+            minWidth: 16,
+            height: 16,
+            padding: "0 4px",
+            borderRadius: 999,
+            background: "var(--coral)",
+            color: "#fff",
+            fontSize: 10,
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "2px solid var(--bg)",
+            lineHeight: 1,
+          }}
+        >
+          {badgeLabel}
+        </span>
+      )}
+    </button>
+  );
+}
+
+export function MobileHeader({
+  title,
+  subtitle,
+  leading,
+  onLeadingClick,
+  leadingLabel = "Abrir perfil",
+  onBack,
+  backLabel = "Volver",
+  trailing,
+  big = true,
+  sticky = true,
+}) {
+  const leadingNode = leading
+    ? onLeadingClick
+      ? (
+        <button
+          type="button"
+          onClick={onLeadingClick}
+          aria-label={leadingLabel}
+          className="header-leading-btn"
+          style={leadingBtnReset}
+        >
+          {leading}
+        </button>
+      )
+      : leading
+    : null;
+
   return (
     <div
       style={{
         position: sticky ? "sticky" : "static",
         top: 0,
-        zIndex: 5,
+        zIndex: 20,
         background: "var(--bg)",
-        paddingTop: 24,
-        paddingLeft: 20,
-        paddingRight: 20,
+        paddingTop: "calc(24px + env(safe-area-inset-top, 0px))",
+        paddingLeft: "calc(20px + env(safe-area-inset-left, 0px))",
+        paddingRight: "calc(20px + env(safe-area-inset-right, 0px))",
         paddingBottom: big ? 14 : 10,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 36 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>{leading}</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 36, gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          {onBack && (
+            <HeaderIconButton label={backLabel} onClick={onBack}>
+              <Icon.ChevronL />
+            </HeaderIconButton>
+          )}
+          {leadingNode}
+        </div>
         {trailing && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <button style={iconBtn} className="icon-tap" aria-label="Notificaciones">
-              <Icon.Bell />
-              <span
-                style={{
-                  position: "absolute",
-                  top: 8,
-                  right: 9,
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: "var(--coral)",
-                }}
-              />
-            </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {trailing}
           </div>
         )}
       </div>

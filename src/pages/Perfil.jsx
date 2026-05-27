@@ -78,7 +78,7 @@ export default function Perfil() {
       header={
         <MobileHeader
           title="Perfil"
-          subtitle="Tus pronósticos, racha y logros"
+          subtitle={perfilSubtitle({ rank: me?.rank, total: ranking.length, puntos: me?.puntos, racha })}
           leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
         />
       }
@@ -348,6 +348,18 @@ function Stat({ label, val, sub, index = 0 }) {
       </div>
     </Card>
   );
+}
+
+function perfilSubtitle({ rank, total, puntos, racha }) {
+  const partes = [];
+  if (rank && total) {
+    partes.push(`#${rank} de ${total}`);
+  } else {
+    partes.push(GROUP_NAME);
+  }
+  if (typeof puntos === "number") partes.push(`${puntos} pts`);
+  if ((racha || 0) >= 2) partes.push(`Racha ${racha}`);
+  return partes.join(" · ");
 }
 
 function deriveBadges({ stats, racha, ranking, total }) {

@@ -18,6 +18,7 @@ import {
   Card,
   Countdown,
   Flag,
+  HeaderIconButton,
   Icon,
   MatchCard,
   MobileHeader,
@@ -128,6 +129,12 @@ export default function Inicio() {
           title={`Hola, ${(user?.nombre || "").split(" ")[0] || "jugador"}`}
           subtitle={`${GROUP_NAME} · ${GROUP_MOTTO}`}
           leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
+          onLeadingClick={() => navigate("/app/perfil")}
+          trailing={
+            <HeaderIconButton label="Abrir chat" onClick={() => navigate("/app/chat")}>
+              <Icon.Chat />
+            </HeaderIconButton>
+          }
         />
       }
     >

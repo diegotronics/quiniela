@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { celebratePodium, celebrateOnce } from "@/lib/celebrate";
 import { useAuth } from "@/context/AuthContext";
 import { useUsuariosPublic } from "@/hooks/useUsuarios";
@@ -41,6 +42,7 @@ function startOfWeek(d) {
 
 export default function TablaFamiliar() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { usuarios } = useUsuariosPublic();
   const { data: puntajes, loading } = useAsync(listPuntajesGlobales, []);
   const { fases } = useFases();
@@ -115,6 +117,7 @@ export default function TablaFamiliar() {
           title="Tabla familiar"
           subtitle={`${GROUP_NAME} · ${ranking.length} jugador${ranking.length === 1 ? "" : "es"}`}
           leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: meTotal?.rank, streak: racha })} />}
+          onLeadingClick={() => navigate("/app/perfil")}
         />
       }
     >

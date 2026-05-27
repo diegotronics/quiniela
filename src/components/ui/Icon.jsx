@@ -85,6 +85,9 @@ export const Icon = {
       <path d="M10 20a2 2 0 0 0 4 0" />
     </>
   )),
+  Chat: svgFactory(18, (
+    <path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-8.2L6 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V6A1.5 1.5 0 0 1 5 4.5z" />
+  )),
   Search: svgFactory(18, (
     <>
       <circle cx="11" cy="11" r="6.5" />

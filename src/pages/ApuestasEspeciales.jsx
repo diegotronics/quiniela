@@ -6,7 +6,6 @@ import {
   useApuestaEspecialUsuario,
 } from "@/hooks/useApuestasEspeciales";
 import {
-  Avatar,
   Button,
   Card,
   Flag,
@@ -99,7 +98,7 @@ export default function ApuestasEspeciales() {
         <MobileHeader
           title="Apuestas especiales"
           subtitle="Pronósticos pre-mundial: Campeón, Sub-campeón, Goleador y Sorpresa"
-          leading={<Avatar name={user?.nombre} size={36} />}
+          onBack={() => navigate(-1)}
         />
       }
     >

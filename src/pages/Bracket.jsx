@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useFases } from "@/hooks/useFases";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
@@ -31,6 +32,7 @@ const KNOCKOUT_PHASES = [
 
 export default function Bracket() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { fases } = useFases();
   const { partidos } = useAllPartidos(fases);
   const { predicciones } = usePrediccionesUsuario(user?.id);
@@ -91,6 +93,7 @@ export default function Bracket() {
           title="Bracket"
           subtitle="Octavos · Cuartos · Semis · Final"
           leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
+          onLeadingClick={() => navigate("/app/perfil")}
         />
       }
     >
