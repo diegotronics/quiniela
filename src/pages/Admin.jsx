@@ -1,72 +1,290 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import AdminFases from "./admin/AdminFases.jsx";
-import AdminResultados from "./admin/AdminResultados.jsx";
-import AdminUsuarios from "./admin/AdminUsuarios.jsx";
-import { color, radius, styles } from "@/styles/theme";
+import { Avatar, Icon } from "@/components/ui";
+import { GROUP_NAME } from "@/lib/constants";
 
-const TABS = [
-  { id: "fases", label: "Fases", Component: AdminFases },
-  { id: "resultados", label: "Resultados", Component: AdminResultados },
-  { id: "usuarios", label: "Usuarios", Component: AdminUsuarios },
+const NAV = [
+  { id: "miembros",  path: "/admin/miembros",  label: "Miembros", icon: Icon.Group },
+  { id: "reglas",    path: "/admin/reglas",    label: "Reglas y puntos", icon: Icon.Gear },
+  { id: "partidos",  path: "/admin/partidos",  label: "Partidos", icon: Icon.Cal },
 ];
 
 export default function Admin() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState("fases");
+  const location = useLocation();
+  const [isDesktop, setIsDesktop] = useState(typeof window !== "undefined" ? window.innerWidth >= 1024 : true);
 
-  const Current = TABS.find(t => t.id === tab)?.Component;
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
-  return (
-    <div style={{ ...styles.page, paddingBottom: "2rem" }}>
-      <header style={styles.appHeader}>
-        <div>
-          <h1 style={styles.brandTitle}>⚙️ Panel Admin</h1>
-          <p style={styles.brandSubtitle}>La Copa Familiar</p>
-        </div>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <button onClick={() => navigate("/app")} style={styles.btnGhost}>← Volver</button>
-          <button onClick={logout} style={styles.btnGhost}>Salir</button>
-        </div>
-      </header>
+  const current = NAV.find((n) => location.pathname.startsWith(n.path));
 
-      <div style={{ padding: "1rem" }}>
-        <div style={{ ...styles.panel, marginBottom: "1rem" }}>
-          <h2 style={{ color: color.gold, margin: 0, fontSize: "1.1rem" }}>Hola, {user?.nombre}</h2>
-          <p style={{ color: color.mutedSoft, margin: "0.3rem 0 0", fontSize: "0.8rem" }}>
-            Solo el admin puede ver esto
-          </p>
-        </div>
-
-        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
+  if (isDesktop) {
+    return (
+      <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg)" }}>
+        {/* Sidebar */}
+        <aside
+          style={{
+            width: 240,
+            flexShrink: 0,
+            borderRight: "0.5px solid var(--line)",
+            padding: "20px 14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            background: "var(--surface-2)",
+            position: "sticky",
+            top: 0,
+            height: "100vh",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 16px" }}>
+            <div
               style={{
-                flex: 1,
-                padding: "0.6rem 0.3rem",
-                borderRadius: radius.md,
-                border: "none",
-                cursor: "pointer",
-                background: tab === t.id ? color.navy : color.border,
-                color: tab === t.id ? color.gold : color.slateLight,
-                fontSize: "0.8rem",
+                width: 32,
+                height: 32,
+                borderRadius: 10,
+                background: "var(--ink)",
+                color: "var(--bg)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 fontWeight: 700,
+                fontSize: 14,
               }}
             >
-              {t.label}
-            </button>
+              LC
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.1 }}>
+                La Copa Familiar
+              </div>
+              <div style={{ fontSize: 11, color: "var(--ink-3)" }}>Admin · {(user?.nombre || "").split(" ")[0]}</div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              fontSize: 10,
+              color: "var(--ink-3)",
+              textTransform: "uppercase",
+              letterSpacing: 0.8,
+              padding: "12px 8px 6px",
+              fontWeight: 600,
+            }}
+          >
+            Grupo
+          </div>
+          <div
+            style={{
+              padding: "10px 10px",
+              borderRadius: 10,
+              background: "var(--surface)",
+              border: "0.5px solid var(--line)",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                background: "var(--accent-soft)",
+                color: "var(--accent-ink)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 700,
+                fontSize: 12,
+              }}
+            >
+              {GROUP_NAME.charAt(0)}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>{GROUP_NAME}</div>
+              <div style={{ fontSize: 11, color: "var(--ink-3)" }}>Mundial 2026</div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              fontSize: 10,
+              color: "var(--ink-3)",
+              textTransform: "uppercase",
+              letterSpacing: 0.8,
+              padding: "16px 8px 6px",
+              fontWeight: 600,
+            }}
+          >
+            Panel
+          </div>
+          {NAV.map((n) => (
+            <NavLink
+              key={n.id}
+              to={n.path}
+              style={({ isActive }) => ({
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "9px 10px",
+                borderRadius: 10,
+                background: isActive ? "var(--surface)" : "transparent",
+                color: isActive ? "var(--ink)" : "var(--ink-2)",
+                border: isActive ? "0.5px solid var(--line)" : "0.5px solid transparent",
+                fontSize: 13,
+                fontWeight: isActive ? 600 : 500,
+                textDecoration: "none",
+                boxShadow: isActive ? "var(--shadow-1)" : "none",
+              })}
+            >
+              <n.icon />
+              <span style={{ flex: 1 }}>{n.label}</span>
+            </NavLink>
           ))}
+
+          <div style={{ marginTop: "auto", padding: "12px 8px", borderTop: "0.5px solid var(--line)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Avatar name={user?.nombre} size={28} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>
+                  {(user?.nombre || "").split(" ")[0]}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--ink-3)" }}>Admin</div>
+              </div>
+              <button
+                onClick={logout}
+                title="Cerrar sesión"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--ink-3)",
+                  padding: 6,
+                  cursor: "pointer",
+                }}
+              >
+                <Icon.Logout />
+              </button>
+            </div>
+            <button
+              onClick={() => navigate("/app/inicio")}
+              style={{
+                marginTop: 8,
+                background: "transparent",
+                border: "none",
+                color: "var(--ink-3)",
+                fontSize: 12,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "4px 8px",
+              }}
+            >
+              <Icon.ChevronL /> Volver a la app
+            </button>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <div
+            style={{
+              borderBottom: "0.5px solid var(--line)",
+              padding: "18px 28px",
+              background: "var(--bg)",
+              position: "sticky",
+              top: 0,
+              zIndex: 5,
+            }}
+          >
+            <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase" }}>
+              Admin
+            </div>
+            <h1 style={{ margin: "2px 0 0", fontSize: 22, fontWeight: 600, letterSpacing: -0.4, color: "var(--ink)" }}>
+              {current?.label || "Panel"}
+            </h1>
+          </div>
+          <div style={{ flex: 1, padding: "24px 28px", overflowX: "auto" }}>
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Mobile fallback: top bar con nav horizontal
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+      <header
+        style={{
+          background: "var(--surface)",
+          borderBottom: "0.5px solid var(--line)",
+          padding: "14px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            onClick={() => navigate("/app/inicio")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--ink)",
+              padding: 6,
+              cursor: "pointer",
+            }}
+            aria-label="Volver"
+          >
+            <Icon.ChevronL />
+          </button>
+          <div>
+            <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>
+              Admin
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>{current?.label || "Panel"}</div>
+          </div>
         </div>
+        <button
+          onClick={logout}
+          style={{ background: "none", border: "none", color: "var(--ink-3)", padding: 6, cursor: "pointer" }}
+        >
+          <Icon.Logout />
+        </button>
+      </header>
 
-        {Current && <Current />}
+      <div className="scroll-hide" style={{ display: "flex", gap: 6, overflowX: "auto", padding: "10px 16px", background: "var(--surface)", borderBottom: "0.5px solid var(--line)" }}>
+        {NAV.map((n) => (
+          <NavLink
+            key={n.id}
+            to={n.path}
+            style={({ isActive }) => ({
+              padding: "7px 14px",
+              borderRadius: 999,
+              background: isActive ? "var(--ink)" : "transparent",
+              color: isActive ? "var(--bg)" : "var(--ink-2)",
+              border: isActive ? "none" : "0.5px solid var(--line)",
+              fontSize: 13,
+              fontWeight: 500,
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+            })}
+          >
+            {n.label}
+          </NavLink>
+        ))}
+      </div>
 
-        <p style={{ textAlign: "center", color: color.mutedSoft, fontSize: "0.75rem", marginTop: "2rem" }}>
-          <Link to="/app" style={{ color: color.info }}>← Volver a la app normal</Link>
-        </p>
+      <div style={{ padding: "16px" }}>
+        <Outlet />
       </div>
     </div>
   );

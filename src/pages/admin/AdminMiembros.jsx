@@ -1,0 +1,371 @@
+import { useMemo, useState } from "react";
+import { createUsuario, deleteUsuario, updateUsuario } from "@/api/usuarios";
+import { useUsuariosAdmin } from "@/hooks/useUsuarios";
+import { useAsync } from "@/hooks/useAsync";
+import { listPuntajesGlobales } from "@/api/predicciones";
+import { Avatar, Button, Card, Icon, Pill } from "@/components/ui";
+
+const EMPTY = { nombre: "", email: "", password: "1234", avatar: "", color: "#553C9A", es_admin: false };
+const FILTERS = ["Todos", "Activos", "Admins"];
+
+export default function AdminMiembros() {
+  const { usuarios, refresh } = useUsuariosAdmin();
+  const { data: puntajes } = useAsync(listPuntajesGlobales, []);
+  const [form, setForm] = useState(EMPTY);
+  const [editing, setEditing] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState("Todos");
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const totales = useMemo(() => {
+    const m = new Map();
+    for (const p of puntajes || []) {
+      m.set(p.usuario_id, (m.get(p.usuario_id) || 0) + (p.puntos_obtenidos || 0));
+    }
+    return m;
+  }, [puntajes]);
+
+  const lista = useMemo(() => {
+    const enriched = usuarios.map((u) => ({ ...u, puntos: totales.get(u.id) || 0 }));
+    if (filter === "Admins") return enriched.filter((u) => u.es_admin);
+    if (filter === "Activos") return enriched.filter((u) => !u.es_admin);
+    return enriched;
+  }, [usuarios, totales, filter]);
+
+  const sorted = [...lista].sort((a, b) => b.puntos - a.puntos);
+
+  const guardar = async (e) => {
+    e?.preventDefault();
+    if (!form.nombre || !form.email || !form.password) return;
+    setBusy(true);
+    try {
+      if (editing) {
+        await updateUsuario(editing, form);
+      } else {
+        const avatar = form.avatar || form.nombre.slice(0, 2).toUpperCase();
+        await createUsuario({ ...form, avatar });
+      }
+      setForm(EMPTY);
+      setEditing(null);
+      setModalOpen(false);
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const editar = (u) => {
+    setEditing(u.id);
+    setForm({
+      nombre: u.nombre,
+      email: u.email,
+      password: u.password,
+      avatar: u.avatar || "",
+      color: u.color || "#553C9A",
+      es_admin: u.es_admin,
+    });
+    setModalOpen(true);
+  };
+
+  const eliminar = async (u) => {
+    if (u.es_admin) return alert("No se puede eliminar al admin");
+    if (!confirm(`¿Eliminar a ${u.nombre}? Sus predicciones también se borrarán.`)) return;
+    await deleteUsuario(u.id);
+    refresh();
+  };
+
+  const togglePagado = async (u) => {
+    await updateUsuario(u.id, { pagado: !u.pagado });
+    refresh();
+  };
+
+  const activos = usuarios.filter((u) => !u.es_admin).length;
+  const totalPicks = (puntajes || []).length;
+
+  const copyInvite = () => {
+    navigator.clipboard?.writeText("copa.fam/familia");
+    alert("Link copiado al portapapeles");
+  };
+
+  return (
+    <div>
+      {/* Actions bar */}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 18 }}>
+        <Button variant="primary" onClick={() => { setForm(EMPTY); setEditing(null); setModalOpen(true); }}>
+          <Icon.Plus /> Invitar miembro
+        </Button>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, marginBottom: 22 }}>
+        <Kpi label="Miembros activos" val={String(activos)} sub={`${usuarios.length} en total`} />
+        <Kpi label="Pendientes" val="0" sub="invitaciones" />
+        <Kpi label="Pronósticos hechos" val={String(totalPicks)} sub="totales" />
+        <Kpi
+          label="% participación"
+          val={activos > 0 ? `${Math.round((totalPicks / (activos * 32)) * 100)}%` : "—"}
+          sub="estimado"
+        />
+      </div>
+
+      {/* Invite card */}
+      <Card style={{ marginBottom: 22 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>Link de invitación familiar</div>
+            <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>
+              Compartilo en el grupo de WhatsApp. Próximamente el flow real.
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                background: "var(--surface-2)",
+                border: "0.5px solid var(--line)",
+                fontFamily: "var(--font-mono)",
+                fontSize: 13,
+                color: "var(--ink-2)",
+              }}
+            >
+              copa.fam/familia
+            </div>
+            <Button variant="primary" onClick={copyInvite}>
+              <Icon.Copy /> Copiar link
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Filters */}
+      <div style={{ marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              style={{
+                padding: "7px 12px",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 500,
+                background: filter === f ? "var(--ink)" : "transparent",
+                color: filter === f ? "var(--bg)" : "var(--ink-2)",
+                border: filter === f ? "none" : "0.5px solid var(--line)",
+                cursor: "pointer",
+              }}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink-3)" }}>
+          Ordenar por <span style={{ color: "var(--ink)", fontWeight: 500 }}>Puntos ↓</span>
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <Card pad={0} style={{ overflow: "hidden" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "40px 1fr 100px 100px 90px 40px",
+            padding: "10px 16px",
+            background: "var(--surface-2)",
+            fontSize: 11,
+            color: "var(--ink-3)",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: 0.4,
+            borderBottom: "0.5px solid var(--line)",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <span>#</span>
+          <span>Miembro</span>
+          <span>Rol</span>
+          <span>Pago</span>
+          <span style={{ textAlign: "right" }}>Puntos</span>
+          <span></span>
+        </div>
+        {sorted.map((u, i) => (
+          <div
+            key={u.id}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "40px 1fr 100px 100px 90px 40px",
+              padding: "12px 16px",
+              alignItems: "center",
+              gap: 12,
+              borderBottom: i < sorted.length - 1 ? "0.5px solid var(--line-2)" : "none",
+              fontSize: 13,
+            }}
+          >
+            <span className="mono" style={{ color: "var(--ink-3)" }}>{String(i + 1).padStart(2, "0")}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+              <Avatar name={u.nombre} size={32} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 600, color: "var(--ink)" }}>{u.nombre}</div>
+                <div
+                  style={{ fontSize: 11, color: "var(--ink-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+                  className="mono"
+                >
+                  {u.email}
+                </div>
+              </div>
+            </div>
+            <span>
+              {u.es_admin ? (
+                <Pill tone="ink" size="sm">Admin</Pill>
+              ) : (
+                <Pill tone="outline" size="sm">Miembro</Pill>
+              )}
+            </span>
+            <span>
+              <button
+                onClick={() => togglePagado(u)}
+                title={u.pagado ? "Marcar como pendiente" : "Marcar como pagado"}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                {u.pagado ? (
+                  <Pill tone="accent" size="sm"><Icon.Check /> Pagado</Pill>
+                ) : (
+                  <Pill tone="coral" size="sm">Pendiente</Pill>
+                )}
+              </button>
+            </span>
+            <span className="mono" style={{ textAlign: "right", fontWeight: 600, color: "var(--ink)" }}>
+              {u.puntos}
+            </span>
+            <div style={{ display: "flex", gap: 4 }}>
+              <button
+                onClick={() => editar(u)}
+                title="Editar"
+                style={{ background: "none", border: "none", padding: 6, borderRadius: 6, color: "var(--ink-3)", cursor: "pointer" }}
+              >
+                <Icon.Edit />
+              </button>
+              {!u.es_admin && (
+                <button
+                  onClick={() => eliminar(u)}
+                  title="Eliminar"
+                  style={{ background: "none", border: "none", padding: 6, borderRadius: 6, color: "var(--danger)", cursor: "pointer" }}
+                >
+                  <Icon.Trash />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </Card>
+
+      {/* Modal de crear/editar */}
+      {modalOpen && (
+        <Modal onClose={() => { setModalOpen(false); setEditing(null); setForm(EMPTY); }}>
+          <h3 style={{ margin: "0 0 14px", fontSize: 16, fontWeight: 600, color: "var(--ink)" }}>
+            {editing ? "Editar miembro" : "Invitar miembro"}
+          </h3>
+          <form onSubmit={guardar} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Input label="Nombre" value={form.nombre} onChange={(v) => setForm({ ...form, nombre: v })} />
+            <Input label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
+            <Input label="Contraseña" value={form.password} onChange={(v) => setForm({ ...form, password: v })} />
+            <Input label="Avatar (2 letras)" value={form.avatar} maxLength={3} onChange={(v) => setForm({ ...form, avatar: v.toUpperCase() })} />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 6 }}>
+              <Button type="button" variant="ghost" onClick={() => { setModalOpen(false); setEditing(null); setForm(EMPTY); }}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={busy}>
+                {busy ? "Guardando…" : editing ? "Actualizar" : "Crear miembro"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function Kpi({ label, val, sub }) {
+  return (
+    <div
+      style={{
+        background: "var(--surface)",
+        border: "0.5px solid var(--line)",
+        borderRadius: "var(--r-lg)",
+        padding: "16px 16px",
+      }}
+    >
+      <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase" }}>
+        {label}
+      </div>
+      <div style={{ marginTop: 8, display: "flex", alignItems: "baseline", gap: 6 }}>
+        <span className="mono" style={{ fontSize: 28, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.8 }}>
+          {val}
+        </span>
+      </div>
+      <div style={{ marginTop: 4, fontSize: 12, color: "var(--ink-3)" }}>{sub}</div>
+    </div>
+  );
+}
+
+function Input({ label, value, onChange, type = "text", maxLength }) {
+  return (
+    <label style={{ display: "block" }}>
+      <span style={{ display: "block", fontSize: 12, fontWeight: 500, color: "var(--ink-2)", marginBottom: 6 }}>
+        {label}
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        maxLength={maxLength}
+        style={{
+          width: "100%",
+          padding: "10px 12px",
+          borderRadius: "var(--r-md)",
+          border: "0.5px solid var(--line)",
+          background: "var(--surface-2)",
+          fontSize: 14,
+          fontFamily: "var(--font-sans)",
+          outline: "none",
+          boxSizing: "border-box",
+        }}
+      />
+    </label>
+  );
+}
+
+function Modal({ children, onClose }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(20,17,13,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+        zIndex: 100,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "var(--surface)",
+          borderRadius: "var(--r-xl)",
+          padding: 22,
+          maxWidth: 420,
+          width: "100%",
+          boxShadow: "var(--shadow-3)",
+          border: "0.5px solid var(--line)",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}

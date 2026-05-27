@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { Button, Card, Icon } from "@/components/ui";
+import { AuthLayout, Field, inputStyle } from "./_authShared.jsx";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -10,7 +12,7 @@ export default function Register() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (user) navigate("/app", { replace: true });
+    if (user) navigate("/app/inicio", { replace: true });
   }, [user, navigate]);
 
   const handleRegister = async () => {
@@ -20,81 +22,84 @@ export default function Register() {
     const res = await register(form);
     setBusy(false);
     if (!res.ok) setError(res.error);
-    else navigate("/app", { replace: true });
+    else navigate("/app/inicio", { replace: true });
   };
 
   return (
-    <div style={S.bg}>
-      <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-        <div style={{ fontSize: "3.5rem", marginBottom: "0.5rem" }}>🏆</div>
-        <h1 style={S.title}>Crea tu cuenta</h1>
-        <p style={S.subtitle}>Únete a la Copa Familiar ⚽</p>
-      </div>
-
-      <div style={S.card}>
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={S.label}>🙂 Nombre</label>
+    <AuthLayout title="Crear cuenta" subtitle="Unite a la quiniela familiar">
+      <Card pad={24}>
+        <Field label="Nombre">
           <input
             type="text"
             placeholder="Tu nombre"
             value={form.nombre}
-            onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))}
-            onKeyDown={e => e.key === "Enter" && handleRegister()}
-            style={S.input}
+            onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
+            onKeyDown={(e) => e.key === "Enter" && handleRegister()}
+            style={inputStyle}
+            autoFocus
           />
-        </div>
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={S.label}>📧 Email</label>
+        </Field>
+        <Field label="Email">
           <input
             type="email"
             placeholder="tu@email.com"
             autoComplete="email"
             value={form.email}
-            onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-            onKeyDown={e => e.key === "Enter" && handleRegister()}
-            style={S.input}
+            onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+            onKeyDown={(e) => e.key === "Enter" && handleRegister()}
+            style={inputStyle}
           />
-        </div>
-        <div style={{ marginBottom: "1.25rem" }}>
-          <label style={S.label}>🔒 Contraseña</label>
+        </Field>
+        <Field label="Contraseña">
           <input
             type="password"
             placeholder="Mínimo 4 caracteres"
             autoComplete="new-password"
             value={form.password}
-            onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-            onKeyDown={e => e.key === "Enter" && handleRegister()}
-            style={S.input}
+            onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+            onKeyDown={(e) => e.key === "Enter" && handleRegister()}
+            style={inputStyle}
           />
-        </div>
+        </Field>
 
-        {error && <p style={S.error}>⚠️ {error}</p>}
+        {error && (
+          <div
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              background: "var(--danger-soft)",
+              color: "var(--danger)",
+              fontSize: 13,
+              marginBottom: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <Icon.X /> {error}
+          </div>
+        )}
 
-        <button
-          onClick={handleRegister}
-          disabled={busy}
-          style={{ ...S.button, opacity: busy ? 0.6 : 1 }}
+        <Button onClick={handleRegister} disabled={busy} block size="lg">
+          {busy ? "Creando cuenta..." : "Crear cuenta"}
+          {!busy && <Icon.Arrow />}
+        </Button>
+
+        <p
+          style={{
+            color: "var(--ink-3)",
+            fontSize: 13,
+            textAlign: "center",
+            marginTop: 16,
+            marginBottom: 0,
+          }}
         >
-          {busy ? "Creando cuenta..." : "Crear cuenta →"}
-        </button>
-
-        <p style={S.hint}>
-          ¿Ya tienes cuenta? <Link to="/" style={S.link}>Inicia sesión</Link>
+          ¿Ya tenés cuenta?{" "}
+          <Link to="/" style={{ color: "var(--accent-ink)", fontWeight: 600 }}>
+            Iniciar sesión
+          </Link>
         </p>
-      </div>
-    </div>
+      </Card>
+    </AuthLayout>
   );
 }
-
-const S = {
-  bg: { minHeight: "100vh", background: "linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d2137 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem 1.5rem", fontFamily: "'Georgia', serif" },
-  title: { color: "#FFD700", fontSize: "1.8rem", fontWeight: 700, margin: 0, letterSpacing: "-0.5px", textShadow: "0 0 30px rgba(255,215,0,0.4)" },
-  subtitle: { color: "#a0aec0", margin: "0.4rem 0 0", fontSize: "1rem", fontStyle: "italic" },
-  card: { background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,215,0,0.2)", borderRadius: "20px", padding: "2rem", width: "100%", maxWidth: "340px" },
-  label: { color: "#e2e8f0", fontSize: "0.9rem", display: "block", marginBottom: "0.5rem", fontFamily: "sans-serif" },
-  input: { width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid rgba(255,215,0,0.3)", background: "rgba(255,255,255,0.08)", color: "#fff", fontSize: "1rem", outline: "none", boxSizing: "border-box", fontFamily: "sans-serif" },
-  error: { color: "#fc8181", fontSize: "0.9rem", textAlign: "center", marginBottom: "1rem", fontFamily: "sans-serif" },
-  button: { width: "100%", padding: "1rem", background: "linear-gradient(135deg, #FFD700, #FFA500)", border: "none", borderRadius: "12px", color: "#1a1a1a", fontSize: "1.1rem", fontWeight: 700, cursor: "pointer", fontFamily: "sans-serif" },
-  hint: { color: "#a0aec0", fontSize: "0.85rem", textAlign: "center", marginTop: "1rem", fontFamily: "sans-serif" },
-  link: { color: "#FFD700", textDecoration: "none", fontWeight: 600 },
-};
