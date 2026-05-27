@@ -384,3 +384,61 @@ a { color: inherit; text-decoration: none; }
     0 0 0 1px rgba(255,255,255,0.4) inset,
     0 0 0 0.5px rgba(0,0,0,0.18);
 }
+
+/* ───────── Barra de progreso protagonista (punto 12) ───────── */
+@keyframes lcfProgressFill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.progress-bar-fill {
+  transform-origin: left center;
+  animation: lcfProgressFill 720ms cubic-bezier(.2,.7,.2,1) both;
+}
+
+/* ───────── Countdown (punto 13) ───────── */
+@keyframes lcfCountdownPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+.countdown-tick {
+  animation: lcfCountdownPulse 1.2s ease-in-out infinite;
+}
+
+/* ───────── Streak flame (punto 14) ───────── */
+@keyframes lcfFlameFlicker {
+  0%, 100% { transform: scaleY(1)    scaleX(1); }
+  25%      { transform: scaleY(1.06) scaleX(0.96); }
+  50%      { transform: scaleY(0.96) scaleX(1.04); }
+  75%      { transform: scaleY(1.04) scaleX(0.98); }
+}
+.flame-body {
+  transform-origin: 50% 100%;
+  animation: lcfFlameFlicker 1.6s ease-in-out infinite;
+}
+
+@keyframes lcfFlameGlow {
+  0%, 100% { filter: drop-shadow(0 0 4px color-mix(in oklab, var(--coral) 35%, transparent)); }
+  50%      { filter: drop-shadow(0 0 10px color-mix(in oklab, var(--coral) 55%, transparent)); }
+}
+.flame-glow {
+  animation: lcfFlameGlow 2s ease-in-out infinite;
+}
+
+@keyframes lcfEmber {
+  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+  40%  { opacity: 1; transform: translateY(-8px) scale(1); }
+  100% { opacity: 0; transform: translateY(-18px) scale(0.4); }
+}
+.flame-ember {
+  animation: lcfEmber 1.8s ease-out infinite;
+}
+
+/* ───────── Podio diferencial (punto 15) ───────── */
+@keyframes lcfPodiumPedestal {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+.podium-pedestal {
+  transform-origin: bottom center;
+  animation: lcfPodiumPedestal 540ms cubic-bezier(.2,.7,.2,1) both;
+}

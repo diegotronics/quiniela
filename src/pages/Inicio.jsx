@@ -16,12 +16,14 @@ import {
 import {
   Avatar,
   Card,
+  Countdown,
   Flag,
   Icon,
   MobileHeader,
   MobileShell,
   Pill,
   SectionTitle,
+  StreakFlame,
   Button,
   ringFor,
 } from "@/components/ui";
@@ -228,20 +230,66 @@ export default function Inicio() {
             </div>
           </div>
 
-          <div style={{ height: 6, background: "var(--line-2)", position: "relative", overflow: "hidden" }}>
+          <div style={{ padding: "0 16px 12px" }}>
             <div
               style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: `${ratio}%`,
-                background: "linear-gradient(90deg, var(--accent) 0%, var(--gold) 130%)",
-                transition: "width 360ms ease",
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                marginBottom: 6,
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: 0.2,
               }}
-            />
+            >
+              <span
+                className="mono"
+                style={{
+                  color: me?.id === lider?.id ? "var(--gold-ink)" : "var(--accent-ink)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: -0.2,
+                }}
+              >
+                {me?.id === lider?.id ? "100%" : `${ratio}%`}
+              </span>
+              <span style={{ color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                {me?.id === lider?.id ? "Sos el líder" : "del líder"}
+              </span>
+            </div>
+            <div
+              style={{
+                height: 10,
+                background: "var(--line-2)",
+                borderRadius: 999,
+                position: "relative",
+                overflow: "hidden",
+                boxShadow: "inset 0 1px 2px rgba(20,17,13,0.06)",
+              }}
+            >
+              <div
+                className="progress-bar-fill shine"
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: `${ratio}%`,
+                  background:
+                    me?.id === lider?.id
+                      ? "linear-gradient(90deg, var(--gold) 0%, var(--gold-ink) 100%)"
+                      : "linear-gradient(90deg, var(--accent) 0%, var(--gold) 130%)",
+                  borderRadius: 999,
+                  transition: "width 520ms cubic-bezier(.2,.7,.2,1)",
+                  boxShadow:
+                    me?.id === lider?.id
+                      ? "0 1px 4px color-mix(in oklab, var(--gold) 35%, transparent)"
+                      : "0 1px 4px color-mix(in oklab, var(--accent) 30%, transparent)",
+                }}
+              />
+            </div>
           </div>
-          <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12 }}>
+          <div style={{ padding: "0 16px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12 }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)" }}>
               {lider && (
                 <>
@@ -339,9 +387,35 @@ export default function Inicio() {
                 <Pill tone="outline">
                   {next.grupo ? `Grupo ${next.grupo}` : faseLabel(fases, next.fase_id)}
                 </Pill>
-                <span style={{ fontSize: 12, color: "var(--ink-3)", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  <Icon.Clock /> {formatDate(next.fecha)}
+                <span style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: 0.3 }}>
+                  {formatDate(next.fecha)}
                 </span>
+              </div>
+              <div
+                style={{
+                  marginBottom: 12,
+                  padding: "10px 12px",
+                  background: "var(--surface-2)",
+                  borderRadius: "var(--r-md)",
+                  border: "0.5px solid var(--line)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: "var(--ink-3)",
+                    fontWeight: 600,
+                    letterSpacing: 0.5,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Empieza en
+                </span>
+                <Countdown targetIso={next.fecha} />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
@@ -383,10 +457,12 @@ export default function Inicio() {
 
         {/* Stats row */}
         {stats.jugados > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            <MiniStat label="Aciertos" value={String(stats.ganador)} unit={`/ ${stats.jugados}`} />
-            <MiniStat label="Racha" value={String(racha)} unit="🔥" />
-            <MiniStat label="Exactos" value={String(stats.exactos)} unit={`/ ${stats.jugados}`} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <StreakCard streak={racha} />
+            <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: 10 }}>
+              <MiniStat label="Aciertos" value={String(stats.ganador)} unit={`/ ${stats.jugados}`} />
+              <MiniStat label="Exactos" value={String(stats.exactos)} unit={`/ ${stats.jugados}`} />
+            </div>
           </div>
         )}
 
@@ -436,6 +512,69 @@ const bigNumGold = {
   WebkitTextFillColor: "transparent",
   backgroundClip: "text",
 };
+
+function StreakCard({ streak }) {
+  const isCold = streak <= 0;
+  const isHot = streak >= 3;
+  const isBlaze = streak >= 6;
+  const label = isCold ? "Sin racha" : isBlaze ? "¡En llamas!" : isHot ? "Racha caliente" : "Racha";
+  const subtitle = isCold
+    ? "Acertá el próximo"
+    : `${streak} acierto${streak === 1 ? "" : "s"} seguido${streak === 1 ? "" : "s"}`;
+  const borderColor = isBlaze
+    ? "color-mix(in oklab, var(--danger) 35%, transparent)"
+    : isHot
+      ? "color-mix(in oklab, var(--coral) 30%, transparent)"
+      : "var(--line)";
+  return (
+    <div
+      style={{
+        background: isHot ? "var(--coral-soft)" : "var(--surface)",
+        border: `1px solid ${borderColor}`,
+        borderRadius: "var(--r-lg)",
+        padding: "12px 14px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        boxShadow: isBlaze ? "var(--shadow-coral)" : "var(--shadow-1)",
+        overflow: "hidden",
+      }}
+    >
+      <StreakFlame streak={streak} />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div
+          style={{
+            fontSize: 10,
+            color: isHot ? "var(--coral-ink)" : "var(--ink-3)",
+            fontWeight: 700,
+            letterSpacing: 0.5,
+            textTransform: "uppercase",
+          }}
+        >
+          {label}
+        </div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 4 }}>
+          <span
+            className="mono"
+            style={{
+              fontSize: 32,
+              fontWeight: 700,
+              color: isHot ? "var(--coral-ink)" : "var(--ink)",
+              letterSpacing: -1.5,
+              lineHeight: 1,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {streak}
+          </span>
+        </div>
+        <div style={{ marginTop: 4, fontSize: 10, color: "var(--ink-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {subtitle}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function MiniStat({ label, value, unit }) {
   return (

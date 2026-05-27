@@ -156,11 +156,14 @@ export default function TablaFamiliar() {
           <div
             className="dotgrid-soft"
             style={{
-              padding: "16px 8px 6px",
+              padding: "26px 12px 0",
               borderRadius: "var(--r-xl)",
+              border: "0.5px solid var(--line)",
+              background: "var(--surface)",
+              boxShadow: "var(--shadow-1)",
               display: "grid",
-              gridTemplateColumns: "1fr 1.1fr 1fr",
-              gap: 8,
+              gridTemplateColumns: "1fr 1.15fr 1fr",
+              gap: 10,
               alignItems: "end",
             }}
           >
@@ -195,69 +198,213 @@ export default function TablaFamiliar() {
   );
 }
 
+const PODIUM_VISUAL = {
+  1: {
+    pedestalHeight: 76,
+    avatarSize: 72,
+    pedestalBg: "linear-gradient(180deg, var(--gold) 0%, var(--gold-ink) 100%)",
+    pedestalShadow: "var(--shadow-gold)",
+    numberColor: "#fff",
+    labelColor: "var(--gold-ink)",
+    ringTone: "gold",
+    badgeBg: "var(--gold)",
+  },
+  2: {
+    pedestalHeight: 52,
+    avatarSize: 56,
+    pedestalBg: "linear-gradient(180deg, oklch(0.85 0.02 80) 0%, oklch(0.66 0.02 80) 100%)",
+    pedestalShadow: "var(--shadow-1)",
+    numberColor: "#fff",
+    labelColor: "oklch(0.42 0.02 80)",
+    ringTone: "silver",
+    badgeBg: "oklch(0.78 0.02 80)",
+  },
+  3: {
+    pedestalHeight: 34,
+    avatarSize: 56,
+    pedestalBg: "linear-gradient(180deg, oklch(0.70 0.10 35) 0%, oklch(0.48 0.10 35) 100%)",
+    pedestalShadow: "var(--shadow-1)",
+    numberColor: "#fff",
+    labelColor: "oklch(0.40 0.10 35)",
+    ringTone: "bronze",
+    badgeBg: "oklch(0.62 0.10 35)",
+  },
+};
+
+const ROMAN = { 1: "I", 2: "II", 3: "III" };
+
 function PodiumCard({ place, member, center, me, delay = 0 }) {
+  const visual = PODIUM_VISUAL[place];
+
   if (!member) {
     return (
-      <div
-        style={{
-          background: "var(--surface)",
-          border: "0.5px solid var(--line)",
-          borderRadius: "var(--r-lg)",
-          padding: center ? "18px 10px 16px" : "14px 8px 12px",
-          textAlign: "center",
-          opacity: 0.4,
-        }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, opacity: 0.4 }}>
         <div
           style={{
-            width: center ? 52 : 44,
-            height: center ? 52 : 44,
+            width: visual.avatarSize,
+            height: visual.avatarSize,
             borderRadius: "50%",
-            background: "var(--line)",
-            margin: "0 auto",
+            background: "var(--line-2)",
+            border: "1px dashed var(--line)",
           }}
         />
-        <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 8 }}>—</div>
+        <div style={{ fontSize: 11, color: "var(--ink-3)" }}>—</div>
+        <div
+          style={{
+            width: "100%",
+            height: visual.pedestalHeight,
+            background: "var(--line-2)",
+            borderTopLeftRadius: 10,
+            borderTopRightRadius: 10,
+            border: "1px dashed var(--line)",
+            borderBottom: "none",
+          }}
+        />
       </div>
     );
   }
+
   const isMe = me === member.id;
-  const ringTone = place === 1 ? "gold" : place === 2 ? "silver" : "bronze";
-  const badgeBg = place === 1 ? "var(--gold)" : place === 2 ? "oklch(0.78 0.02 80)" : "oklch(0.62 0.10 35)";
+
   return (
     <div
       className="podium-rise"
       style={{
-        background: "var(--surface)",
-        border: isMe ? "1.5px solid var(--accent)" : "0.5px solid var(--line)",
-        borderRadius: "var(--r-lg)",
-        padding: center ? "18px 10px 16px" : "14px 8px 12px",
-        textAlign: "center",
-        position: "relative",
-        boxShadow: center ? "var(--shadow-2)" : "var(--shadow-1)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         animationDelay: `${delay}ms`,
       }}
     >
-      {place === 1 && (
-        <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", color: "var(--gold)" }}>
-          <Icon.Crown />
+      {/* Bloque jugador */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 6,
+          padding: "4px 4px 10px",
+          position: "relative",
+          width: "100%",
+        }}
+      >
+        {place === 1 && (
+          <div
+            className="trophy-rise"
+            style={{
+              position: "absolute",
+              top: -14,
+              left: "50%",
+              transform: "translateX(-50%)",
+              color: "var(--gold)",
+              filter: "drop-shadow(0 2px 4px color-mix(in oklab, var(--gold) 50%, transparent))",
+            }}
+          >
+            <Icon.Crown />
+          </div>
+        )}
+        <Avatar
+          name={member.nombre}
+          size={visual.avatarSize}
+          ring={visual.ringTone}
+        />
+        <div
+          style={{
+            marginTop: 2,
+            fontWeight: 700,
+            fontSize: center ? 14 : 13,
+            color: "var(--ink)",
+            letterSpacing: -0.2,
+            textAlign: "center",
+            maxWidth: "100%",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {(member.nombre || "").split(" ")[0]}
         </div>
-      )}
-      <Avatar
-        name={member.nombre}
-        size={center ? 52 : 44}
-        ring={ringTone}
-        badge={{ label: String(place), bg: badgeBg, fg: "#fff" }}
-      />
-      <div style={{ marginTop: 8, fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>
-        {(member.nombre || "").split(" ")[0]}
+        {isMe && (
+          <div
+            style={{
+              fontSize: 9,
+              color: "var(--accent-ink)",
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              textTransform: "uppercase",
+              padding: "1px 6px",
+              borderRadius: 999,
+              background: "var(--accent-soft)",
+              border: "1px solid color-mix(in oklab, var(--accent) 25%, transparent)",
+            }}
+          >
+            Vos
+          </div>
+        )}
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 3 }}>
+          <span
+            className="mono"
+            style={{
+              fontSize: center ? 24 : 20,
+              fontWeight: 700,
+              color: "var(--ink)",
+              letterSpacing: -0.8,
+              lineHeight: 1,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {member.puntos}
+          </span>
+          <span style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 500 }}>pts</span>
+        </div>
       </div>
-      <div style={{ fontSize: 10, color: "var(--ink-3)" }}>{isMe ? "vos" : ""}</div>
-      <div style={{ marginTop: 6, display: "flex", alignItems: "baseline", justifyContent: "center", gap: 3 }}>
-        <span className="mono" style={{ fontSize: center ? 22 : 18, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.5 }}>
-          {member.puntos}
+
+      {/* Pedestal */}
+      <div
+        className="podium-pedestal"
+        style={{
+          width: "100%",
+          height: visual.pedestalHeight,
+          background: visual.pedestalBg,
+          borderTopLeftRadius: 10,
+          borderTopRightRadius: 10,
+          boxShadow: visual.pedestalShadow,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          overflow: "hidden",
+          animationDelay: `${delay + 80}ms`,
+          border: isMe ? "1.5px solid var(--accent)" : "1px solid color-mix(in oklab, var(--ink) 8%, transparent)",
+          borderBottom: "none",
+        }}
+      >
+        {/* Brillo superior del pedestal */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "40%",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%)",
+            pointerEvents: "none",
+          }}
+        />
+        <span
+          className="mono"
+          style={{
+            fontSize: place === 1 ? 36 : place === 2 ? 26 : 20,
+            fontWeight: 700,
+            color: visual.numberColor,
+            letterSpacing: -1,
+            lineHeight: 1,
+            textShadow: "0 1px 2px rgba(0,0,0,0.18)",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {ROMAN[place]}
         </span>
-        <span style={{ fontSize: 10, color: "var(--ink-3)" }}>pts</span>
       </div>
     </div>
   );

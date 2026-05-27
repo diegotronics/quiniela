@@ -138,6 +138,50 @@ Live card en Inicio con `.breathe-live` (box-shadow pulsante en `--danger`). Gol
 
 ---
 
+## Engagement diario y celebración del progreso (puntos 12-15)
+
+Cuarta iteración: convertir la barra de progreso, el bloque "próximo pronóstico", el contador de racha y el podio en elementos visualmente protagonistas.
+
+**Barra de progreso protagonista — punto 12** ([Inicio.jsx](../src/pages/Inicio.jsx))
+
+- Altura subida de 6px a 10px, radio 999, con sombra interna sutil para que se sienta como un canal físico.
+- Etiqueta superior `"82% del líder"` en mono con `--accent-ink`; cambia a `"100% — Sos el líder"` en `--gold-ink` cuando el usuario es 1°.
+- Gradiente diferente según contexto: `accent → gold` para perseguidores, `gold → gold-ink` para el líder.
+- Animación `lcfProgressFill` (scaleX) al montar + clase `shine` reutilizada para barrido luminoso periódico.
+- `box-shadow` con `color-mix` del propio gradiente para que la barra "irradie".
+
+**Countdown live — punto 13** ([useCountdown.js](../src/hooks/useCountdown.js), [Countdown.jsx](../src/components/ui/Countdown.jsx))
+
+- Nuevo hook `useCountdown(targetIso)` que retorna `{ days, hours, minutes, seconds, expired, total }` y se actualiza cada segundo (intervalo solo activo si hay target).
+- Componente `<Countdown>` con dos variantes: `compact` (inline, para listas) y default (display grande con unidades separadas).
+- Color escalonado por urgencia: gris (>24h), `--coral-ink` (<24h), `--danger` + pulso (`countdown-tick`) cuando faltan <1h. Estado `expired` muestra pill animado "Comenzó".
+- Segundos solo se renderizan cuando faltan <1 día — evita re-render constante en partidos lejanos.
+- Integrado como bloque protagonista en "Tu próximo pronóstico" reemplazando la fecha estática anterior.
+
+**Streak como elemento gráfico — punto 14** ([StreakFlame.jsx](../src/components/ui/StreakFlame.jsx))
+
+- SVG de llama puro (sin dependencias) con cuerpo + núcleo + brillo en gradientes lineales.
+- Cuatro tiers escalonados por valor de racha:
+  - `0` → ember gris (sin racha)
+  - `1-2` → llama dorada chica
+  - `3-5` → llama coral mediana + glow pulsante (`flame-glow`)
+  - `6+` → llama grande + glow intenso + 3 chispas orbitando (`flame-ember`)
+- Cuerpo de la llama anima con `lcfFlameFlicker` (scaleY/scaleX alternados) emulando parpadeo real.
+- Reemplaza el `MiniStat` "🔥 3" anterior por una `StreakCard` que dedica el lado izquierdo del grid a la llama protagonista + número grande en mono; el lado derecho mantiene "Aciertos" y "Exactos" apilados.
+- Color de fondo cambia a `--coral-soft` cuando hay racha activa y la card recibe `--shadow-coral` en tier máximo.
+
+**Podio con altura diferencial — punto 15** ([TablaFamiliar.jsx](../src/pages/TablaFamiliar.jsx))
+
+- Rediseño completo de `PodiumCard` separando bloque del jugador (avatar + nombre + puntos) y pedestal sólido debajo.
+- Pedestales con altura real distinta — 1° = 76px, 2° = 52px, 3° = 34px — y `alignItems: end` en el grid contenedor para que el 1° quede físicamente más alto.
+- Cada pedestal usa gradiente metálico propio (oro, plata, bronce) + brillo superior translúcido + número romano (I/II/III) en mono grande con `textShadow`.
+- Avatares más grandes y diferenciados — 72px para 1°, 56px para 2°/3° — manteniendo el anillo gold/silver/bronze.
+- Animación de entrada en dos fases: `lcfPodiumRise` (jugador) + `lcfPodiumPedestal` (pedestal con scaleY desde abajo) con delays escalonados (0/120/260ms + 80ms para el pedestal).
+- Pill "Vos" en `--accent-soft` reemplaza el texto plano cuando el usuario es uno de los tres.
+- Corona dorada flotante sobre el 1° con `drop-shadow` y animación `trophy-rise`.
+
+---
+
 ## Estado de implementación
 
 | ID | Mejora | Estado |
@@ -154,10 +198,10 @@ Live card en Inicio con `.breathe-live` (box-shadow pulsante en `--danger`). Gol
 | 10 | Microinteracciones (hover-lift, confetti) | ✅ Implementado |
 | 10w | Winner reveal estilo Google + champion trophy | ✅ Implementado |
 | 11 | Avatar con anillo de estado | ✅ Implementado |
-| 12 | Barra de progreso protagonista | 🟡 Parcial (gradiente aplicado) |
-| 13 | Countdown live al próximo partido | ⏳ Pendiente |
-| 14 | Streak como elemento gráfico | ⏳ Pendiente |
-| 15 | Podio visual en la Tabla | 🟡 Parcial (ya existe; falta altura diferencial) |
+| 12 | Barra de progreso protagonista | ✅ Implementado |
+| 13 | Countdown live al próximo partido | ✅ Implementado |
+| 14 | Streak como elemento gráfico | ✅ Implementado |
+| 15 | Podio visual en la Tabla | ✅ Implementado |
 | 16 | Skeleton loaders | ⏳ Pendiente |
 | 17 | Empty states ilustrados | ⏳ Pendiente |
 | 18 | Escala de elevación de 4 niveles | 🟡 Parcial (`elevated` agregado a `Card`) |
