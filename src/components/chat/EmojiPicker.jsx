@@ -36,7 +36,7 @@ export function EmojiPicker({ onSelect, onClose, anclaDerecha = false }) {
         display: "grid",
         gridTemplateColumns: "repeat(4, 1fr)",
         gap: 4,
-        boxShadow: "var(--shadow-1)",
+        boxShadow: "var(--shadow-3)",
       }}
     >
       {EMOJIS.map((e) => (

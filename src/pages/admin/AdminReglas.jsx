@@ -5,7 +5,7 @@ import {
   useApuestasEspecialesConfig,
   updateApuestasEspecialesConfig,
 } from "@/hooks/useApuestasEspeciales";
-import { Button, Card, Flag, Icon, Pill } from "@/components/ui";
+import { Button, Card, Flag, Icon, Pill, Skeleton } from "@/components/ui";
 import { FASES_INFO, code, TEAMS_MUNDIAL_2026 } from "@/lib/constants";
 
 const ESTADOS = [
@@ -196,7 +196,11 @@ function ApuestasEspecialesAdminCard() {
       </div>
 
       {loading || !config ? (
-        <div style={{ padding: 18, color: "var(--ink-3)", fontSize: 13 }}>Cargando…</div>
+        <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 10 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} h={40} r={10} />
+          ))}
+        </div>
       ) : (
         <>
           <CierreRow config={config} onSave={refresh} />

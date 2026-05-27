@@ -12,7 +12,7 @@ import {
   revokeInvitacion,
 } from "@/api/invitaciones";
 import { useAuth } from "@/context/AuthContext";
-import { Avatar, Button, Card, Icon, Pill } from "@/components/ui";
+import { Avatar, Button, Card, EmptyState, Icon, Pill } from "@/components/ui";
 
 const EMPTY = { nombre: "", email: "", password: "", avatar: "", color: "#553C9A", es_admin: false, pagado: false };
 const FILTERS = ["Todos", "Activos", "Admins"];
@@ -233,19 +233,12 @@ export default function AdminMiembros() {
         </div>
 
         {invitacionesPendientes.length === 0 ? (
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: 10,
-              background: "var(--surface-2)",
-              border: "0.5px dashed var(--line)",
-              fontSize: 13,
-              color: "var(--ink-3)",
-              textAlign: "center",
-            }}
-          >
-            No hay invitaciones pendientes.
-          </div>
+          <EmptyState
+            illustration="envelope"
+            title="Sin invitaciones pendientes"
+            description="Cuando generes un link de invitación aparecerá acá hasta que se use o expire."
+            compact
+          />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {invitacionesPendientes.map((inv) => (

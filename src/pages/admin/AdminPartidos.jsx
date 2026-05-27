@@ -3,7 +3,7 @@ import { clearResultadoPartido, setResultadoPartido } from "@/api/partidos";
 import { useFases } from "@/hooks/useFases";
 import { usePartidosByFase } from "@/hooks/usePartidos";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
-import { Avatar, Button, Card, Flag, Icon, Pill } from "@/components/ui";
+import { Avatar, Button, Card, EmptyState, Flag, Icon, Pill } from "@/components/ui";
 import { code } from "@/lib/constants";
 
 const GRUPOS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
@@ -180,13 +180,22 @@ export default function AdminPartidos() {
       </div>
 
       {/* Lista */}
-      <Card pad={0} style={{ overflow: "hidden", marginBottom: 22 }}>
-        {filtered.length === 0 ? (
-          <div style={{ padding: 24, textAlign: "center", color: "var(--ink-3)" }}>
-            {tab === "live" ? "No hay partidos en vivo." : "Sin partidos en esta vista."}
-          </div>
-        ) : (
-          filtered.map((p, i) => (
+      {filtered.length === 0 ? (
+        <div style={{ marginBottom: 22 }}>
+          <EmptyState
+            illustration={tab === "live" ? "whistle" : "cal"}
+            title={tab === "live" ? "Sin partidos en vivo" : "Vista vacía"}
+            description={
+              tab === "live"
+                ? "Cuando empiece un partido aparecerá acá durante las 2 hs siguientes."
+                : "No hay partidos cargados para los filtros actuales."
+            }
+            compact
+          />
+        </div>
+      ) : (
+        <Card pad={0} style={{ overflow: "hidden", marginBottom: 22 }}>
+          {filtered.map((p, i) => (
             <button
               key={p.id}
               onClick={() => seleccionar(p)}
@@ -234,9 +243,9 @@ export default function AdminPartidos() {
                 )}
               </div>
             </button>
-          ))
-        )}
-      </Card>
+          ))}
+        </Card>
+      )}
 
       {/* Card de cargar resultado */}
       {selected && (

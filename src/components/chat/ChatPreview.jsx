@@ -1,4 +1,4 @@
-import { Avatar, Card } from "@/components/ui";
+import { Avatar, Card, EmptyState, Skeleton } from "@/components/ui";
 import { formatearHora } from "@/lib/fechas";
 import { usePreviewChat } from "@/hooks/usePreviewChat";
 
@@ -7,21 +7,36 @@ export function ChatPreview({ limit = 3 }) {
 
   if (loading) {
     return (
-      <Card pad={14}>
-        <div style={{ color: "var(--ink-3)", fontSize: 13, textAlign: "center" }}>
-          Cargando picadas…
-        </div>
+      <Card pad={0} style={{ overflow: "hidden" }}>
+        {Array.from({ length: limit }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              gap: 10,
+              padding: "12px 14px",
+              borderBottom: i < limit - 1 ? "0.5px solid var(--line-2)" : "none",
+            }}
+          >
+            <Skeleton w={28} h={28} r={999} />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+              <Skeleton w="45%" h={11} />
+              <Skeleton w="80%" h={11} />
+            </div>
+          </div>
+        ))}
       </Card>
     );
   }
 
   if (mensajes.length === 0) {
     return (
-      <Card pad={14}>
-        <div style={{ color: "var(--ink-3)", fontSize: 13, textAlign: "center" }}>
-          Aún no hay picadas. Inicia la conversación.
-        </div>
-      </Card>
+      <EmptyState
+        illustration="chat"
+        title="Sin picadas todavía"
+        description="Sé el primero en abrir la charla del partido."
+        compact
+      />
     );
   }
 

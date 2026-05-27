@@ -15,6 +15,7 @@ import {
   MobileShell,
   Pill,
   SectionTitle,
+  Skeleton,
 } from "@/components/ui";
 import { code, TEAMS_MUNDIAL_2026 } from "@/lib/constants";
 
@@ -136,9 +137,17 @@ export default function ApuestasEspeciales() {
         </Card>
 
         {loading ? (
-          <Card pad={20}>
-            <div style={{ color: "var(--ink-3)", fontSize: 13 }}>Cargando…</div>
-          </Card>
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} pad={18}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <Skeleton w={90} h={14} r={999} />
+                  <Skeleton w="65%" h={18} />
+                  <Skeleton w="100%" h={48} r={12} />
+                </div>
+              </Card>
+            ))}
+          </>
         ) : (
           <>
             {/* Campeón */}

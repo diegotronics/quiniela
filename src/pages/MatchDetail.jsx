@@ -11,10 +11,13 @@ import { supabase } from "@/lib/supabase";
 import {
   Avatar,
   Card,
+  EmptyState,
   Flag,
   Icon,
   Pill,
   ScoreStepper,
+  SkeletonMatchHeader,
+  SkeletonText,
 } from "@/components/ui";
 import { code } from "@/lib/constants";
 import { ChatPanel } from "@/components/chat/ChatPanel";
@@ -106,21 +109,34 @@ export default function MatchDetail() {
 
   if (loadingPartido) {
     return (
-      <Centered>
-        <p style={{ color: "var(--ink-3)" }}>Cargando partido…</p>
-      </Centered>
+      <div style={{ padding: "16px 16px 80px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <SkeletonMatchHeader />
+        <div
+          style={{
+            background: "var(--surface)",
+            borderRadius: "var(--r-xl)",
+            border: "1px solid var(--line)",
+            padding: 16,
+            boxShadow: "var(--shadow-1)",
+          }}
+        >
+          <SkeletonText lines={4} lastWidth="40%" />
+        </div>
+      </div>
     );
   }
   if (!partido) {
     return (
       <Centered>
-        <p style={{ color: "var(--ink-3)" }}>Partido no encontrado.</p>
-        <button
-          onClick={() => navigate("/app/partidos")}
-          style={{ marginTop: 12, background: "var(--ink)", color: "var(--bg)", padding: "10px 16px", border: "none", borderRadius: 10, fontWeight: 600 }}
-        >
-          Volver
-        </button>
+        <EmptyState
+          illustration="ball"
+          title="Partido no encontrado"
+          description="Puede que el partido haya sido removido o que la URL esté mal."
+          cta={{
+            label: "Volver a partidos",
+            onClick: () => navigate("/app/partidos"),
+          }}
+        />
       </Centered>
     );
   }

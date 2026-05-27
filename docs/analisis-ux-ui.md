@@ -182,6 +182,62 @@ Cuarta iteración: convertir la barra de progreso, el bloque "próximo pronósti
 
 ---
 
+## Sistema y consistencia (puntos 16-19)
+
+Quinta iteración: profesionalizar los estados de carga, vacío, la escala de elevación y la iconografía.
+
+**Skeleton loaders — punto 16** ([Skeleton.jsx](../src/components/ui/Skeleton.jsx))
+
+- Animación base `lcfShimmer` en [globals.css](../src/styles/globals.css) — gradiente diagonal que barre la caja gris cada 1.4 s. Se desactiva con `prefers-reduced-motion`.
+- Primitiva `<Skeleton w h r />` + variantes especializadas:
+  - `<SkeletonText lines lastWidth>` — bloque de texto multilínea con última línea más corta.
+  - `<SkeletonMatchCard>` y `<SkeletonMatchList>` — emulan la `Card` de partido con pill, equipos, banderas y marcador.
+  - `<SkeletonRankRow>` — fila de tabla familiar con rank + avatar + nombre + puntos.
+  - `<SkeletonPodium>` — tres columnas con altura diferencial que reflejan la silueta real del podio.
+  - `<SkeletonMatchHeader>` — cabecera del detalle de partido (pill + dos equipos + marcador).
+  - `<SkeletonChatMessages count>` — burbujas alternadas izquierda/derecha con anchos pseudoaleatorios.
+- Reemplazos aplicados en: [Partidos.jsx](../src/pages/Partidos.jsx), [TablaFamiliar.jsx](../src/pages/TablaFamiliar.jsx) (podio + rows), [MatchDetail.jsx](../src/pages/MatchDetail.jsx), [ChatPanel.jsx](../src/components/chat/ChatPanel.jsx), [ChatPreview.jsx](../src/components/chat/ChatPreview.jsx), [ApuestasEspeciales.jsx](../src/pages/ApuestasEspeciales.jsx), [admin/AdminReglas.jsx](../src/pages/admin/AdminReglas.jsx).
+
+**Empty states ilustrados — punto 17** ([EmptyState.jsx](../src/components/ui/EmptyState.jsx))
+
+- Componente `<EmptyState illustration title description cta compact />` con borde dashed, sombra `s0` y animación `empty-illu` (flotación + leve rotación).
+- Seis ilustraciones SVG puras sin dependencias, todas en viewBox `96×96` y con paleta basada en tokens del sistema:
+  - `whistle` — silbato cromo dentro de un círculo cálido (para listas de partidos vacías).
+  - `ball` — pelota de fútbol con paneles geométricos.
+  - `trophy` — copa dorada con base, gradiente `gold-soft`.
+  - `chat` — burbuja con tres puntos en accent verde.
+  - `envelope` — sobre con sello coral (para invitaciones vacías).
+  - `cal` — calendario con check (para vistas de admin vacías).
+- Reemplazos aplicados en: [Partidos.jsx](../src/pages/Partidos.jsx), [TablaFamiliar.jsx](../src/pages/TablaFamiliar.jsx), [MatchDetail.jsx](../src/pages/MatchDetail.jsx) (404 de partido con CTA), [ChatPanel.jsx](../src/components/chat/ChatPanel.jsx), [ChatPreview.jsx](../src/components/chat/ChatPreview.jsx), [admin/AdminPartidos.jsx](../src/pages/admin/AdminPartidos.jsx), [admin/AdminMiembros.jsx](../src/pages/admin/AdminMiembros.jsx).
+
+**Escala de elevación de 4 niveles — punto 18** ([globals.css](../src/styles/globals.css), [Card.jsx](../src/components/ui/Card.jsx))
+
+- Nuevo token `--shadow-0` (microsombra para superficies planas con borde — empty states, chips).
+- `--shadow-2` y `--shadow-3` reescritos con doble + triple capa para que las diferencias se perciban al ojo.
+- Roles documentados:
+  - `s0` → chips, list-items con borde, badges sobre superficie.
+  - `s1` → cards estándar en reposo (default de `<Card>`).
+  - `s2` → cards interactivas en hover · elevadas (`hero`, live, ganador) · headers fijos. Aplicado automáticamente en `.card-interactive:hover`.
+  - `s3` → modales, sheets, popovers, tooltips. Aplicado en [EmojiPicker.jsx](../src/components/chat/EmojiPicker.jsx), menús contextuales de [MensajeItem.jsx](../src/components/chat/MensajeItem.jsx) y sheet de [admin/AdminMiembros.jsx](../src/pages/admin/AdminMiembros.jsx).
+- `<Card elevation={0|1|2|3} />` reemplaza al booleano `elevated` (que se mantiene como alias compatible).
+
+**Sistema de iconografía coherente — punto 19** ([Icon.jsx](../src/components/ui/Icon.jsx))
+
+- Refactor completo con un factory `svgFactory(baseSize, paths)` que aplica los mismos atributos a todos los íconos:
+  - `viewBox="0 0 24 24"` normalizado.
+  - `strokeWidth = 1.75` uniforme (constante `STROKE`).
+  - `strokeLinecap="round"` + `strokeLinejoin="round"` siempre.
+  - `aria-hidden="true"` por defecto.
+- Props `size`, `width`, `height` y `color` añadidas — el `style` legacy sigue funcionando.
+- Tamaños base estandarizados por familia:
+  - **20px** — navegación principal (Home, Bracket, Cal, Trophy, User).
+  - **18px** — header/acción (Bell, Search).
+  - **16px** — glyphs de control (Chevron, ChevronD/L, Check, X, Plus, Minus, More, Arrow, Filter, Crown, Gear, Group, Send, Logout, Stadium).
+  - **14px** — inline en texto y pills (Heart, Fire, Clock, Lock, Copy, Edit, Trash).
+- Redibujados inspirados en Lucide: `Trophy` (asas separadas + base con forma definida), `Crown` (línea limpia tipo corona heráldica), `Stadium` (con línea central punteada), `Fire` (curvatura orgánica), `Bracket` (forma de torneo eliminatorio escalonado), `Cal` (con puntos de día), `Home` (con dintel de puerta).
+
+---
+
 ## Estado de implementación
 
 | ID | Mejora | Estado |
@@ -202,9 +258,9 @@ Cuarta iteración: convertir la barra de progreso, el bloque "próximo pronósti
 | 13 | Countdown live al próximo partido | ✅ Implementado |
 | 14 | Streak como elemento gráfico | ✅ Implementado |
 | 15 | Podio visual en la Tabla | ✅ Implementado |
-| 16 | Skeleton loaders | ⏳ Pendiente |
-| 17 | Empty states ilustrados | ⏳ Pendiente |
-| 18 | Escala de elevación de 4 niveles | 🟡 Parcial (`elevated` agregado a `Card`) |
-| 19 | Sistema de iconografía unificado | ⏳ Pendiente |
+| 16 | Skeleton loaders | ✅ Implementado |
+| 17 | Empty states ilustrados | ✅ Implementado |
+| 18 | Escala de elevación de 4 niveles | ✅ Implementado |
+| 19 | Sistema de iconografía unificado | ✅ Implementado |
 | 20 | Componentes especializados (MatchCard, etc.) | ⏳ Pendiente |
 | 21 | Modo oscuro | ⏳ Pendiente |

@@ -7,11 +7,13 @@ import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import {
   Avatar,
   Card,
+  EmptyState,
   Flag,
   Icon,
   MobileHeader,
   MobileShell,
   Pill,
+  SkeletonMatchList,
   ringFor,
 } from "@/components/ui";
 import { useUsuariosPublic } from "@/hooks/useUsuarios";
@@ -168,13 +170,17 @@ export default function Partidos() {
       {/* Lista por día */}
       <div style={{ padding: "0 20px 12px", display: "flex", flexDirection: "column", gap: 18 }}>
         {loading ? (
-          <p style={{ textAlign: "center", color: "var(--ink-3)" }}>Cargando partidos…</p>
+          <SkeletonMatchList count={4} />
         ) : byDay.length === 0 ? (
-          <Card>
-            <p style={{ margin: 0, textAlign: "center", color: "var(--ink-3)" }}>
-              No hay partidos cargados todavía.
-            </p>
-          </Card>
+          <EmptyState
+            illustration="whistle"
+            title="Sin partidos en esta fase"
+            description={
+              isGrupos
+                ? `Aún no se cargaron partidos del grupo ${activeGrupo}.`
+                : "Cuando se publique el fixture aparecerá acá."
+            }
+          />
         ) : (
           byDay.map(([day, list]) => (
             <div key={day}>

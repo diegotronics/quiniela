@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useChat } from "@/hooks/useChat";
 import { MensajeItem } from "./MensajeItem";
 import { ChatInput } from "./ChatInput";
+import { EmptyState, SkeletonChatMessages } from "@/components/ui";
 
 export function ChatPanel({ partidoId = null, altura = "60vh" }) {
   const { user } = useAuth();
@@ -131,27 +132,19 @@ export function ChatPanel({ partidoId = null, altura = "60vh" }) {
           gap: 14,
         }}
       >
-        {loading && (
-          <div style={{ color: "var(--ink-3)", textAlign: "center", padding: 20, fontSize: 13 }}>
-            Cargando mensajes…
-          </div>
-        )}
+        {loading && <SkeletonChatMessages count={5} />}
         {!loading && error && (
           <div style={{ color: "var(--danger)", textAlign: "center", padding: 20, fontSize: 13 }}>
             Error al cargar el chat.
           </div>
         )}
         {!loading && !error && mensajes.length === 0 && (
-          <div
-            style={{
-              color: "var(--ink-3)",
-              textAlign: "center",
-              padding: "40px 20px",
-              fontSize: 13,
-            }}
-          >
-            Aún no hay mensajes. Sé el primero en escribir.
-          </div>
+          <EmptyState
+            illustration="chat"
+            title="Chat sin mensajes"
+            description="Sé el primero en escribir. Compartí tu pronóstico o picada."
+            compact
+          />
         )}
         {mensajes.map((m) => (
           <MensajeItem

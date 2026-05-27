@@ -140,7 +140,7 @@ export function MensajeItem({
                     borderRadius: 10,
                     padding: 4,
                     minWidth: 130,
-                    boxShadow: "var(--shadow-1)",
+                    boxShadow: "var(--shadow-3)",
                   }}
                 >
                   {puedeEditar && (

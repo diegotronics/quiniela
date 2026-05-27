@@ -9,11 +9,14 @@ import { listPuntajesGlobales } from "@/api/predicciones";
 import {
   Avatar,
   Card,
+  EmptyState,
   Icon,
   MobileHeader,
   MobileShell,
   Pill,
   SectionTitle,
+  SkeletonPodium,
+  SkeletonRankRow,
   ringFor,
 } from "@/components/ui";
 import { rankingFromUsers, userScoringStats, userStreak } from "@/lib/stats";
@@ -146,8 +149,18 @@ export default function TablaFamiliar() {
         </div>
       </div>
 
-      {loading && (
-        <p style={{ padding: "0 20px", textAlign: "center", color: "var(--ink-3)" }}>Cargando…</p>
+      {loading && top3.length === 0 && (
+        <>
+          <div style={{ padding: "0 20px 14px" }}>
+            <SkeletonPodium />
+          </div>
+          <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 6 }}>
+            <SectionTitle>Posiciones</SectionTitle>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonRankRow key={i} />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Podio */}
@@ -187,11 +200,11 @@ export default function TablaFamiliar() {
           <LeaderRow key={m.id} member={m} me={m.id === user?.id} index={i} />
         ))}
         {resto.length === 0 && top3.length === 0 && !loading && (
-          <Card>
-            <p style={{ margin: 0, textAlign: "center", color: "var(--ink-3)" }}>
-              Aún no hay jugadores en la tabla.
-            </p>
-          </Card>
+          <EmptyState
+            illustration="trophy"
+            title="Tabla todavía vacía"
+            description="Cuando se carguen partidos y predicciones, los puntajes se mostrarán acá."
+          />
         )}
       </div>
     </MobileShell>

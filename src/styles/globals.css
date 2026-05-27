@@ -48,9 +48,15 @@
   --r-xl: 22px;
   --r-2xl: 28px;
 
+  /* Escala de elevación con roles asignados (punto 18)
+     s0: superficies planas sobre fondo (chips, list-items con borde, badges)
+     s1: cards estándar en reposo
+     s2: cards interactivas en hover · cards elevadas (live, ganador) · headers fijos
+     s3: modales, sheets, popovers, bottom-sheets, tooltips */
+  --shadow-0: 0 0.5px 0 rgba(20,17,13,0.04), 0 1px 2px rgba(20,17,13,0.03);
   --shadow-1: 0 1px 3px rgba(20,17,13,0.08), 0 2px 8px rgba(20,17,13,0.05);
-  --shadow-2: 0 4px 12px rgba(20,17,13,0.10), 0 8px 24px rgba(20,17,13,0.06);
-  --shadow-3: 0 12px 28px rgba(20,17,13,0.14), 0 24px 60px rgba(20,17,13,0.08);
+  --shadow-2: 0 4px 12px rgba(20,17,13,0.10), 0 8px 24px rgba(20,17,13,0.07), 0 1px 2px rgba(20,17,13,0.04);
+  --shadow-3: 0 16px 32px rgba(20,17,13,0.18), 0 32px 64px rgba(20,17,13,0.10), 0 2px 6px rgba(20,17,13,0.06);
   --shadow-gold: 0 4px 14px rgba(212,160,23,0.22), 0 1px 3px rgba(20,17,13,0.08);
   --shadow-coral: 0 4px 14px rgba(225,121,76,0.20), 0 1px 3px rgba(20,17,13,0.08);
 }
@@ -432,6 +438,36 @@ a { color: inherit; text-decoration: none; }
 .flame-ember {
   animation: lcfEmber 1.8s ease-out infinite;
 }
+
+/* ───────── Skeleton loaders (punto 16) ───────── */
+@keyframes lcfShimmer {
+  0%   { background-position: -180% 0; }
+  100% { background-position: 180% 0; }
+}
+.skeleton {
+  background-color: var(--line-2);
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in oklab, var(--surface) 75%, transparent) 45%,
+    color-mix(in oklab, var(--surface) 90%, transparent) 50%,
+    color-mix(in oklab, var(--surface) 75%, transparent) 55%,
+    transparent 80%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  background-position: -180% 0;
+  animation: lcfShimmer 1.4s ease-in-out infinite;
+  border-radius: var(--r-sm);
+  display: block;
+}
+
+/* ───────── Empty states ilustrados (punto 17) ───────── */
+@keyframes lcfFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-4px) rotate(2deg); }
+}
+.empty-illu { animation: lcfFloat 3.6s ease-in-out infinite; }
 
 /* ───────── Podio diferencial (punto 15) ───────── */
 @keyframes lcfPodiumPedestal {
