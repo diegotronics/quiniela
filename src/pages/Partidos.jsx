@@ -6,13 +6,11 @@ import { usePartidosByFase } from "@/hooks/usePartidos";
 import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import {
   Avatar,
-  Card,
   EmptyState,
-  Flag,
   Icon,
+  MatchCard,
   MobileHeader,
   MobileShell,
-  Pill,
   SkeletonMatchList,
   ringFor,
 } from "@/components/ui";
@@ -21,7 +19,6 @@ import { useAsync } from "@/hooks/useAsync";
 import { listPuntajesGlobales } from "@/api/predicciones";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
 import { rankingFromUsers, userStreak } from "@/lib/stats";
-import { code } from "@/lib/constants";
 
 const GRUPOS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
@@ -199,9 +196,10 @@ export default function Partidos() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {list.map((m) => (
-                  <MatchListItem
+                  <MatchCard
                     key={m.id}
-                    m={m}
+                    variant="list"
+                    match={m}
                     pred={predicciones[m.id]}
                     onClick={() => navigate(`/app/partido/${m.id}`)}
                   />
@@ -215,180 +213,6 @@ export default function Partidos() {
   );
 }
 
-function MatchListItem({ m, pred, onClick }) {
-  const isFinal = !!m.resultado_ingresado;
-  const tienePick = pred && pred.goles_local != null && pred.goles_visitante != null;
-  const winnerSide = isFinal
-    ? m.goles_local === m.goles_visitante
-      ? null
-      : m.goles_local > m.goles_visitante
-        ? "local"
-        : "visitante"
-    : null;
-  const isDraw = isFinal && m.goles_local === m.goles_visitante;
-  return (
-    <Card pad={14} onClick={onClick}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {m.grupo && <Pill tone="outline">Grupo {m.grupo}</Pill>}
-          <span style={{ fontSize: 11, color: "var(--ink-3)" }} className="mono">
-            {hour(m.fecha)}
-          </span>
-        </div>
-        {isFinal ? (
-          isDraw ? (
-            <Pill tone="gold">
-              <Icon.Check style={{ width: 11, height: 11 }} /> Empate
-            </Pill>
-          ) : (
-            <Pill tone="default">
-              <Icon.Check style={{ width: 11, height: 11 }} /> Finalizado
-            </Pill>
-          )
-        ) : tienePick ? (
-          <Pill tone="accent">
-            <Icon.Check style={{ width: 11, height: 11 }} /> Pronosticado
-          </Pill>
-        ) : (
-          <Pill tone="coral" dot>Pendiente</Pill>
-        )}
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 1fr", alignItems: "center", gap: 10 }}>
-        <TeamRow
-          team={m.equipo_local}
-          isFinal={isFinal}
-          isWinner={winnerSide === "local"}
-          isLoser={winnerSide === "visitante"}
-        />
-        <div style={{ textAlign: "center" }}>
-          {isFinal ? (
-            <span
-              className="mono score-reveal"
-              style={{
-                fontSize: 22,
-                fontWeight: 700,
-                color: "var(--ink)",
-                letterSpacing: -0.5,
-                display: "inline-flex",
-                alignItems: "baseline",
-                gap: 4,
-              }}
-            >
-              <span
-                style={{
-                  color: winnerSide === "local" ? "var(--accent-ink)" : winnerSide === "visitante" ? "var(--ink-3)" : "var(--ink)",
-                }}
-              >
-                {m.goles_local}
-              </span>
-              <span style={{ opacity: 0.45 }}>–</span>
-              <span
-                style={{
-                  color: winnerSide === "visitante" ? "var(--accent-ink)" : winnerSide === "local" ? "var(--ink-3)" : "var(--ink)",
-                }}
-              >
-                {m.goles_visitante}
-              </span>
-            </span>
-          ) : tienePick ? (
-            <div>
-              <span className="mono" style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.3 }}>
-                {pred.goles_local} – {pred.goles_visitante}
-              </span>
-              <div style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>tu pick</div>
-            </div>
-          ) : (
-            <span style={{ fontSize: 12, color: "var(--ink-3)" }} className="mono">
-              vs
-            </span>
-          )}
-        </div>
-        <TeamRow
-          team={m.equipo_visitante}
-          isFinal={isFinal}
-          isWinner={winnerSide === "visitante"}
-          isLoser={winnerSide === "local"}
-          right
-        />
-      </div>
-
-      {isFinal && tienePick && (pred.puntos_obtenidos != null) && (() => {
-        const exacto =
-          Number(pred.goles_local) === Number(m.goles_local) &&
-          Number(pred.goles_visitante) === Number(m.goles_visitante);
-        const ganado = pred.puntos_obtenidos > 0;
-        const palette = exacto
-          ? { bg: "var(--gold-soft)", fg: "var(--gold-ink)", bd: "var(--gold)" }
-          : ganado
-            ? { bg: "var(--accent-soft)", fg: "var(--accent-ink)", bd: "color-mix(in oklab, var(--accent) 30%, transparent)" }
-            : { bg: "var(--surface-2)", fg: "var(--ink-3)", bd: "var(--line)" };
-        return (
-          <div
-            style={{
-              marginTop: 10,
-              padding: "8px 12px",
-              borderRadius: "var(--r-md)",
-              background: palette.bg,
-              color: palette.fg,
-              border: `1px solid ${palette.bd}`,
-              fontSize: 12,
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <span>
-              {exacto ? "Resultado exacto · " : ""}
-              {ganado ? `+${pred.puntos_obtenidos} pts` : "0 pts"}
-            </span>
-            <Icon.Chevron />
-          </div>
-        );
-      })()}
-    </Card>
-  );
-}
-
-function TeamRow({ team, isFinal, isWinner, isLoser, right = false }) {
-  const opacity = isFinal && isLoser ? 0.55 : 1;
-  const weight = isWinner ? 800 : 700;
-  const color = isLoser ? "var(--ink-3)" : "var(--ink)";
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        flexDirection: right ? "row-reverse" : "row",
-        opacity,
-        transition: "opacity 280ms ease",
-      }}
-    >
-      <Flag code={code(team)} w={32} h={22} rounded={4} />
-      <span
-        style={{
-          fontWeight: weight,
-          fontSize: 14,
-          color,
-          letterSpacing: -0.2,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-        }}
-      >
-        {team}
-        {isWinner && (
-          <span className="win-mark" style={{ color: "var(--accent-ink)", display: "inline-flex" }}>
-            <Icon.Check style={{ width: 12, height: 12 }} />
-          </span>
-        )}
-      </span>
-    </div>
-  );
-}
-
 function dayKey(iso) {
   if (!iso) return "Sin fecha";
   try {
@@ -398,15 +222,5 @@ function dayKey(iso) {
     return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
   } catch {
     return iso.slice(0, 10);
-  }
-}
-
-function hour(iso) {
-  if (!iso) return "";
-  try {
-    const d = new Date(iso);
-    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-  } catch {
-    return "";
   }
 }

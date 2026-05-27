@@ -12,9 +12,9 @@ import {
   ChampionReveal,
   Flag,
   Icon,
+  MatchCard,
   MobileHeader,
   MobileShell,
-  Pill,
   ringFor,
 } from "@/components/ui";
 import { rankingFromUsers, userStreak } from "@/lib/stats";
@@ -251,94 +251,13 @@ function BracketColumn({ round, predicciones }) {
       <div style={{ display: "flex", flexDirection: "column", gap: spacing }}>
         {round.matches.length === 0
           ? Array.from({ length: Math.max(1, Math.ceil(N / 2) || 1) }).map((_, i) => (
-              <BracketMatch key={`empty-${i}`} />
+              <MatchCard key={`empty-${i}`} variant="bracket" />
             ))
           : round.matches.map((m) => (
-              <BracketMatch key={m.id} m={m} pred={predicciones[m.id]} />
+              <MatchCard key={m.id} variant="bracket" match={m} pred={predicciones[m.id]} />
             ))}
       </div>
     </div>
   );
 }
 
-function BracketMatch({ m, pred }) {
-  const winner =
-    m && m.resultado_ingresado
-      ? m.goles_local === m.goles_visitante
-        ? null
-        : m.goles_local > m.goles_visitante
-          ? m.equipo_local
-          : m.equipo_visitante
-      : null;
-
-  const isFinal = Boolean(m?.resultado_ingresado);
-  const Row = ({ equipo, isWinner, isLoser }) => (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "9px 10px",
-        background: isWinner ? "var(--ink)" : "transparent",
-        color: isWinner ? "var(--bg)" : "var(--ink)",
-        borderRadius: 8,
-        opacity: isLoser ? 0.55 : 1,
-        transition: "opacity 280ms ease, background 280ms ease",
-      }}
-    >
-      {equipo ? (
-        <Flag code={code(equipo)} w={20} h={14} rounded={2} />
-      ) : (
-        <div style={{ width: 20, height: 14, borderRadius: 2, background: "var(--line)" }} />
-      )}
-      <span style={{ fontSize: 12, fontWeight: isWinner ? 700 : 600, flex: 1, letterSpacing: -0.1 }}>
-        {equipo || "—"}
-      </span>
-      {isWinner && (
-        <span className="win-mark" style={{ display: "inline-flex" }}>
-          <Icon.Check style={{ color: "var(--bg)", width: 12, height: 12 }} />
-        </span>
-      )}
-    </div>
-  );
-
-  return (
-    <div
-      style={{
-        position: "relative",
-        background: "var(--surface)",
-        borderRadius: "var(--r-md)",
-        border: "0.5px solid var(--line)",
-        padding: 4,
-        boxShadow: "var(--shadow-1)",
-      }}
-    >
-      <Row
-        equipo={m?.equipo_local}
-        isWinner={winner && winner === m.equipo_local}
-        isLoser={isFinal && winner && winner !== m.equipo_local}
-      />
-      <Row
-        equipo={m?.equipo_visitante}
-        isWinner={winner && winner === m.equipo_visitante}
-        isLoser={isFinal && winner && winner !== m.equipo_visitante}
-      />
-      {m && pred?.goles_local != null && (
-        <div
-          style={{
-            padding: "4px 8px 2px",
-            fontSize: 10,
-            color: "var(--ink-3)",
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <span>Tu pick</span>
-          <span className="mono">
-            {pred.goles_local}–{pred.goles_visitante}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}

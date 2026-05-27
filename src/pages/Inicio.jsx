@@ -19,10 +19,12 @@ import {
   Countdown,
   Flag,
   Icon,
+  MatchCard,
   MobileHeader,
   MobileShell,
   Pill,
   SectionTitle,
+  StatTile,
   StreakFlame,
   Button,
   ringFor,
@@ -326,54 +328,16 @@ export default function Inicio() {
 
         {/* Partido en vivo */}
         {live && (
-          <Card
-            pad={14}
-            elevated
-            className="breathe-live"
-            style={{ background: "var(--ink)", borderColor: "var(--ink)", color: "var(--bg)" }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-              <Pill tone="live">En vivo</Pill>
-              <span style={{ fontSize: 11, color: "oklch(0.75 0.02 60)", fontWeight: 500 }}>
-                {live.grupo ? `Grupo ${live.grupo}` : faseLabel(fases, live.fase_id)}
-              </span>
-            </div>
-            <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-              <TeamMini code={code(live.equipo_local)} label={live.equipo_local} dark />
-              {liveLocal != null && liveVisitante != null ? (
-                <span
-                  className="mono"
-                  style={{ fontSize: 28, fontWeight: 700, color: "var(--bg)", letterSpacing: -1, display: "inline-flex", alignItems: "baseline", gap: 6 }}
-                >
-                  <span key={`l-${pulseLocal}`} className={pulseLocal > 0 ? "bounce" : undefined} style={{ display: "inline-block" }}>
-                    {liveLocal}
-                  </span>
-                  <span style={{ opacity: 0.5 }}>–</span>
-                  <span key={`v-${pulseVisitante}`} className={pulseVisitante > 0 ? "bounce" : undefined} style={{ display: "inline-block" }}>
-                    {liveVisitante}
-                  </span>
-                </span>
-              ) : (
-                <span className="mono" style={{ fontSize: 26, fontWeight: 600, color: "var(--bg)", letterSpacing: -1 }}>
-                  vs
-                </span>
-              )}
-              <TeamMini code={code(live.equipo_visitante)} label={live.equipo_visitante} dark right />
-            </div>
-            {predicciones[live.id]?.goles_local != null && (
-              <div style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "oklch(0.75 0.02 60)" }}>
-                <span>
-                  Tu pronóstico:{" "}
-                  <span className="mono" style={{ color: "var(--bg)" }}>
-                    {predicciones[live.id].goles_local}–{predicciones[live.id].goles_visitante}
-                  </span>
-                </span>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  En juego <Icon.Arrow />
-                </span>
-              </div>
-            )}
-          </Card>
+          <MatchCard
+            variant="live"
+            match={live}
+            pred={predicciones[live.id]}
+            rightLabel={live.grupo ? `Grupo ${live.grupo}` : faseLabel(fases, live.fase_id)}
+            liveLocal={liveLocal}
+            liveVisitante={liveVisitante}
+            pulseLocal={pulseLocal}
+            pulseVisitante={pulseVisitante}
+          />
         )}
 
         {/* Próximo pronóstico */}
@@ -460,8 +424,8 @@ export default function Inicio() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <StreakCard streak={racha} />
             <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: 10 }}>
-              <MiniStat label="Aciertos" value={String(stats.ganador)} unit={`/ ${stats.jugados}`} />
-              <MiniStat label="Exactos" value={String(stats.exactos)} unit={`/ ${stats.jugados}`} />
+              <StatTile label="Aciertos" value={String(stats.ganador)} unit={`/ ${stats.jugados}`} />
+              <StatTile label="Exactos" value={String(stats.exactos)} unit={`/ ${stats.jugados}`} />
             </div>
           </div>
         )}
@@ -572,45 +536,6 @@ function StreakCard({ streak }) {
           {subtitle}
         </div>
       </div>
-    </div>
-  );
-}
-
-function MiniStat({ label, value, unit }) {
-  return (
-    <div
-      style={{
-        background: "var(--surface)",
-        border: "0.5px solid var(--line)",
-        borderRadius: "var(--r-lg)",
-        padding: "12px 12px",
-      }}
-    >
-      <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 500, letterSpacing: 0.2 }}>{label}</div>
-      <div style={{ marginTop: 4, display: "flex", alignItems: "baseline", gap: 4 }}>
-        <span className="mono" style={{ fontSize: 22, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.5 }}>
-          {value}
-        </span>
-        <span style={{ fontSize: 11, color: "var(--ink-3)" }}>{unit}</span>
-      </div>
-    </div>
-  );
-}
-
-function TeamMini({ code: c, label, dark, right }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        flexDirection: right ? "row-reverse" : "row",
-      }}
-    >
-      <Flag code={c} w={38} h={26} rounded={5} />
-      <span style={{ fontSize: 14, fontWeight: 700, color: dark ? "var(--bg)" : "var(--ink)", letterSpacing: -0.2 }}>
-        {(label || "").length > 12 ? c : label}
-      </span>
     </div>
   );
 }

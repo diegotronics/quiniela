@@ -8,12 +8,11 @@ import { useAllPartidos } from "@/hooks/useAllPartidos";
 import { listPuntajesGlobales } from "@/api/predicciones";
 import {
   Avatar,
-  Card,
   EmptyState,
   Icon,
   MobileHeader,
   MobileShell,
-  Pill,
+  RankRow,
   SectionTitle,
   SkeletonPodium,
   SkeletonRankRow,
@@ -197,7 +196,13 @@ export default function TablaFamiliar() {
           Posiciones
         </SectionTitle>
         {resto.map((m, i) => (
-          <LeaderRow key={m.id} member={m} me={m.id === user?.id} index={i} />
+          <RankRow
+            key={m.id}
+            member={m}
+            isMe={m.id === user?.id}
+            index={i}
+            showPagoStatus
+          />
         ))}
         {resto.length === 0 && top3.length === 0 && !loading && (
           <EmptyState
@@ -423,44 +428,3 @@ function PodiumCard({ place, member, center, me, delay = 0 }) {
   );
 }
 
-function LeaderRow({ member, me, index = 0 }) {
-  return (
-    <div
-      className="stagger-item"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        background: me ? "var(--accent-soft)" : "var(--surface)",
-        border: me
-          ? "1px solid color-mix(in oklab, var(--accent) 30%, transparent)"
-          : "0.5px solid var(--line)",
-        borderRadius: "var(--r-md)",
-        padding: "10px 12px",
-        animationDelay: `${Math.min(index, 8) * 45}ms`,
-      }}
-    >
-      <span className="mono" style={{ width: 22, textAlign: "center", fontSize: 13, fontWeight: 600, color: "var(--ink-3)" }}>
-        {member.rank}
-      </span>
-      <Avatar name={member.nombre} size={32} />
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-          {member.nombre}
-          {me && <span style={{ fontWeight: 400, color: "var(--ink-3)" }}> · vos</span>}
-        </div>
-        <div style={{ fontSize: 11, color: "var(--ink-3)", display: "flex", gap: 8 }}>
-          {member.pagado === false && (
-            <span style={{ color: "var(--coral)" }}>Pago pendiente</span>
-          )}
-        </div>
-      </div>
-      <div style={{ textAlign: "right" }}>
-        <span className="mono" style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.3 }}>
-          {member.puntos}
-        </span>
-        <div style={{ fontSize: 10, color: "var(--ink-3)" }}>pts</div>
-      </div>
-    </div>
-  );
-}

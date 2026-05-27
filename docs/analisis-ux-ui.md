@@ -238,6 +238,56 @@ Quinta iteración: profesionalizar los estados de carga, vacío, la escala de el
 
 ---
 
+## Componentes especializados (punto 20)
+
+Sexta iteración: extraer los patrones repetidos de marcador, equipo, fila de ranking y métricas como componentes con variantes. Reduce el inlining masivo de estilos en `Inicio.jsx`, `Partidos.jsx`, `TablaFamiliar.jsx` y `Bracket.jsx`, y deja la próxima evolución visual concentrada en un único archivo por componente.
+
+**TeamRow** ([TeamRow.jsx](../src/components/ui/TeamRow.jsx))
+
+Bloque "bandera + nombre de equipo" reutilizable. Centraliza la lógica de tamaños, marca de ganador (`win-mark`), opacidad del perdedor y temas claro/oscuro que antes vivía duplicada en `MatchListItem`, `BracketMatch`, la live card de `Inicio.jsx` y `HeaderTeam` de `MatchDetail.jsx`.
+
+- `size`: `xs` (20×14) · `sm` (32×22) · `md` (38×26) · `lg` (56×40) — preset de bandera, tipografía y gap.
+- `direction`: `row` · `row-reverse` para alinear hacia adentro del marcador.
+- `theme`: `light` · `dark` — colores adecuados para superficies claras o el header oscuro del live.
+- `isWinner` / `isLoser` / `isFinal` — pinta peso 800 con check + atenúa al perdedor a 0.55.
+- `truncate` — usa el código de país cuando el nombre supera 12 caracteres (clave para la live card estrecha).
+
+**MatchCard** ([MatchCard.jsx](../src/components/ui/MatchCard.jsx))
+
+Tarjeta de partido con tres variantes que cubren las tres apariciones del patrón en la app:
+
+- `variant="list"` (default) — fila de [Partidos.jsx](../src/pages/Partidos.jsx): Pill de estado (Pronosticado/Pendiente/Finalizado/Empate), `TeamRow` izquierda + marcador central + `TeamRow` derecha invertida, y banner inferior con puntos obtenidos cuando el partido está finalizado y hubo pick.
+- `variant="live"` — versión oscura para [Inicio.jsx](../src/pages/Inicio.jsx): superficie `--ink` con `breathe-live`, `LiveBadge` arriba, score grande con animación `bounce` por dígito que cambia (props `liveLocal`, `liveVisitante`, `pulseLocal`, `pulseVisitante`).
+- `variant="bracket"` — tarjeta mini para [Bracket.jsx](../src/pages/Bracket.jsx): dos filas apiladas con resaltado oscuro al ganador y línea inferior con el pick del usuario.
+
+Helpers internos (`StatusPill`, `PointsBanner`, `winnerSideOf`) quedan privados al componente — encapsulan la lógica de empate/ganador/exacto/ganado que antes se duplicaba.
+
+**RankRow** ([RankRow.jsx](../src/components/ui/RankRow.jsx))
+
+Fila de ranking reutilizada por [TablaFamiliar.jsx](../src/pages/TablaFamiliar.jsx) (resto del podio). Acepta `member`, `isMe`, `index` (para escalonado con `stagger-item`), `variant: "default" | "compact"`, `showPagoStatus` y un slot `trailing` para casos donde se quiera mostrar algo distinto al `pts` por defecto.
+
+**LiveBadge** ([LiveBadge.jsx](../src/components/ui/LiveBadge.jsx))
+
+Indicador "En vivo" con dot pulsante (`lcfPulse`). Dos variantes:
+
+- `solid` (default) — `--danger` sólido, pensado sobre fondos claros u oscuros.
+- `soft` — `--danger-soft` con texto y dot en `--danger`, para banners menos invasivos.
+
+Acepta `minute` opcional (renderizado en mono) y `size: "sm" | "lg"`. Usado dentro de `MatchCard variant="live"`, dejando disponible el componente para futuras vistas con minuto del partido.
+
+**StatTile** ([StatTile.jsx](../src/components/ui/StatTile.jsx))
+
+Tarjeta compacta de métrica. Cuatro tonos (`default`, `accent`, `gold`, `coral`) con tipografía, fondo, borde y sombra cohesivos. Acepta `leading` para slot de ícono o ilustración y `size: "sm" | "md" | "lg"`. Reemplaza al `MiniStat` anterior de `Inicio.jsx` y queda disponible como bloque base para futuras pantallas de estadísticas.
+
+**Refactors aplicados**
+
+- [Partidos.jsx](../src/pages/Partidos.jsx) — `MatchListItem` + `TeamRow` locales removidos; ahora itera con `<MatchCard variant="list">`. Quedaron fuera ~140 líneas de estilos inline.
+- [TablaFamiliar.jsx](../src/pages/TablaFamiliar.jsx) — `LeaderRow` local eliminado, ahora `<RankRow showPagoStatus>` para el resto del podio.
+- [Inicio.jsx](../src/pages/Inicio.jsx) — la live card pasa a `<MatchCard variant="live">`; `MiniStat` y `TeamMini` locales removidos; `<StatTile>` cubre los tiles de Aciertos/Exactos.
+- [Bracket.jsx](../src/pages/Bracket.jsx) — `BracketMatch` local eliminado, ahora `<MatchCard variant="bracket">` (también en los placeholders vacíos).
+
+---
+
 ## Estado de implementación
 
 | ID | Mejora | Estado |
@@ -262,5 +312,5 @@ Quinta iteración: profesionalizar los estados de carga, vacío, la escala de el
 | 17 | Empty states ilustrados | ✅ Implementado |
 | 18 | Escala de elevación de 4 niveles | ✅ Implementado |
 | 19 | Sistema de iconografía unificado | ✅ Implementado |
-| 20 | Componentes especializados (MatchCard, etc.) | ⏳ Pendiente |
+| 20 | Componentes especializados (MatchCard, etc.) | ✅ Implementado |
 | 21 | Modo oscuro | ⏳ Pendiente |
