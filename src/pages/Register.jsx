@@ -12,7 +12,7 @@ export default function Register() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (user) navigate("/app/inicio", { replace: true });
+    if (user) navigate("/app/onboarding", { replace: true });
   }, [user, navigate]);
 
   const handleRegister = async () => {
@@ -22,7 +22,7 @@ export default function Register() {
     const res = await register(form);
     setBusy(false);
     if (!res.ok) setError(res.error);
-    else navigate("/app/inicio", { replace: true });
+    else navigate("/app/onboarding", { replace: true });
   };
 
   return (

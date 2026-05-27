@@ -7,6 +7,7 @@ import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import { useUsuariosPublic } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
 import { listPuntajesGlobales } from "@/api/predicciones";
+import { listPuntajesApuestasEspeciales } from "@/api/apuestasEspeciales";
 import {
   Avatar,
   Button,
@@ -33,6 +34,7 @@ export default function Perfil() {
   const { predicciones } = usePrediccionesUsuario(user?.id);
   const { usuarios } = useUsuariosPublic();
   const { data: puntajesRaw } = useAsync(listPuntajesGlobales, []);
+  const { data: puntajesEspeciales } = useAsync(listPuntajesApuestasEspeciales, []);
 
   const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
   const stats = useMemo(
@@ -44,8 +46,11 @@ export default function Perfil() {
     [prediccionesList, partidos],
   );
   const ranking = useMemo(
-    () => rankingFromUsers(usuarios, puntajesRaw || []),
-    [usuarios, puntajesRaw],
+    () => rankingFromUsers(usuarios, [
+      ...(puntajesRaw || []),
+      ...(puntajesEspeciales || []),
+    ]),
+    [usuarios, puntajesRaw, puntajesEspeciales],
   );
   const me = ranking.find((u) => u.id === user?.id);
 
@@ -196,6 +201,18 @@ export default function Perfil() {
 
         {/* Acciones */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+          <Button
+            variant="ghost"
+            size="lg"
+            block
+            onClick={() => navigate("/app/apuestas")}
+            style={{ justifyContent: "space-between", paddingLeft: 16, paddingRight: 16 }}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Icon.Crown /> Apuestas especiales
+            </span>
+            <Icon.Chevron />
+          </Button>
           {user?.es_admin && (
             <Button
               variant="ghost"

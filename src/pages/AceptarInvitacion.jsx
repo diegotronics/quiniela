@@ -55,7 +55,7 @@ export default function AceptarInvitacion() {
 
   useEffect(() => {
     if (!loading && user && invitacion) {
-      navigate("/app/inicio", { replace: true });
+      navigate("/app/onboarding", { replace: true });
     }
   }, [loading, user, invitacion, navigate]);
 
@@ -75,7 +75,7 @@ export default function AceptarInvitacion() {
       /* la cuenta quedó creada; no bloqueamos la entrada */
     }
     setBusy(false);
-    navigate("/app/inicio", { replace: true });
+    navigate("/app/onboarding", { replace: true });
   };
 
   if (loading) {

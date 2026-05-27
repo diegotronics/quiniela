@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { updateFaseEstado, updateFasePuntos } from "@/api/fases";
 import { useFases } from "@/hooks/useFases";
+import {
+  useApuestasEspecialesConfig,
+  updateApuestasEspecialesConfig,
+} from "@/hooks/useApuestasEspeciales";
 import { Button, Card, Flag, Icon, Pill } from "@/components/ui";
-import { FASES_INFO, code } from "@/lib/constants";
+import { FASES_INFO, code, TEAMS_MUNDIAL_2026 } from "@/lib/constants";
 
 const ESTADOS = [
   { value: "activa", label: "Activa", tone: "accent" },
@@ -171,21 +175,273 @@ export default function AdminReglas() {
           </div>
         </Card>
 
-        <Card pad={16}>
-          <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>Apuestas especiales</div>
-          <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
-            Predicciones pre-mundial · próximamente.
-          </div>
-          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10, opacity: 0.6 }}>
-            <SpecialRow label="Campeón" pts={15} />
-            <SpecialRow label="Sub-campeón" pts={8} />
-            <SpecialRow label="Goleador" pts={10} />
-            <SpecialRow label="Sorpresa" pts={6} />
-          </div>
-        </Card>
+        <ApuestasEspecialesAdminCard />
       </div>
     </div>
   );
+}
+
+function ApuestasEspecialesAdminCard() {
+  const { config, loading, refresh } = useApuestasEspecialesConfig();
+
+  return (
+    <Card pad={0}>
+      <div style={{ padding: "16px 18px", borderBottom: "0.5px solid var(--line-2)" }}>
+        <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>
+          Apuestas especiales
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
+          Predicciones pre-mundial. Cada jugador elige Campeón, Sub-campeón, Goleador y Sorpresa.
+        </div>
+      </div>
+
+      {loading || !config ? (
+        <div style={{ padding: 18, color: "var(--ink-3)", fontSize: 13 }}>Cargando…</div>
+      ) : (
+        <>
+          <CierreRow config={config} onSave={refresh} />
+          <CategoriaRow
+            label="Campeón"
+            hint="Equipo que levanta la copa."
+            ptsKey="pts_campeon"
+            resultKey="campeon"
+            kind="team"
+            config={config}
+            onSave={refresh}
+          />
+          <CategoriaRow
+            label="Sub-campeón"
+            hint="Finalista que pierde la final."
+            ptsKey="pts_subcampeon"
+            resultKey="subcampeon"
+            kind="team"
+            config={config}
+            onSave={refresh}
+          />
+          <CategoriaRow
+            label="Goleador"
+            hint="Jugador con más goles (Bota de Oro)."
+            ptsKey="pts_goleador"
+            resultKey="goleador"
+            kind="text"
+            config={config}
+            onSave={refresh}
+          />
+          <CategoriaRow
+            label="Sorpresa"
+            hint="Evento inesperado del torneo. Coincidencia case-insensitive."
+            ptsKey="pts_sorpresa"
+            resultKey="sorpresa"
+            kind="text"
+            config={config}
+            onSave={refresh}
+            last
+          />
+        </>
+      )}
+    </Card>
+  );
+}
+
+function CierreRow({ config, onSave }) {
+  const [value, setValue] = useState(() => toLocalInput(config.cierra_en));
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setValue(toLocalInput(config.cierra_en));
+  }, [config.cierra_en]);
+
+  const original = toLocalInput(config.cierra_en);
+  const dirty = value !== original;
+
+  const guardar = async () => {
+    if (!dirty || busy) return;
+    setBusy(true);
+    try {
+      const iso = value ? new Date(value).toISOString() : null;
+      await updateApuestasEspecialesConfig({ cierra_en: iso });
+      await onSave();
+    } catch (e) {
+      alert("Error: " + e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 280px",
+        gap: 16,
+        padding: "14px 18px",
+        borderBottom: "0.5px solid var(--line-2)",
+        alignItems: "center",
+      }}
+    >
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>
+          Fecha de cierre
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.4 }}>
+          Después de esta fecha, los jugadores no pueden editar sus apuestas.
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
+        <input
+          type="datetime-local"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          disabled={busy}
+          style={{
+            padding: "7px 10px",
+            borderRadius: 8,
+            border: "0.5px solid var(--line)",
+            background: "var(--surface-2)",
+            fontSize: 12,
+            color: "var(--ink)",
+            fontFamily: "var(--font-mono)",
+            outline: "none",
+          }}
+        />
+        <Button
+          size="sm"
+          variant={dirty ? "primary" : "ghost"}
+          disabled={!dirty || busy}
+          onClick={guardar}
+        >
+          <Icon.Check /> {busy ? "…" : "Guardar"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CategoriaRow({ label, hint, ptsKey, resultKey, kind, config, onSave, last }) {
+  const [pts, setPts] = useState(String(config[ptsKey] ?? 0));
+  const [resultado, setResultado] = useState(config[resultKey] || "");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setPts(String(config[ptsKey] ?? 0));
+    setResultado(config[resultKey] || "");
+  }, [config, ptsKey, resultKey]);
+
+  const ptsNum = Number.parseInt(pts, 10);
+  const ptsValid = Number.isFinite(ptsNum) && ptsNum >= 0;
+  const dirty =
+    (ptsValid && ptsNum !== config[ptsKey]) ||
+    (resultado || "") !== (config[resultKey] || "");
+
+  const guardar = async () => {
+    if (!dirty || !ptsValid || busy) return;
+    setBusy(true);
+    try {
+      await updateApuestasEspecialesConfig({
+        [ptsKey]: ptsNum,
+        [resultKey]: resultado.trim() || null,
+      });
+      await onSave();
+    } catch (e) {
+      alert("Error: " + e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 320px",
+        gap: 16,
+        padding: "14px 18px",
+        borderBottom: last ? "none" : "0.5px solid var(--line-2)",
+        alignItems: "center",
+      }}
+    >
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{label}</span>
+          {config[resultKey] && <Pill tone="accent">Resultado cargado</Pill>}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.4 }}>
+          {hint}
+        </div>
+        {kind === "team" && resultado && (
+          <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <Flag code={code(resultado)} w={22} h={16} rounded={3} />
+            <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{resultado}</span>
+          </div>
+        )}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+        {kind === "team" ? (
+          <select
+            value={resultado}
+            onChange={(e) => setResultado(e.target.value)}
+            disabled={busy}
+            style={{
+              flex: "1 1 140px",
+              minWidth: 140,
+              padding: "7px 10px",
+              borderRadius: 8,
+              border: "0.5px solid var(--line)",
+              background: "var(--surface-2)",
+              fontSize: 12,
+              color: "var(--ink)",
+              fontFamily: "var(--font-sans)",
+              outline: "none",
+            }}
+          >
+            <option value="">— Sin resultado —</option>
+            {TEAMS_MUNDIAL_2026.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            value={resultado}
+            onChange={(e) => setResultado(e.target.value)}
+            disabled={busy}
+            placeholder="Sin resultado"
+            style={{
+              flex: "1 1 140px",
+              minWidth: 140,
+              padding: "7px 10px",
+              borderRadius: 8,
+              border: "0.5px solid var(--line)",
+              background: "var(--surface-2)",
+              fontSize: 12,
+              color: "var(--ink)",
+              fontFamily: "var(--font-sans)",
+              outline: "none",
+            }}
+          />
+        )}
+        <PtsInput label="Pts" value={pts} onChange={setPts} disabled={busy} />
+        <Button
+          size="sm"
+          variant={dirty && ptsValid ? "primary" : "ghost"}
+          disabled={!dirty || !ptsValid || busy}
+          onClick={guardar}
+        >
+          <Icon.Check /> {busy ? "…" : "Guardar"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function toLocalInput(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function RuleRow({ fase, hint, last, onSave }) {
@@ -310,23 +566,3 @@ function RowItem({ label, pts }) {
   );
 }
 
-function SpecialRow({ label, pts }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "8px 10px",
-        borderRadius: 10,
-        background: "var(--surface-2)",
-        border: "0.5px solid var(--line)",
-      }}
-    >
-      <span style={{ fontSize: 13, color: "var(--ink)" }}>{label}</span>
-      <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--accent-ink)" }}>
-        +{pts} pts
-      </span>
-    </div>
-  );
-}

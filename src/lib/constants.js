@@ -60,3 +60,19 @@ export function flag(equipo) {
 // Nombre del grupo familiar (placeholder; podría salir de un campo de configuración).
 export const GROUP_NAME = "La Copa Familiar";
 export const GROUP_MOTTO = "Mundial 2026";
+
+// Selecciones clasificadas al Mundial 2026 (48 equipos del sorteo oficial).
+// Lista mantenida en sincronía con supabase/09_partidos_reales_mundial_2026.sql.
+// Se usa en el desplegable de Apuestas especiales (Campeón / Sub-campeón).
+export const TEAMS_MUNDIAL_2026 = [
+  "Alemania", "Arabia Saudita", "Argelia", "Argentina", "Australia",
+  "Austria", "Bélgica", "Bosnia y Herzegovina", "Brasil", "Cabo Verde",
+  "Canadá", "Chequia", "Colombia", "Corea del Sur", "Costa de Marfil",
+  "Croacia", "Curazao", "Ecuador", "EEUU", "Egipto",
+  "Escocia", "España", "Francia", "Ghana", "Haití",
+  "Holanda", "Inglaterra", "Irak", "Irán", "Japón",
+  "Jordania", "Marruecos", "México", "Noruega", "Nueva Zelanda",
+  "Panamá", "Paraguay", "Portugal", "Qatar", "RD Congo",
+  "Senegal", "Sudáfrica", "Suecia", "Suiza", "Túnez",
+  "Turquía", "Uruguay", "Uzbekistán",
+];

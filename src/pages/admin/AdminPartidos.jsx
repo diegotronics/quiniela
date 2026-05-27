@@ -13,6 +13,15 @@ const TABS = [
   { id: "final", label: "Finalizados" },
 ];
 
+const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
+
+function isLive(p, now) {
+  if (!p || p.resultado_ingresado || !p.fecha) return false;
+  const t = new Date(p.fecha).getTime();
+  if (Number.isNaN(t)) return false;
+  return Math.abs(t - now) <= LIVE_WINDOW_MS;
+}
+
 export default function AdminPartidos() {
   const { fases } = useFases();
   const [selectedFase, setSelectedFase] = useState("grupos");
@@ -27,9 +36,10 @@ export default function AdminPartidos() {
 
   const counts = useMemo(() => {
     const all = allMatches || [];
+    const now = Date.now();
     return {
-      proximos: all.filter((p) => !p.resultado_ingresado).length,
-      live: 0,
+      proximos: all.filter((p) => !p.resultado_ingresado && !isLive(p, now)).length,
+      live: all.filter((p) => isLive(p, now)).length,
       final: all.filter((p) => p.resultado_ingresado).length,
     };
   }, [allMatches]);
@@ -39,10 +49,11 @@ export default function AdminPartidos() {
   }, [selectedFase, grupo, tab]);
 
   const filtered = useMemo(() => {
+    const now = Date.now();
     let list = selectedFase === "grupos" ? faseMatches.filter((p) => p.grupo === grupo) : faseMatches;
-    if (tab === "proximos") list = list.filter((p) => !p.resultado_ingresado);
+    if (tab === "proximos") list = list.filter((p) => !p.resultado_ingresado && !isLive(p, now));
     else if (tab === "final") list = list.filter((p) => p.resultado_ingresado);
-    else if (tab === "live") list = [];
+    else if (tab === "live") list = list.filter((p) => isLive(p, now));
     return list.sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""));
   }, [faseMatches, selectedFase, grupo, tab]);
 

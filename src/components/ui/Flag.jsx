@@ -53,6 +53,18 @@ const FLAGS = {
   QAT: { kind: "vstripe", cols: ["#fff", "#8A1538"], ratio: [1, 2] },
   IRQ: { kind: "hstripe", cols: ["#CE1126", "#fff", "#000"] },
   JOR: { kind: "hstripe", cols: ["#000", "#fff", "#007A3D"] },
+  RSA: { kind: "hstripe", cols: ["#007749", "#fff", "#DE3831"], ratio: [1, 1, 1] },
+  CZE: { kind: "hstripe", cols: ["#fff", "#D7141A"] },
+  BIH: { kind: "hstripe", cols: ["#002F6C", "#FECB00"] },
+  HAI: { kind: "hstripe", cols: ["#00209F", "#D21034"] },
+  CUW: { kind: "hstripe", cols: ["#002B7F", "#F9E814", "#002B7F"], ratio: [3, 1, 3] },
+  TUN: { kind: "circle", bg: "#E70013", dot: "#fff" },
+  EGY: { kind: "hstripe", cols: ["#CE1126", "#fff", "#000"] },
+  NZL: { kind: "aus" },
+  CPV: { kind: "hstripe", cols: ["#003893", "#fff", "#CF2027", "#fff", "#003893"], ratio: [6, 1, 2, 1, 2] },
+  ALG: { kind: "vstripe", cols: ["#006233", "#fff"] },
+  COD: { kind: "hstripe", cols: ["#007FFF", "#F7D618", "#CE1021"] },
+  UZB: { kind: "hstripe", cols: ["#0099B5", "#fff", "#1EB53A"] },
 };
 
 function star5(cx, cy, ro, ri) {

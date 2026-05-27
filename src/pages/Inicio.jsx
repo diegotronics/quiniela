@@ -7,6 +7,11 @@ import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import { useUsuariosPublic } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
 import { listPuntajesGlobales } from "@/api/predicciones";
+import { listPuntajesApuestasEspeciales } from "@/api/apuestasEspeciales";
+import {
+  useApuestasEspecialesConfig,
+  useApuestaEspecialUsuario,
+} from "@/hooks/useApuestasEspeciales";
 import {
   Avatar,
   Card,
@@ -27,6 +32,8 @@ import {
 } from "@/lib/stats";
 import { code, GROUP_NAME, GROUP_MOTTO } from "@/lib/constants";
 import { ChatPreview } from "@/components/chat/ChatPreview";
+import { BannerPredicciones } from "@/components/BannerPredicciones";
+import { TOTAL_PARTIDOS_GRUPOS, countPredicciones } from "@/lib/onboarding";
 
 export default function Inicio() {
   const { user } = useAuth();
@@ -35,11 +42,17 @@ export default function Inicio() {
   const { partidos } = useAllPartidos(fases);
   const { usuarios } = useUsuariosPublic();
   const { data: puntajesRaw } = useAsync(listPuntajesGlobales, []);
+  const { data: puntajesEspeciales } = useAsync(listPuntajesApuestasEspeciales, []);
   const { predicciones } = usePrediccionesUsuario(user?.id);
+  const { config: apuestasCfg } = useApuestasEspecialesConfig();
+  const { apuesta: apuestaUsuario } = useApuestaEspecialUsuario(user?.id);
 
   const ranking = useMemo(
-    () => rankingFromUsers(usuarios, puntajesRaw || []),
-    [usuarios, puntajesRaw],
+    () => rankingFromUsers(usuarios, [
+      ...(puntajesRaw || []),
+      ...(puntajesEspeciales || []),
+    ]),
+    [usuarios, puntajesRaw, puntajesEspeciales],
   );
   const me = useMemo(() => ranking.find((u) => u.id === user?.id), [ranking, user]);
   const lider = ranking[0];
@@ -61,7 +74,20 @@ export default function Inicio() {
     [partidos, predicciones, fases],
   );
 
+  const picksCompletas = useMemo(() => countPredicciones(predicciones), [predicciones]);
+  const onboardingPendiente = picksCompletas < TOTAL_PARTIDOS_GRUPOS;
   const pendientes = partidos.filter((p) => !p.resultado_ingresado).length;
+
+  const apuestasCierre = apuestasCfg?.cierra_en ? new Date(apuestasCfg.cierra_en).getTime() : null;
+  const apuestasAbiertas = apuestasCierre ? apuestasCierre > Date.now() : true;
+  const apuestasCompletadas = Boolean(
+    apuestaUsuario?.campeon &&
+      apuestaUsuario?.subcampeon &&
+      apuestaUsuario?.goleador &&
+      apuestaUsuario?.sorpresa
+  );
+  const mostrarBannerApuestas = apuestasAbiertas && !apuestasCompletadas;
+
   const myPts = me?.puntos || 0;
   const liderPts = lider?.puntos || 0;
   const ratio = liderPts > 0 ? Math.min(100, Math.round((myPts / liderPts) * 100)) : 0;
@@ -79,6 +105,51 @@ export default function Inicio() {
       }
     >
       <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+        {onboardingPendiente && <BannerPredicciones picks={picksCompletas} />}
+
+        {mostrarBannerApuestas && (
+          <Card
+            pad={16}
+            onClick={() => navigate("/app/apuestas")}
+            style={{
+              background: "var(--accent-soft)",
+              borderColor: "transparent",
+              cursor: "pointer",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--accent-ink)",
+                    fontWeight: 700,
+                    letterSpacing: 0.4,
+                    textTransform: "uppercase",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <Icon.Crown /> Apuestas especiales
+                </div>
+                <div style={{ marginTop: 4, fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+                  {apuestaUsuario ? "Completá tus picks pre-mundial" : "Pronosticá Campeón, Goleador y más"}
+                </div>
+                <div style={{ marginTop: 2, fontSize: 12, color: "var(--ink-3)" }}>
+                  Hasta{" "}
+                  {(apuestasCfg?.pts_campeon ?? 0) +
+                    (apuestasCfg?.pts_subcampeon ?? 0) +
+                    (apuestasCfg?.pts_goleador ?? 0) +
+                    (apuestasCfg?.pts_sorpresa ?? 0)}{" "}
+                  pts en juego
+                </div>
+              </div>
+              <Icon.Chevron />
+            </div>
+          </Card>
+        )}
+
         {/* Puntaje + posición */}
         <Card pad={0} style={{ overflow: "hidden" }}>
           <div style={{ padding: "18px 18px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
