@@ -1,6 +1,12 @@
 {
   "buildCommand": "npm run build",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/((?!api/).*)", "destination": "/" }
+  ],
+  "crons": [
+    {
+      "path": "/api/sync-partidos",
+      "schedule": "0 4 * * *"
+    }
   ]
 }

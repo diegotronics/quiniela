@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useFases } from "@/hooks/useFases";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
@@ -25,7 +25,8 @@ import {
   proximoPartido,
   partidoEnVivo,
 } from "@/lib/stats";
-import { code, GROUP_NAME, GROUP_MOTTO, MOCK_CHAT } from "@/lib/constants";
+import { code, GROUP_NAME, GROUP_MOTTO } from "@/lib/constants";
+import { ChatPreview } from "@/components/chat/ChatPreview";
 
 export default function Inicio() {
   const { user } = useAuth();
@@ -215,52 +216,17 @@ export default function Inicio() {
           </div>
         )}
 
-        {/* Picadas preview (mock) */}
-        <SectionTitle action="Próximamente">Picadas de la familia</SectionTitle>
-        <Card pad={0} style={{ overflow: "hidden" }}>
-          {MOCK_CHAT.slice(0, 3).map((c, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                gap: 10,
-                padding: "12px 14px",
-                borderBottom: i < 2 ? "0.5px solid var(--line-2)" : "none",
-              }}
-            >
-              <Avatar name={c.who_short} size={28} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{c.who_short}</span>
-                  <span style={{ fontSize: 11, color: "var(--ink-3)" }} className="mono">
-                    {c.t}
-                  </span>
-                </div>
-                <div style={{ fontSize: 13.5, color: "var(--ink-2)", marginTop: 2, lineHeight: 1.35 }}>
-                  {c.text}
-                </div>
-                {c.reacts && (
-                  <div style={{ marginTop: 6, display: "flex", gap: 4 }}>
-                    {c.reacts.map((r, j) => (
-                      <span
-                        key={j}
-                        style={{
-                          fontSize: 11,
-                          padding: "2px 6px",
-                          borderRadius: 999,
-                          background: "var(--surface-2)",
-                          color: "var(--ink-2)",
-                        }}
-                      >
-                        {r.e} {r.n}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </Card>
+        {/* Picadas preview (chat global en tiempo real) */}
+        <SectionTitle
+          action={
+            <Link to="/app/chat" style={{ color: "var(--accent-ink)", textDecoration: "none" }}>
+              Ver todo →
+            </Link>
+          }
+        >
+          Picadas de la familia
+        </SectionTitle>
+        <ChatPreview limit={3} />
       </div>
     </MobileShell>
   );

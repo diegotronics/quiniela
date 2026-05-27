@@ -15,7 +15,8 @@ import {
   Icon,
   Pill,
 } from "@/components/ui";
-import { code, MOCK_CHAT } from "@/lib/constants";
+import { code } from "@/lib/constants";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 
 export default function MatchDetail() {
   const { id } = useParams();
@@ -254,7 +255,7 @@ export default function MatchDetail() {
         <div style={{ display: "flex", gap: 18, borderBottom: "1px solid var(--line)" }}>
           {[
             ["familia", "Pronósticos familia"],
-            ["picadas", `Picadas (${MOCK_CHAT.length})`],
+            ["picadas", "Picadas"],
           ].map(([k, label]) => (
             <button
               key={k}
@@ -280,7 +281,7 @@ export default function MatchDetail() {
         {tab === "familia" ? (
           <FamilyPicks usuarios={usuarios} picksByUser={picksByUser} mePartial={user?.id} />
         ) : (
-          <PicadasMock />
+          <ChatPanel partidoId={id} altura="60vh" />
         )}
       </div>
     </div>
@@ -378,68 +379,6 @@ function FamilyPicks({ usuarios, picksByUser, mePartial }) {
           </Card>
         );
       })}
-    </div>
-  );
-}
-
-function PicadasMock() {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div
-        style={{
-          padding: 12,
-          borderRadius: 10,
-          background: "var(--coral-soft)",
-          color: "var(--coral)",
-          fontSize: 12,
-          textAlign: "center",
-        }}
-      >
-        Vista previa · chat funcional próximamente
-      </div>
-      {MOCK_CHAT.map((c, i) => (
-        <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
-          <Avatar name={c.who_short} size={28} />
-          <div style={{ maxWidth: "78%" }}>
-            <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 3, paddingLeft: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>{c.who_short}</span>
-              <span style={{ fontSize: 10, color: "var(--ink-3)" }} className="mono">{c.t}</span>
-            </div>
-            <div
-              style={{
-                padding: "10px 14px",
-                background: "var(--surface)",
-                color: "var(--ink)",
-                border: "0.5px solid var(--line)",
-                borderRadius: "4px 18px 18px 18px",
-                fontSize: 14,
-                lineHeight: 1.35,
-              }}
-            >
-              {c.text}
-            </div>
-            {c.reacts && (
-              <div style={{ display: "flex", gap: 4, marginTop: 4, paddingLeft: 4 }}>
-                {c.reacts.map((r, j) => (
-                  <span
-                    key={j}
-                    style={{
-                      fontSize: 11,
-                      padding: "2px 8px",
-                      borderRadius: 999,
-                      background: "var(--surface-2)",
-                      border: "0.5px solid var(--line)",
-                      color: "var(--ink-2)",
-                    }}
-                  >
-                    {r.e} {r.n}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

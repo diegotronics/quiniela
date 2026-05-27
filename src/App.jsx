@@ -9,6 +9,7 @@ import Partidos from "@/pages/Partidos.jsx";
 import TablaFamiliar from "@/pages/TablaFamiliar.jsx";
 import Perfil from "@/pages/Perfil.jsx";
 import MatchDetail from "@/pages/MatchDetail.jsx";
+import Chat from "@/pages/Chat.jsx";
 import Admin from "@/pages/Admin.jsx";
 import AdminMiembros from "@/pages/admin/AdminMiembros.jsx";
 import AdminReglas from "@/pages/admin/AdminReglas.jsx";
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="tabla" element={<TablaFamiliar />} />
         <Route path="perfil" element={<Perfil />} />
         <Route path="partido/:id" element={<MatchDetail />} />
+        <Route path="chat" element={<Chat />} />
       </Route>
 
       <Route

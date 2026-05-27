@@ -24,6 +24,10 @@ export const COUNTRY_CODE = {
   "Costa Rica": "CRC", "Panamá": "PAN", "Jamaica": "JAM", "Venezuela": "VEN", "Suecia": "SWE",
   "Noruega": "NOR", "Finlandia": "FIN", "Islandia": "ISL", "Serbia": "SRB", "Irán": "IRN",
   "Qatar": "QAT", "Irak": "IRQ", "Jordania": "JOR",
+  // Equipos añadidos para el sorteo real del Mundial 2026
+  "Sudáfrica": "RSA", "Chequia": "CZE", "Bosnia y Herzegovina": "BIH", "Haití": "HAI",
+  "Curazao": "CUW", "Túnez": "TUN", "Egipto": "EGY", "Nueva Zelanda": "NZL",
+  "Cabo Verde": "CPV", "Argelia": "ALG", "RD Congo": "COD", "Uzbekistán": "UZB",
 };
 
 export function code(equipo) {
@@ -44,19 +48,14 @@ export const FLAGS = {
   "Irán": "🇮🇷", "Qatar": "🇶🇦", "Irak": "🇮🇶", "Jordania": "🇯🇴",
   "Costa Rica": "🇨🇷", "Panamá": "🇵🇦", "Jamaica": "🇯🇲", "Venezuela": "🇻🇪",
   "Suecia": "🇸🇪", "Noruega": "🇳🇴", "Finlandia": "🇫🇮", "Islandia": "🇮🇸",
+  "Sudáfrica": "🇿🇦", "Chequia": "🇨🇿", "Bosnia y Herzegovina": "🇧🇦", "Haití": "🇭🇹",
+  "Curazao": "🇨🇼", "Túnez": "🇹🇳", "Egipto": "🇪🇬", "Nueva Zelanda": "🇳🇿",
+  "Cabo Verde": "🇨🇻", "Argelia": "🇩🇿", "RD Congo": "🇨🇩", "Uzbekistán": "🇺🇿",
 };
 
 export function flag(equipo) {
   return FLAGS[equipo] || "🏳";
 }
-
-// Mock data — picadas/chat (no hay tabla todavía, visible en MatchDetail).
-export const MOCK_CHAT = [
-  { who_short: "María", text: "¡Vamos México! Pronosticando 2-0", t: "14:32", reacts: [{ e: "😂", n: 4 }] },
-  { who_short: "Carlos", text: "Esta vez sí, papá. Nuevo entrenador, nueva era", t: "14:33" },
-  { who_short: "Roberto", text: "Veré cómo te recupero el postre.", t: "14:35", reacts: [{ e: "🔥", n: 3 }] },
-  { who_short: "Diego", text: "Yo voy con un 1-1 conservador.", t: "14:40" },
-];
 
 // Nombre del grupo familiar (placeholder; podría salir de un campo de configuración).
 export const GROUP_NAME = "La Copa Familiar";

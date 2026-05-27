@@ -162,6 +162,68 @@ scripts/
 └── migrate.mjs            # corre las migraciones en cada deploy
 ```
 
+## 🤖 Sincronización automática de resultados (API-Football)
+
+Los partidos del Mundial 2026 reales se cargan vía la migración [`supabase/09_partidos_reales_mundial_2026.sql`](supabase/09_partidos_reales_mundial_2026.sql) (todas las horas en UTC-4 Caracas).
+
+La función serverless [`api/sync-partidos.js`](api/sync-partidos.js) consulta API-Football, identifica los partidos terminados (`FT`/`AET`/`PEN`) y los guarda en Supabase. El trigger `trg_partido_recalc` se encarga del resto.
+
+### 1) Obtener API key gratuita
+
+1. Crear cuenta en [https://www.api-football.com/](https://www.api-football.com/) (plan Free, 100 requests/día).
+2. Dashboard → **API Key** → copiar.
+
+### 2) Variables de entorno (Vercel → Project Settings → Environment Variables)
+
+| Variable | Valor |
+|---|---|
+| `SUPABASE_URL` | `https://TU-PROYECTO.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (Supabase → Settings → API). **NO** la anon. |
+| `API_FOOTBALL_KEY` | La key obtenida en el paso 1. |
+| `CRON_SECRET` | Cualquier string aleatorio largo (32+ caracteres). Ejemplo: `openssl rand -hex 32`. |
+
+> ⚠️ `SUPABASE_SERVICE_ROLE_KEY` permite bypass de RLS. **Nunca** la pongas en código del frontend, solo como env var del backend.
+
+### 3) Probar manualmente
+
+```bash
+curl -H "Authorization: Bearer TU_CRON_SECRET" \
+  https://lacopafamiliar.vercel.app/api/sync-partidos
+```
+
+Respuesta esperada (JSON):
+
+```json
+{
+  "ok": true,
+  "totalFixtures": 72,
+  "actualizados": 3,
+  "ignorados": 69,
+  "noEncontrados": 0,
+  "detalleActualizados": [{"id":"A1","marcador":"México 2-1 Sudáfrica"}, ...]
+}
+```
+
+### 4) Disparo automático
+
+- **Vercel Cron** (ya configurado en [`vercel.json`](vercel.json), una vez al día a las 04:00 UTC) — útil como respaldo.
+- **Cron externo gratuito** (recomendado para tiempo real durante días de partido):
+  1. Crear cuenta en [cron-job.org](https://cron-job.org).
+  2. **Create cronjob** con URL `https://lacopafamiliar.vercel.app/api/sync-partidos` y schedule cada 5 minutos.
+  3. En **Notifications → Advanced** agregar header `Authorization: Bearer TU_CRON_SECRET`.
+
+### 5) Si la API devuelve nombres distintos
+
+El job loggea en `detalleNoEncontrados` los equipos que no pudo emparejar. Si aparece algo como `{ home: "Korea Republic", homeEs: "Korea Republic" }`, agregar el alias al mapping `TEAM_MAP` en `api/sync-partidos.js` y re-desplegar.
+
+### 6) Plan free de API-Football: 100 req/día
+
+Llamar cada 5 min serían 288 req/día → excede el plan free. Estrategias:
+- Llamar cada 15 min durante el día (96 req/día) — cabe con holgura.
+- O usar cron-job.org con horarios condicionales (solo durante ventanas de partidos).
+
+---
+
 ## 🔐 Notas de seguridad
 
 Esta app está pensada para uso familiar/cerrado: las contraseñas se guardan en texto plano en `usuarios.password` y RLS está abierto para `anon`. Para uso público real habría que migrar a Supabase Auth.
