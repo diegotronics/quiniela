@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { celebratePodium, celebrateOnce } from "@/lib/celebrate";
 import { useAuth } from "@/context/AuthContext";
 import { useUsuariosPublic } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
@@ -95,6 +96,15 @@ export default function TablaFamiliar() {
   const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
   const racha = useMemo(() => userStreak(prediccionesList, partidos), [prediccionesList, partidos]);
 
+  useEffect(() => {
+    if (!meTotal || filtro !== "total") return;
+    if (meTotal.rank >= 1 && meTotal.rank <= 3) {
+      celebrateOnce(`podium-${user?.id}`, () => {
+        setTimeout(celebratePodium, 400);
+      });
+    }
+  }, [meTotal, filtro, user]);
+
   return (
     <MobileShell
       activeTab="tabla"
@@ -115,6 +125,7 @@ export default function TablaFamiliar() {
               <button
                 key={key}
                 onClick={() => setFiltro(key)}
+                className="chip-interactive"
                 style={{
                   flex: 1,
                   padding: "8px 0",
@@ -153,9 +164,9 @@ export default function TablaFamiliar() {
               alignItems: "end",
             }}
           >
-            <PodiumCard place={2} member={top3[1]} me={user?.id} />
-            <PodiumCard place={1} member={top3[0]} me={user?.id} center />
-            <PodiumCard place={3} member={top3[2]} me={user?.id} />
+            <PodiumCard place={2} member={top3[1]} me={user?.id} delay={120} />
+            <PodiumCard place={1} member={top3[0]} me={user?.id} center delay={260} />
+            <PodiumCard place={3} member={top3[2]} me={user?.id} delay={0} />
           </div>
         </div>
       )}
@@ -169,8 +180,8 @@ export default function TablaFamiliar() {
         }>
           Posiciones
         </SectionTitle>
-        {resto.map((m) => (
-          <LeaderRow key={m.id} member={m} me={m.id === user?.id} />
+        {resto.map((m, i) => (
+          <LeaderRow key={m.id} member={m} me={m.id === user?.id} index={i} />
         ))}
         {resto.length === 0 && top3.length === 0 && !loading && (
           <Card>
@@ -184,7 +195,7 @@ export default function TablaFamiliar() {
   );
 }
 
-function PodiumCard({ place, member, center, me }) {
+function PodiumCard({ place, member, center, me, delay = 0 }) {
   if (!member) {
     return (
       <div
@@ -215,6 +226,7 @@ function PodiumCard({ place, member, center, me }) {
   const badgeBg = place === 1 ? "var(--gold)" : place === 2 ? "oklch(0.78 0.02 80)" : "oklch(0.62 0.10 35)";
   return (
     <div
+      className="podium-rise"
       style={{
         background: "var(--surface)",
         border: isMe ? "1.5px solid var(--accent)" : "0.5px solid var(--line)",
@@ -223,6 +235,7 @@ function PodiumCard({ place, member, center, me }) {
         textAlign: "center",
         position: "relative",
         boxShadow: center ? "var(--shadow-2)" : "var(--shadow-1)",
+        animationDelay: `${delay}ms`,
       }}
     >
       {place === 1 && (
@@ -250,9 +263,10 @@ function PodiumCard({ place, member, center, me }) {
   );
 }
 
-function LeaderRow({ member, me }) {
+function LeaderRow({ member, me, index = 0 }) {
   return (
     <div
+      className="stagger-item"
       style={{
         display: "flex",
         alignItems: "center",
@@ -263,6 +277,7 @@ function LeaderRow({ member, me }) {
           : "0.5px solid var(--line)",
         borderRadius: "var(--r-md)",
         padding: "10px 12px",
+        animationDelay: `${Math.min(index, 8) * 45}ms`,
       }}
     >
       <span className="mono" style={{ width: 22, textAlign: "center", fontSize: 13, fontWeight: 600, color: "var(--ink-3)" }}>

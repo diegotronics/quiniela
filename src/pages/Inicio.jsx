@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useCountUp, usePrevious } from "@/hooks/useCountUp";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useFases } from "@/hooks/useFases";
@@ -94,6 +95,27 @@ export default function Inicio() {
   const ratio = liderPts > 0 ? Math.min(100, Math.round((myPts / liderPts) * 100)) : 0;
   const diff = (lider?.puntos || 0) - myPts;
 
+  const myPtsDisplay = useCountUp(myPts, { duration: 800 });
+  const myRankDisplay = useCountUp(me?.rank || 0, { duration: 600 });
+
+  // Detección de cambio de gol en partido live
+  const liveLocal = live?.goles_local;
+  const liveVisitante = live?.goles_visitante;
+  const prevLiveLocal = usePrevious(liveLocal);
+  const prevLiveVisitante = usePrevious(liveVisitante);
+  const [pulseLocal, setPulseLocal] = useState(0);
+  const [pulseVisitante, setPulseVisitante] = useState(0);
+  useEffect(() => {
+    if (prevLiveLocal != null && liveLocal != null && liveLocal !== prevLiveLocal) {
+      setPulseLocal((k) => k + 1);
+    }
+  }, [liveLocal, prevLiveLocal]);
+  useEffect(() => {
+    if (prevLiveVisitante != null && liveVisitante != null && liveVisitante !== prevLiveVisitante) {
+      setPulseVisitante((k) => k + 1);
+    }
+  }, [liveVisitante, prevLiveVisitante]);
+
   return (
     <MobileShell
       activeTab="inicio"
@@ -160,7 +182,7 @@ export default function Inicio() {
             <div>
               <div style={kicker}>Tus puntos</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 8 }}>
-                <span className="mono" style={me?.id === lider?.id ? bigNumGold : bigNum}>{myPts}</span>
+                <span className="mono" style={me?.id === lider?.id ? bigNumGold : bigNum}>{myPtsDisplay}</span>
                 <span style={{ fontSize: 14, color: "var(--ink-3)", fontWeight: 500 }}>pts</span>
               </div>
               {stats.jugados > 0 && (
@@ -174,7 +196,7 @@ export default function Inicio() {
             <div style={{ textAlign: "right" }}>
               <div style={kicker}>Posición</div>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 4, marginTop: 8 }}>
-                <span className="mono" style={me?.id === lider?.id ? bigNumGold : bigNum}>{me?.rank || "—"}</span>
+                <span className="mono" style={me?.id === lider?.id ? bigNumGold : bigNum}>{me?.rank ? myRankDisplay : "—"}</span>
                 <span style={{ fontSize: 14, color: "var(--ink-3)", fontWeight: 500 }}>/ {totalJugadores || 0}</span>
               </div>
               {lider && me && me.id !== lider.id && (
@@ -256,18 +278,38 @@ export default function Inicio() {
 
         {/* Partido en vivo */}
         {live && (
-          <Card pad={14} elevated style={{ background: "var(--ink)", borderColor: "var(--ink)", color: "var(--bg)" }}>
+          <Card
+            pad={14}
+            elevated
+            className="breathe-live"
+            style={{ background: "var(--ink)", borderColor: "var(--ink)", color: "var(--bg)" }}
+          >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
               <Pill tone="live">En vivo</Pill>
               <span style={{ fontSize: 11, color: "oklch(0.75 0.02 60)", fontWeight: 500 }}>
                 {live.grupo ? `Grupo ${live.grupo}` : faseLabel(fases, live.fase_id)}
               </span>
             </div>
-            <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
               <TeamMini code={code(live.equipo_local)} label={live.equipo_local} dark />
-              <span className="mono" style={{ fontSize: 26, fontWeight: 600, color: "var(--bg)", letterSpacing: -1 }}>
-                vs
-              </span>
+              {liveLocal != null && liveVisitante != null ? (
+                <span
+                  className="mono"
+                  style={{ fontSize: 28, fontWeight: 700, color: "var(--bg)", letterSpacing: -1, display: "inline-flex", alignItems: "baseline", gap: 6 }}
+                >
+                  <span key={`l-${pulseLocal}`} className={pulseLocal > 0 ? "bounce" : undefined} style={{ display: "inline-block" }}>
+                    {liveLocal}
+                  </span>
+                  <span style={{ opacity: 0.5 }}>–</span>
+                  <span key={`v-${pulseVisitante}`} className={pulseVisitante > 0 ? "bounce" : undefined} style={{ display: "inline-block" }}>
+                    {liveVisitante}
+                  </span>
+                </span>
+              ) : (
+                <span className="mono" style={{ fontSize: 26, fontWeight: 600, color: "var(--bg)", letterSpacing: -1 }}>
+                  vs
+                </span>
+              )}
               <TeamMini code={code(live.equipo_visitante)} label={live.equipo_visitante} dark right />
             </div>
             {predicciones[live.id]?.goles_local != null && (

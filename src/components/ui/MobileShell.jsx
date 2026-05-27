@@ -33,7 +33,7 @@ export function MobileHeader({ title, subtitle, leading, trailing = true, big = 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>{leading}</div>
         {trailing && (
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <button style={iconBtn} aria-label="Notificaciones">
+            <button style={iconBtn} className="icon-tap" aria-label="Notificaciones">
               <Icon.Bell />
               <span
                 style={{
@@ -112,6 +112,7 @@ export function TabBar({ active }) {
             <button
               key={t.id}
               onClick={() => navigate(t.path)}
+              className="icon-tap"
               style={{
                 flex: 1,
                 position: "relative",
@@ -128,6 +129,7 @@ export function TabBar({ active }) {
                 fontWeight: on ? 700 : 500,
                 letterSpacing: -0.1,
                 transition: "color 160ms ease",
+                cursor: "pointer",
               }}
             >
               <span

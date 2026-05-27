@@ -18,6 +18,7 @@ import {
 } from "@/components/ui";
 import { code } from "@/lib/constants";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { celebrateExact, celebrateWin, celebrateOnce } from "@/lib/celebrate";
 
 export default function MatchDetail() {
   const { id } = useParams();
@@ -69,16 +70,37 @@ export default function MatchDetail() {
   }, [myPred?.goles_local, myPred?.goles_visitante]);
 
   const [saving, setSaving] = useState(false);
+  const [savedTick, setSavedTick] = useState(0);
   const guardar = async () => {
     if (draft.local == null || draft.visitante == null) return;
     setSaving(true);
     try {
       await setPrediccion(id, "goles_local", draft.local);
       await setPrediccion(id, "goles_visitante", draft.visitante);
+      setSavedTick((k) => k + 1);
     } finally {
       setSaving(false);
     }
   };
+
+  // Confetti automático cuando se entra a un partido finalizado y el usuario acertó.
+  useEffect(() => {
+    if (!partido || !partido.resultado_ingresado || !myPred) return;
+    if (myPred.goles_local == null || myPred.goles_visitante == null) return;
+    const exact =
+      Number(myPred.goles_local) === Number(partido.goles_local) &&
+      Number(myPred.goles_visitante) === Number(partido.goles_visitante);
+    const won = (myPred.puntos_obtenidos || 0) > 0;
+    if (exact) {
+      celebrateOnce(`exact-${id}`, () => {
+        setTimeout(celebrateExact, 280);
+      });
+    } else if (won) {
+      celebrateOnce(`win-${id}`, () => {
+        setTimeout(celebrateWin, 280);
+      });
+    }
+  }, [partido, myPred, id]);
 
   const [tab, setTab] = useState("familia");
 
@@ -124,53 +146,114 @@ export default function MatchDetail() {
           <div style={{ width: 36 }} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12, padding: "8px 16px" }}>
-          <div style={{ textAlign: "center" }}>
-            <Flag code={code(partido.equipo_local)} w={56} h={40} rounded={6} />
-            <div style={{ marginTop: 8, fontWeight: 600, fontSize: 15, letterSpacing: -0.1 }}>{partido.equipo_local}</div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-            {isFinal ? (
-              <>
+        {(() => {
+          const isDraw = isFinal && partido.goles_local === partido.goles_visitante;
+          const winnerSide = isFinal && !isDraw
+            ? partido.goles_local > partido.goles_visitante
+              ? "local"
+              : "visitante"
+            : null;
+          const HeaderTeam = ({ team, side }) => {
+            const isWinner = winnerSide === side;
+            const isLoser = winnerSide && !isWinner;
+            return (
+              <div style={{ textAlign: "center", opacity: isLoser ? 0.55 : 1, transition: "opacity 320ms ease" }}>
+                <div style={{ position: "relative", display: "inline-block" }}>
+                  <Flag code={code(team)} w={56} h={40} rounded={6} />
+                  {isWinner && (
+                    <span
+                      className="win-mark"
+                      aria-hidden
+                      style={{
+                        position: "absolute",
+                        top: -8,
+                        right: -8,
+                        width: 22,
+                        height: 22,
+                        borderRadius: "50%",
+                        background: "var(--accent)",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "2px solid var(--ink)",
+                      }}
+                    >
+                      <Icon.Check style={{ width: 11, height: 11 }} />
+                    </span>
+                  )}
+                </div>
                 <div
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "4px 10px",
-                    borderRadius: 999,
-                    background: "rgba(255,255,255,0.1)",
-                    color: "var(--bg)",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: 0.4,
-                    textTransform: "uppercase",
+                    marginTop: 8,
+                    fontWeight: isWinner ? 700 : 600,
+                    fontSize: 15,
+                    letterSpacing: -0.1,
                   }}
                 >
-                  Finalizado
+                  {team}
                 </div>
-                <span className="mono" style={{ fontSize: 44, fontWeight: 600, letterSpacing: -2, color: "var(--bg)", lineHeight: 1 }}>
-                  {partido.goles_local} – {partido.goles_visitante}
-                </span>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: 11, color: "oklch(0.75 0.02 60)", textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 600 }}>
-                  vs
-                </div>
-                <span className="mono" style={{ fontSize: 18, color: "oklch(0.75 0.02 60)" }}>
-                  {formatDateTime(partido.fecha)}
-                </span>
-              </>
-            )}
-          </div>
+              </div>
+            );
+          };
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12, padding: "8px 16px" }}>
+              <HeaderTeam team={partido.equipo_local} side="local" />
 
-          <div style={{ textAlign: "center" }}>
-            <Flag code={code(partido.equipo_visitante)} w={56} h={40} rounded={6} />
-            <div style={{ marginTop: 8, fontWeight: 600, fontSize: 15, letterSpacing: -0.1 }}>{partido.equipo_visitante}</div>
-          </div>
-        </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                {isFinal ? (
+                  <>
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "4px 10px",
+                        borderRadius: 999,
+                        background: isDraw ? "var(--gold)" : "rgba(255,255,255,0.1)",
+                        color: isDraw ? "var(--ink)" : "var(--bg)",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: 0.4,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {isDraw ? "Empate" : "Finalizado"}
+                    </div>
+                    <span
+                      className="mono score-reveal"
+                      style={{
+                        fontSize: 44,
+                        fontWeight: 700,
+                        letterSpacing: -2,
+                        color: "var(--bg)",
+                        lineHeight: 1,
+                        display: "inline-flex",
+                        alignItems: "baseline",
+                        gap: 6,
+                      }}
+                    >
+                      <span style={{ opacity: winnerSide === "visitante" ? 0.55 : 1 }}>{partido.goles_local}</span>
+                      <span style={{ opacity: 0.45 }}>–</span>
+                      <span style={{ opacity: winnerSide === "local" ? 0.55 : 1 }}>{partido.goles_visitante}</span>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 11, color: "oklch(0.75 0.02 60)", textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 600 }}>
+                      vs
+                    </div>
+                    <span className="mono" style={{ fontSize: 18, color: "oklch(0.75 0.02 60)" }}>
+                      {formatDateTime(partido.fecha)}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <HeaderTeam team={partido.equipo_visitante} side="visitante" />
+            </div>
+          );
+        })()}
       </div>
 
       {/* Mi pronóstico / Editor */}
@@ -230,21 +313,40 @@ export default function MatchDetail() {
               <button
                 onClick={guardar}
                 disabled={saving || draft.local == null || draft.visitante == null}
+                className="btn-interactive"
                 style={{
                   width: "100%",
                   marginTop: 12,
                   padding: "12px 16px",
-                  background: "var(--ink)",
+                  background: savedTick > 0 ? "var(--accent-ink)" : "var(--ink)",
                   color: "var(--bg)",
                   border: "none",
                   borderRadius: "var(--r-md)",
                   fontWeight: 600,
                   fontSize: 14,
-                  cursor: "pointer",
+                  cursor: saving ? "wait" : "pointer",
                   opacity: saving || draft.local == null || draft.visitante == null ? 0.6 : 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  boxShadow: "var(--shadow-1)",
                 }}
               >
-                {saving ? "Guardando…" : "Guardar pronóstico"}
+                {saving ? (
+                  <>
+                    <Spinner /> Guardando…
+                  </>
+                ) : savedTick > 0 ? (
+                  <>
+                    <span key={savedTick} className="save-check" style={{ display: "inline-flex" }}>
+                      <Icon.Check style={{ width: 14, height: 14 }} />
+                    </span>
+                    Pronóstico guardado
+                  </>
+                ) : (
+                  <>Guardar pronóstico</>
+                )}
               </button>
             </div>
           )}
@@ -340,6 +442,30 @@ function FamilyPicks({ usuarios, picksByUser, mePartial }) {
         );
       })}
     </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden style={{ display: "inline-block" }}>
+      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.6" strokeOpacity="0.25" fill="none" />
+      <path
+        d="M7 1.5 a 5.5 5.5 0 0 1 5.5 5.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        fill="none"
+      >
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          from="0 7 7"
+          to="360 7 7"
+          dur="0.9s"
+          repeatCount="indefinite"
+        />
+      </path>
+    </svg>
   );
 }
 

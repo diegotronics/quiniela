@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useFases } from "@/hooks/useFases";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
@@ -9,6 +9,7 @@ import { listPuntajesGlobales } from "@/api/predicciones";
 import {
   Avatar,
   Card,
+  ChampionReveal,
   Flag,
   Icon,
   MobileHeader,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui";
 import { rankingFromUsers, userStreak } from "@/lib/stats";
 import { code } from "@/lib/constants";
+import { celebrateChampion, celebrateOnce } from "@/lib/celebrate";
 
 const KNOCKOUT_PHASES = [
   { id: "dieciseisavos", name: "16avos", short: "16avos" },
@@ -64,6 +66,22 @@ export default function Bracket() {
     if (pr.goles_local === pr.goles_visitante) return null;
     return pr.goles_local > pr.goles_visitante ? finalMatch.equipo_local : finalMatch.equipo_visitante;
   }, [finalMatch, predicciones]);
+
+  const campeonReal = useMemo(() => {
+    if (!finalMatch || !finalMatch.resultado_ingresado) return null;
+    if (finalMatch.goles_local === finalMatch.goles_visitante) return null;
+    return finalMatch.goles_local > finalMatch.goles_visitante
+      ? finalMatch.equipo_local
+      : finalMatch.equipo_visitante;
+  }, [finalMatch]);
+  const acertoCampeon = campeonReal && campeonPred && campeonReal === campeonPred;
+
+  useEffect(() => {
+    if (!acertoCampeon || !finalMatch) return;
+    celebrateOnce(`champion-${finalMatch.id}`, () => {
+      setTimeout(celebrateChampion, 350);
+    });
+  }, [acertoCampeon, finalMatch]);
 
   return (
     <MobileShell
@@ -127,58 +145,86 @@ export default function Bracket() {
       )}
 
       <div style={{ padding: "0 20px", marginTop: 4 }}>
-        <Card style={{ background: "var(--gold-soft)", border: "1px solid color-mix(in oklab, var(--gold) 30%, transparent)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "color-mix(in oklab, var(--gold) 30%, transparent)",
-                color: "oklch(0.4 0.1 85)",
-              }}
-            >
-              <Icon.Crown />
+        {acertoCampeon ? (
+          <Card
+            className="breathe-gold"
+            style={{
+              background: "linear-gradient(180deg, var(--gold-soft) 0%, var(--surface) 100%)",
+              border: "1px solid var(--gold)",
+            }}
+          >
+            <div style={{ fontSize: 11, color: "var(--gold-ink)", fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", textAlign: "center" }}>
+              ¡Acertaste el campeón!
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: "oklch(0.45 0.10 85)", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase" }}>
-                Tu campeón
+            <ChampionReveal teamName={campeonReal} Flag={Flag} code={code} size={120} />
+            <div style={{ textAlign: "center", marginTop: 4, fontSize: 13, color: "var(--ink-2)" }}>
+              +{finalRound?.fase?.pts_exacto ?? 0} pts asegurados
+            </div>
+          </Card>
+        ) : (
+          <Card style={{ background: "var(--gold-soft)", border: "1px solid color-mix(in oklab, var(--gold) 30%, transparent)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "color-mix(in oklab, var(--gold) 30%, transparent)",
+                  color: "oklch(0.4 0.1 85)",
+                }}
+              >
+                <Icon.Crown />
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                {campeonPred ? (
-                  <>
-                    <Flag code={code(campeonPred)} w={26} h={18} rounded={3} />
-                    <span style={{ fontWeight: 600, fontSize: 16, color: "var(--ink)" }}>{campeonPred}</span>
-                  </>
-                ) : (
-                  <span style={{ fontSize: 14, color: "var(--ink-3)" }}>
-                    Pronosticá el partido final para definirlo.
-                  </span>
-                )}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: "oklch(0.45 0.10 85)", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase" }}>
+                  {campeonReal ? "Campeón del torneo" : "Tu campeón"}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                  {campeonReal ? (
+                    <>
+                      <Flag code={code(campeonReal)} w={26} h={18} rounded={3} />
+                      <span style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{campeonReal}</span>
+                      {campeonPred && (
+                        <span style={{ marginLeft: 6, fontSize: 11, color: "var(--ink-3)" }}>
+                          (vos pronosticaste {campeonPred})
+                        </span>
+                      )}
+                    </>
+                  ) : campeonPred ? (
+                    <>
+                      <Flag code={code(campeonPred)} w={26} h={18} rounded={3} />
+                      <span style={{ fontWeight: 600, fontSize: 16, color: "var(--ink)" }}>{campeonPred}</span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: 14, color: "var(--ink-3)" }}>
+                      Pronosticá el partido final para definirlo.
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-          {finalMatch && (
-            <div
-              style={{
-                marginTop: 12,
-                padding: "10px 12px",
-                background: "rgba(255,255,255,0.5)",
-                borderRadius: "var(--r-md)",
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: 12,
-                color: "var(--ink-2)",
-              }}
-            >
-              <span>+{finalRound?.fase?.pts_exacto ?? 0} pts si acertás</span>
-              <span>Final · {finalMatch.equipo_local} vs {finalMatch.equipo_visitante}</span>
-            </div>
-          )}
-        </Card>
+            {finalMatch && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "10px 12px",
+                  background: "rgba(255,255,255,0.5)",
+                  borderRadius: "var(--r-md)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: 12,
+                  color: "var(--ink-2)",
+                }}
+              >
+                <span>+{finalRound?.fase?.pts_exacto ?? 0} pts si acertás</span>
+                <span>Final · {finalMatch.equipo_local} vs {finalMatch.equipo_visitante}</span>
+              </div>
+            )}
+          </Card>
+        )}
       </div>
     </MobileShell>
   );
@@ -225,7 +271,8 @@ function BracketMatch({ m, pred }) {
           : m.equipo_visitante
       : null;
 
-  const Row = ({ equipo, isWinner }) => (
+  const isFinal = Boolean(m?.resultado_ingresado);
+  const Row = ({ equipo, isWinner, isLoser }) => (
     <div
       style={{
         display: "flex",
@@ -235,6 +282,8 @@ function BracketMatch({ m, pred }) {
         background: isWinner ? "var(--ink)" : "transparent",
         color: isWinner ? "var(--bg)" : "var(--ink)",
         borderRadius: 8,
+        opacity: isLoser ? 0.55 : 1,
+        transition: "opacity 280ms ease, background 280ms ease",
       }}
     >
       {equipo ? (
@@ -242,10 +291,14 @@ function BracketMatch({ m, pred }) {
       ) : (
         <div style={{ width: 20, height: 14, borderRadius: 2, background: "var(--line)" }} />
       )}
-      <span style={{ fontSize: 12, fontWeight: 600, flex: 1, letterSpacing: -0.1 }}>
+      <span style={{ fontSize: 12, fontWeight: isWinner ? 700 : 600, flex: 1, letterSpacing: -0.1 }}>
         {equipo || "—"}
       </span>
-      {isWinner && <Icon.Check style={{ color: "var(--bg)", width: 12, height: 12 }} />}
+      {isWinner && (
+        <span className="win-mark" style={{ display: "inline-flex" }}>
+          <Icon.Check style={{ color: "var(--bg)", width: 12, height: 12 }} />
+        </span>
+      )}
     </div>
   );
 
@@ -260,8 +313,16 @@ function BracketMatch({ m, pred }) {
         boxShadow: "var(--shadow-1)",
       }}
     >
-      <Row equipo={m?.equipo_local} isWinner={winner && winner === m.equipo_local} />
-      <Row equipo={m?.equipo_visitante} isWinner={winner && winner === m.equipo_visitante} />
+      <Row
+        equipo={m?.equipo_local}
+        isWinner={winner && winner === m.equipo_local}
+        isLoser={isFinal && winner && winner !== m.equipo_local}
+      />
+      <Row
+        equipo={m?.equipo_visitante}
+        isWinner={winner && winner === m.equipo_visitante}
+        isLoser={isFinal && winner && winner !== m.equipo_visitante}
+      />
       {m && pred?.goles_local != null && (
         <div
           style={{

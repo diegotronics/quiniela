@@ -191,6 +191,193 @@ a { color: inherit; text-decoration: none; }
 }
 .rise { animation: lcfRise 320ms ease-out both; }
 
+/* ───────── Microinteracciones ───────── */
+
+@keyframes lcfWinReveal {
+  0%   { opacity: 0; transform: translateX(-8px) scale(0.9); }
+  60%  { opacity: 1; transform: translateX(2px) scale(1.06); }
+  100% { opacity: 1; transform: translateX(0)  scale(1); }
+}
+.win-mark { animation: lcfWinReveal 420ms cubic-bezier(.2,.7,.2,1) both; }
+
+@keyframes lcfScoreReveal {
+  0%   { opacity: 0; transform: scale(0.7); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.score-reveal { animation: lcfScoreReveal 380ms cubic-bezier(.2,.7,.2,1) both; }
+
+@keyframes lcfBounce {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.bounce { animation: lcfBounce 240ms ease-out; }
+
+@keyframes lcfBreathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--danger) 40%, transparent),
+                         var(--shadow-2); }
+  50%      { box-shadow: 0 0 0 6px color-mix(in oklab, var(--danger) 8%, transparent),
+                         var(--shadow-2); }
+}
+.breathe-live { animation: lcfBreathe 2.4s ease-in-out infinite; }
+
+@keyframes lcfBreatheGold {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 35%, transparent),
+                         var(--shadow-2); }
+  50%      { box-shadow: 0 0 0 8px color-mix(in oklab, var(--gold) 6%, transparent),
+                         var(--shadow-2); }
+}
+.breathe-gold { animation: lcfBreatheGold 2.6s ease-in-out infinite; }
+
+@keyframes lcfPodiumRise {
+  from { opacity: 0; transform: translateY(20px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.podium-rise { animation: lcfPodiumRise 520ms cubic-bezier(.2,.8,.2,1) both; }
+
+@keyframes lcfStagger {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stagger-item { animation: lcfStagger 360ms ease-out both; }
+
+@keyframes lcfTrophyRise {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.6) rotate(-8deg); }
+  60%  { opacity: 1; transform: translateY(-4px) scale(1.1) rotate(4deg); }
+  100% { opacity: 1; transform: translateY(0)    scale(1)   rotate(0); }
+}
+.trophy-rise { animation: lcfTrophyRise 720ms cubic-bezier(.2,.7,.2,1) both; }
+
+@keyframes lcfSparkle {
+  0%, 100% { opacity: 0; transform: scale(0.6) rotate(0deg); }
+  50%      { opacity: 1; transform: scale(1.2) rotate(180deg); }
+}
+.sparkle { animation: lcfSparkle 1.4s ease-in-out infinite; }
+
+@keyframes lcfStrokeDraw {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Hover-lift + press ─ cards interactivos */
+.card-interactive {
+  transition: transform 180ms cubic-bezier(.2,.7,.2,1), box-shadow 180ms ease;
+  will-change: transform;
+}
+@media (hover: hover) {
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+  }
+}
+.card-interactive:active {
+  transform: scale(0.985);
+  box-shadow: var(--shadow-1);
+  transition-duration: 80ms;
+}
+
+/* Botones interactivos */
+.btn-interactive {
+  transition: transform 160ms cubic-bezier(.2,.7,.2,1), box-shadow 160ms ease,
+              opacity 120ms ease, background 160ms ease;
+}
+@media (hover: hover) {
+  .btn-interactive:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-2);
+  }
+}
+.btn-interactive:active:not(:disabled) {
+  transform: scale(0.97);
+  box-shadow: var(--shadow-1);
+  transition-duration: 70ms;
+}
+
+/* Chips clickeables (fases, grupos, filtros) */
+.chip-interactive {
+  transition: transform 140ms cubic-bezier(.2,.7,.2,1), background 160ms ease,
+              color 160ms ease, border-color 160ms ease;
+}
+.chip-interactive:active:not(:disabled) {
+  transform: scale(0.94);
+  transition-duration: 60ms;
+}
+
+/* Tap feedback en iconos pequeños (tab bar, header bell) */
+.icon-tap {
+  transition: transform 160ms cubic-bezier(.2,.7,.2,1);
+}
+.icon-tap:active {
+  transform: scale(0.86);
+  transition-duration: 60ms;
+}
+
+/* Chevron en cards clickables — se traslada en hover */
+.hover-chevron {
+  display: inline-flex;
+  transition: transform 200ms cubic-bezier(.2,.7,.2,1);
+}
+@media (hover: hover) {
+  .card-interactive:hover .hover-chevron,
+  .btn-interactive:hover .hover-chevron {
+    transform: translateX(3px);
+  }
+}
+
+/* SectionTitle action — subrayado animado en hover */
+.section-action {
+  position: relative;
+  cursor: pointer;
+}
+.section-action::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -2px;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1);
+}
+@media (hover: hover) {
+  .section-action:hover::after { transform: scaleX(1); }
+}
+
+/* Flag con hover sutil (desktop) */
+@media (hover: hover) {
+  .flag-hoverable { transition: transform 200ms ease; }
+  .flag-hoverable:hover { transform: scale(1.08); }
+}
+
+/* Save button — estado guardado con check */
+@keyframes lcfSaveCheck {
+  0%   { opacity: 0; transform: scale(0); }
+  60%  { opacity: 1; transform: scale(1.25); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.save-check { animation: lcfSaveCheck 380ms cubic-bezier(.2,.7,.2,1) both; }
+
+/* Respeto a usuarios con preferencia de menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card-interactive:hover,
+  .card-interactive:active,
+  .btn-interactive:hover,
+  .btn-interactive:active,
+  .chip-interactive:active,
+  .icon-tap:active {
+    transform: none !important;
+  }
+}
+
 .flag-chip {
   box-shadow:
     0 1px 2px rgba(20,17,13,0.18),

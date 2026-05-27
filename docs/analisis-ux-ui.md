@@ -89,6 +89,55 @@ Después podés iterar en identidad gráfica (motivo, tipografía display, micro
 
 ---
 
+## Sistema de microinteracciones (punto 10)
+
+Implementado como capa transversal en `globals.css` + helpers en `src/lib/celebrate.js` y `src/hooks/useCountUp.js`.
+
+**Foundation CSS** ([globals.css:188-380](../src/styles/globals.css))
+
+- `.card-interactive`, `.btn-interactive`, `.chip-interactive`, `.icon-tap` — hover-lift en desktop + press scale en mobile (`:active`).
+- `.win-mark`, `.score-reveal`, `.bounce`, `.breathe-live`, `.breathe-gold`, `.podium-rise`, `.stagger-item`, `.trophy-rise`, `.sparkle`, `.save-check`, `.hover-chevron`, `.section-action`, `.flag-hoverable` — keyframes nombrados `lcf*`.
+- `@media (prefers-reduced-motion: reduce)` desactiva transforms y reduce duración a 0.01ms para usuarios sensibles.
+
+**Confetti — `canvas-confetti`** (~6 KB gzip, [src/lib/celebrate.js](../src/lib/celebrate.js))
+
+Cuatro presets con paletas semánticas:
+
+- `celebrateExact()` — dispara al ver un partido finalizado donde el pronóstico coincidió exacto. Triple burst (centro + esquinas) + vibración háptica.
+- `celebrateWin()` — burst breve cuando el pronóstico ganó pero no fue exacto.
+- `celebrateChampion()` — burst sostenido durante 1.4 s cuando el usuario acertó al campeón del torneo. Combina con el componente `<ChampionReveal>`.
+- `celebratePodium()` — al ver la tabla y estar en top 3.
+
+Cada celebración se cachea con `celebrateOnce(key, fn)` para no dispararse repetidamente.
+
+**Trofeo SVG + sparkles** ([ChampionReveal.jsx](../src/components/ui/ChampionReveal.jsx))
+
+Componente puro SVG/CSS sin dependencias. Trofeo con gradiente dorado, asas, estrella central, base. Los `<Sparkles>` orbitan con delays escalonados. Se monta dentro de la card de campeón del bracket cuando coincide la predicción del usuario con el resultado real.
+
+**Winner reveal estilo Google**
+
+Cada partido finalizado destaca al ganador en tres pantallas:
+
+- [Partidos.jsx](../src/pages/Partidos.jsx): `TeamRow` con peso 800, check `.win-mark` y opacidad 0.55 en perdedor. Score con color `--accent-ink` en el ganador y `--ink-3` en el perdedor.
+- [MatchDetail.jsx](../src/pages/MatchDetail.jsx): `HeaderTeam` con check en círculo accent sobre la bandera del ganador. Pill cambia a "Empate" en `--gold` si goles_local = goles_visitante.
+- [Bracket.jsx](../src/pages/Bracket.jsx) `BracketMatch`: ganador en `--ink` puro con check animado; perdedor a opacidad 0.55.
+
+Todo se anima en la entrada con `lcfWinReveal` + `lcfScoreReveal` (~400 ms cubic-bezier).
+
+**Count-up**
+
+`useCountUp(target, { duration })` en [useCountUp.js](../src/hooks/useCountUp.js) — easing cúbico de salida. Aplicado a los puntos y posición de [Inicio.jsx](../src/pages/Inicio.jsx).
+
+**Estados live**
+
+Live card en Inicio con `.breathe-live` (box-shadow pulsante en `--danger`). Goles que cambian disparan `.bounce` (240 ms) por dígito.
+
+**Save button**
+
+[MatchDetail.jsx](../src/pages/MatchDetail.jsx) — el botón "Guardar pronóstico" pasa por `[Spinner + Guardando…] → [✓ Pronóstico guardado]` con `.save-check` y fondo `--accent-ink` momentáneo.
+
+---
+
 ## Estado de implementación
 
 | ID | Mejora | Estado |
@@ -102,7 +151,8 @@ Después podés iterar en identidad gráfica (motivo, tipografía display, micro
 | 7 | Motivo gráfico recurrente | ✅ Implementado |
 | 8 | Tipografía display secundaria | ✅ Implementado |
 | 9 | Color de acento dinámico por sección | ✅ Implementado |
-| 10 | Microinteracciones (hover-lift, confetti) | ⏳ Pendiente |
+| 10 | Microinteracciones (hover-lift, confetti) | ✅ Implementado |
+| 10w | Winner reveal estilo Google + champion trophy | ✅ Implementado |
 | 11 | Avatar con anillo de estado | ✅ Implementado |
 | 12 | Barra de progreso protagonista | 🟡 Parcial (gradiente aplicado) |
 | 13 | Countdown live al próximo partido | ⏳ Pendiente |

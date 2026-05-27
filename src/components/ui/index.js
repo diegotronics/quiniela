@@ -8,3 +8,4 @@ export { MobileShell, MobileHeader, TabBar, iconBtn } from "./MobileShell.jsx";
 export { Button } from "./Button.jsx";
 export { Logo } from "./Logo.jsx";
 export { ScoreStepper } from "./ScoreStepper.jsx";
+export { ChampionReveal, TrophyIcon, Sparkles } from "./ChampionReveal.jsx";

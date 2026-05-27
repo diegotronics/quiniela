@@ -6,7 +6,6 @@ const base = {
   fontFamily: "var(--font-sans)",
   letterSpacing: -0.1,
   cursor: "pointer",
-  transition: "opacity 120ms ease",
 };
 
 const sizes = {
@@ -21,6 +20,7 @@ const variants = {
     color: "var(--bg)",
     border: "none",
     fontWeight: 600,
+    boxShadow: "var(--shadow-1)",
   },
   ghost: {
     background: "var(--surface-2)",
@@ -57,12 +57,18 @@ export function Button({
   type = "button",
   children,
   style,
+  className = "",
   ...rest
 }) {
+  const interactive = variant !== "link";
+  const classes = [interactive ? "btn-interactive" : "", className]
+    .filter(Boolean)
+    .join(" ");
   return (
     <button
       type={type}
       disabled={disabled}
+      className={classes || undefined}
       style={{
         ...base,
         ...sizes[size],

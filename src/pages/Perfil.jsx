@@ -116,10 +116,10 @@ export default function Perfil() {
 
         {/* Stats grid */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <Stat label="Puntos totales" val={String(me?.puntos ?? 0)} sub={me ? `${me.rank}° lugar` : "—"} />
-          <Stat label="Aciertos" val={String(stats.ganador)} sub={`de ${stats.jugados || 0}`} />
-          <Stat label="Exactos" val={String(stats.exactos)} sub={stats.jugados > 0 ? `${Math.round((stats.exactos / stats.jugados) * 100)}%` : "—"} />
-          <Stat label="Mejor jornada" val={mejorJornada ? `+${mejorJornada.pts}` : "—"} sub={mejorJornada ? mejorJornada.label : "Aún sin jornadas"} />
+          <Stat index={0} label="Puntos totales" val={String(me?.puntos ?? 0)} sub={me ? `${me.rank}° lugar` : "—"} />
+          <Stat index={1} label="Aciertos" val={String(stats.ganador)} sub={`de ${stats.jugados || 0}`} />
+          <Stat index={2} label="Exactos" val={String(stats.exactos)} sub={stats.jugados > 0 ? `${Math.round((stats.exactos / stats.jugados) * 100)}%` : "—"} />
+          <Stat index={3} label="Mejor jornada" val={mejorJornada ? `+${mejorJornada.pts}` : "—"} sub={mejorJornada ? mejorJornada.label : "Aún sin jornadas"} />
         </div>
 
         {/* Logros */}
@@ -129,12 +129,14 @@ export default function Perfil() {
             {logros.map((b, i) => (
               <div
                 key={i}
+                className="stagger-item"
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   gap: 4,
                   opacity: b.on ? 1 : 0.35,
+                  animationDelay: `${i * 45}ms`,
                 }}
               >
                 <div
@@ -252,9 +254,9 @@ export default function Perfil() {
   );
 }
 
-function Stat({ label, val, sub }) {
+function Stat({ label, val, sub, index = 0 }) {
   return (
-    <Card pad={14}>
+    <Card pad={14} className="stagger-item" style={{ animationDelay: `${index * 60}ms` }}>
       <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 500, letterSpacing: 0.2 }}>{label}</div>
       <div style={{ marginTop: 4, display: "flex", alignItems: "baseline", gap: 6 }}>
         <span className="mono" style={{ fontSize: 24, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.5 }}>

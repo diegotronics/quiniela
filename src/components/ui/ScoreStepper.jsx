@@ -1,9 +1,20 @@
+import { useEffect, useRef, useState } from "react";
+
 export function ScoreStepper({ label, value, onChange, size = "md" }) {
   const v = value == null ? 0 : value;
   const dims =
     size === "lg"
       ? { w: 48, h: 56, num: 32, btn: 22 }
       : { w: 32, h: 38, num: 22, btn: 18 };
+
+  const [bounceKey, setBounceKey] = useState(0);
+  const prev = useRef(v);
+  useEffect(() => {
+    if (prev.current !== v) {
+      setBounceKey((k) => k + 1);
+      prev.current = v;
+    }
+  }, [v]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
@@ -24,6 +35,7 @@ export function ScoreStepper({ label, value, onChange, size = "md" }) {
         <button
           onClick={() => onChange(Math.max(0, v - 1))}
           aria-label="Bajar gol"
+          className="icon-tap"
           style={{
             width: dims.w,
             height: dims.h,
@@ -38,7 +50,8 @@ export function ScoreStepper({ label, value, onChange, size = "md" }) {
           –
         </button>
         <span
-          className="mono"
+          key={bounceKey}
+          className="mono bounce"
           style={{
             width: 44,
             textAlign: "center",
@@ -46,6 +59,7 @@ export function ScoreStepper({ label, value, onChange, size = "md" }) {
             fontWeight: 600,
             color: value == null ? "var(--ink-4)" : "var(--ink)",
             letterSpacing: -0.5,
+            display: "inline-block",
           }}
         >
           {value == null ? 0 : value}
@@ -53,6 +67,7 @@ export function ScoreStepper({ label, value, onChange, size = "md" }) {
         <button
           onClick={() => onChange(v + 1)}
           aria-label="Subir gol"
+          className="icon-tap"
           style={{
             width: dims.w,
             height: dims.h,

@@ -103,6 +103,7 @@ export default function Partidos() {
                 key={f.id}
                 disabled={isLocked}
                 onClick={() => setActivePhase(f.id)}
+                className="chip-interactive"
                 style={{
                   padding: "8px 14px",
                   borderRadius: 999,
@@ -143,6 +144,7 @@ export default function Partidos() {
               <button
                 key={g}
                 onClick={() => setActiveGrupo(g)}
+                className="chip-interactive"
                 style={{
                   flexShrink: 0,
                   width: 38,
@@ -153,6 +155,7 @@ export default function Partidos() {
                   border: activeGrupo === g ? "none" : "0.5px solid var(--line)",
                   fontSize: 13,
                   fontWeight: 600,
+                  cursor: "pointer",
                 }}
               >
                 {g}
@@ -209,6 +212,14 @@ export default function Partidos() {
 function MatchListItem({ m, pred, onClick }) {
   const isFinal = !!m.resultado_ingresado;
   const tienePick = pred && pred.goles_local != null && pred.goles_visitante != null;
+  const winnerSide = isFinal
+    ? m.goles_local === m.goles_visitante
+      ? null
+      : m.goles_local > m.goles_visitante
+        ? "local"
+        : "visitante"
+    : null;
+  const isDraw = isFinal && m.goles_local === m.goles_visitante;
   return (
     <Card pad={14} onClick={onClick}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -219,9 +230,15 @@ function MatchListItem({ m, pred, onClick }) {
           </span>
         </div>
         {isFinal ? (
-          <Pill tone="default">
-            <Icon.Check style={{ width: 11, height: 11 }} /> Finalizado
-          </Pill>
+          isDraw ? (
+            <Pill tone="gold">
+              <Icon.Check style={{ width: 11, height: 11 }} /> Empate
+            </Pill>
+          ) : (
+            <Pill tone="default">
+              <Icon.Check style={{ width: 11, height: 11 }} /> Finalizado
+            </Pill>
+          )
         ) : tienePick ? (
           <Pill tone="accent">
             <Icon.Check style={{ width: 11, height: 11 }} /> Pronosticado
@@ -232,14 +249,41 @@ function MatchListItem({ m, pred, onClick }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 1fr", alignItems: "center", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Flag code={code(m.equipo_local)} w={32} h={22} rounded={4} />
-          <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", letterSpacing: -0.2 }}>{m.equipo_local}</span>
-        </div>
+        <TeamRow
+          team={m.equipo_local}
+          isFinal={isFinal}
+          isWinner={winnerSide === "local"}
+          isLoser={winnerSide === "visitante"}
+        />
         <div style={{ textAlign: "center" }}>
           {isFinal ? (
-            <span className="mono" style={{ fontSize: 22, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.5 }}>
-              {m.goles_local} – {m.goles_visitante}
+            <span
+              className="mono score-reveal"
+              style={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: "var(--ink)",
+                letterSpacing: -0.5,
+                display: "inline-flex",
+                alignItems: "baseline",
+                gap: 4,
+              }}
+            >
+              <span
+                style={{
+                  color: winnerSide === "local" ? "var(--accent-ink)" : winnerSide === "visitante" ? "var(--ink-3)" : "var(--ink)",
+                }}
+              >
+                {m.goles_local}
+              </span>
+              <span style={{ opacity: 0.45 }}>–</span>
+              <span
+                style={{
+                  color: winnerSide === "visitante" ? "var(--accent-ink)" : winnerSide === "local" ? "var(--ink-3)" : "var(--ink)",
+                }}
+              >
+                {m.goles_visitante}
+              </span>
             </span>
           ) : tienePick ? (
             <div>
@@ -254,10 +298,13 @@ function MatchListItem({ m, pred, onClick }) {
             </span>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: "row-reverse" }}>
-          <Flag code={code(m.equipo_visitante)} w={32} h={22} rounded={4} />
-          <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", letterSpacing: -0.2 }}>{m.equipo_visitante}</span>
-        </div>
+        <TeamRow
+          team={m.equipo_visitante}
+          isFinal={isFinal}
+          isWinner={winnerSide === "visitante"}
+          isLoser={winnerSide === "local"}
+          right
+        />
       </div>
 
       {isFinal && tienePick && (pred.puntos_obtenidos != null) && (() => {
@@ -295,6 +342,44 @@ function MatchListItem({ m, pred, onClick }) {
         );
       })()}
     </Card>
+  );
+}
+
+function TeamRow({ team, isFinal, isWinner, isLoser, right = false }) {
+  const opacity = isFinal && isLoser ? 0.55 : 1;
+  const weight = isWinner ? 800 : 700;
+  const color = isLoser ? "var(--ink-3)" : "var(--ink)";
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        flexDirection: right ? "row-reverse" : "row",
+        opacity,
+        transition: "opacity 280ms ease",
+      }}
+    >
+      <Flag code={code(team)} w={32} h={22} rounded={4} />
+      <span
+        style={{
+          fontWeight: weight,
+          fontSize: 14,
+          color,
+          letterSpacing: -0.2,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        {team}
+        {isWinner && (
+          <span className="win-mark" style={{ color: "var(--accent-ink)", display: "inline-flex" }}>
+            <Icon.Check style={{ width: 12, height: 12 }} />
+          </span>
+        )}
+      </span>
+    </div>
   );
 }
 
