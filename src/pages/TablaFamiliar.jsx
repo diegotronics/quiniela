@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useUsuariosPublic } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
+import { useFases } from "@/hooks/useFases";
+import { useAllPartidos } from "@/hooks/useAllPartidos";
 import { listPuntajesGlobales } from "@/api/predicciones";
 import {
   Avatar,
@@ -15,14 +17,69 @@ import {
 import { rankingFromUsers } from "@/lib/stats";
 import { GROUP_NAME } from "@/lib/constants";
 
+const FILTROS = [
+  { key: "total", label: "Total" },
+  { key: "semana", label: "Semana" },
+  { key: "eliminatorias", label: "Eliminatorias" },
+  { key: "grupos", label: "Grupos" },
+];
+
+// Lunes 00:00 de la semana ISO que contiene `d`.
+function startOfWeek(d) {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 export default function TablaFamiliar() {
   const { user } = useAuth();
   const { usuarios } = useUsuariosPublic();
   const { data: puntajes, loading } = useAsync(listPuntajesGlobales, []);
+  const { fases } = useFases();
+  const { partidos } = useAllPartidos(fases);
+  const [filtro, setFiltro] = useState("total");
+
+  const partidosById = useMemo(() => {
+    const map = new Map();
+    for (const p of partidos) map.set(p.id, p);
+    return map;
+  }, [partidos]);
+
+  const puntajesFiltrados = useMemo(() => {
+    const todos = puntajes || [];
+    if (filtro === "total") return todos;
+    if (filtro === "grupos") {
+      return todos.filter((p) => {
+        const m = partidosById.get(p.partido_id);
+        return m && m.fase_id === "grupos";
+      });
+    }
+    if (filtro === "eliminatorias") {
+      return todos.filter((p) => {
+        const m = partidosById.get(p.partido_id);
+        return m && m.fase_id !== "grupos";
+      });
+    }
+    if (filtro === "semana") {
+      const inicio = startOfWeek(new Date());
+      const fin = new Date(inicio);
+      fin.setDate(fin.getDate() + 7);
+      return todos.filter((p) => {
+        const m = partidosById.get(p.partido_id);
+        if (!m || !m.fecha) return false;
+        const f = new Date(m.fecha);
+        return f >= inicio && f < fin;
+      });
+    }
+    return todos;
+  }, [puntajes, filtro, partidosById]);
 
   const ranking = useMemo(
-    () => rankingFromUsers(usuarios, puntajes || []),
-    [usuarios, puntajes],
+    () => rankingFromUsers(usuarios, puntajesFiltrados),
+    [usuarios, puntajesFiltrados],
   );
   const top3 = ranking.slice(0, 3);
   const resto = ranking.slice(3);
@@ -38,34 +95,32 @@ export default function TablaFamiliar() {
         />
       }
     >
-      {/* Filtros (Total funcional, resto deshabilitado) */}
+      {/* Filtros por período/fase */}
       <div style={{ padding: "0 20px 14px" }}>
         <div style={{ display: "flex", gap: 6 }}>
-          {[
-            ["Total", true],
-            ["Semana", false],
-            ["Eliminatorias", false],
-            ["Grupos", false],
-          ].map(([label, on]) => (
-            <button
-              key={label}
-              disabled={!on}
-              style={{
-                flex: 1,
-                padding: "8px 0",
-                borderRadius: 10,
-                background: on ? "var(--ink)" : "var(--surface)",
-                color: on ? "var(--bg)" : "var(--ink-4)",
-                border: on ? "none" : "0.5px solid var(--line)",
-                fontSize: 12,
-                fontWeight: 500,
-                letterSpacing: -0.1,
-                cursor: on ? "pointer" : "not-allowed",
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          {FILTROS.map(({ key, label }) => {
+            const active = filtro === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setFiltro(key)}
+                style={{
+                  flex: 1,
+                  padding: "8px 0",
+                  borderRadius: 10,
+                  background: active ? "var(--ink)" : "var(--surface)",
+                  color: active ? "var(--bg)" : "var(--ink-4)",
+                  border: active ? "none" : "0.5px solid var(--line)",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  letterSpacing: -0.1,
+                  cursor: "pointer",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

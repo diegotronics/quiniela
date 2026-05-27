@@ -15,7 +15,7 @@ export async function listPrediccionesByUsuario(usuario_id) {
 export async function listPuntajesGlobales() {
   const { data, error } = await supabase
     .from("predicciones")
-    .select("usuario_id, puntos_obtenidos");
+    .select("usuario_id, partido_id, puntos_obtenidos");
   if (error) throw error;
   return data || [];
 }
