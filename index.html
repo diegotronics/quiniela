@@ -3,9 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="format-detection" content="telephone=no" />
 
-    <title>La Copa Familiar · Quiniela en familia</title>
-    <meta name="description" content="Quiniela familiar para el Mundial 2026. Picadas, tabla de posiciones y bracket compartido entre toda la familia." />
+    <!-- SEO básico -->
+    <title>La Copa Familiar · Quiniela en familia · Mundial 2026</title>
+    <meta name="description" content="Quiniela familiar para el Mundial 2026: pronósticos en cada partido, ranking entre familiares y bracket compartido. Sumá puntos por aciertos exactos y ganadores." />
+    <meta name="keywords" content="quiniela mundial 2026, quiniela familiar, pronósticos mundial 2026, bracket mundial, copa familiar, picadas fútbol, quiniela amigos" />
+    <meta name="author" content="La Copa Familiar" />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />
+    <meta name="googlebot" content="index,follow" />
+    <link rel="canonical" href="%SITE_URL%/" />
 
     <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -15,7 +22,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="mask-icon" href="/favicon.svg" color="#1B2A52" />
 
-    <!-- PWA / mobile -->
+    <!-- PWA / móvil -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#F6F3EC" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1B2A52" media="(prefers-color-scheme: dark)" />
@@ -24,21 +31,49 @@
     <meta name="apple-mobile-web-app-title" content="Copa Familiar" />
     <meta name="application-name" content="La Copa Familiar" />
 
-    <!-- Open Graph -->
+    <!-- Open Graph (WhatsApp, Facebook, Telegram, Slack, Discord, LinkedIn, iMessage) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="La Copa Familiar" />
     <meta property="og:title" content="La Copa Familiar · Quiniela en familia" />
-    <meta property="og:description" content="Picadas, tabla de posiciones y bracket compartido para el Mundial 2026." />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:description" content="Pronósticos del Mundial 2026, tabla de posiciones y bracket compartido entre toda la familia." />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/og-image.png" />
+    <meta property="og:image:secure_url" content="%SITE_URL%/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Trofeo dorado con pelota de fútbol — La Copa Familiar, Mundial 2026" />
     <meta property="og:locale" content="es_ES" />
+    <meta property="og:locale:alternate" content="es_MX" />
+    <meta property="og:locale:alternate" content="es_AR" />
 
-    <!-- Twitter -->
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="La Copa Familiar · Quiniela en familia" />
-    <meta name="twitter:description" content="Picadas, tabla de posiciones y bracket compartido para el Mundial 2026." />
-    <meta name="twitter:image" content="/og-image.png" />
+    <meta name="twitter:description" content="Pronósticos del Mundial 2026, tabla de posiciones y bracket compartido entre toda la familia." />
+    <meta name="twitter:image" content="%SITE_URL%/og-image.png" />
+    <meta name="twitter:image:alt" content="Trofeo dorado con pelota de fútbol — La Copa Familiar" />
+
+    <!-- Schema.org / JSON-LD para Google y rich results -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "La Copa Familiar",
+      "alternateName": "Copa Familiar",
+      "description": "Quiniela familiar para el Mundial 2026 con pronósticos, ranking y bracket compartido.",
+      "url": "%SITE_URL%/",
+      "image": "%SITE_URL%/og-image.png",
+      "applicationCategory": "SportsApplication",
+      "operatingSystem": "Any",
+      "inLanguage": "es",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

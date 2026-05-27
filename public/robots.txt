@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /app/
+
+# Las rutas /admin y /app requieren autenticación; no tiene sentido que las
+# rastreen los buscadores. La home pública (login/register) sí debe indexarse.
+
+Sitemap: https://lacopafamiliar.vercel.app/sitemap.xml
