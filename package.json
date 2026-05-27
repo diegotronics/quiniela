@@ -9,7 +9,13 @@
         "prebuild": "node --env-file-if-exists=.env scripts/migrate.mjs",
         "build": "vite build",
         "preview": "vite preview",
-        "icons": "node scripts/build-icons.mjs"
+        "icons": "node scripts/build-icons.mjs",
+        "test:ui": "playwright test",
+        "test:ui:auth": "playwright test specs/auth.spec.js",
+        "test:ui:app": "playwright test specs/app.spec.js",
+        "test:ui:admin": "playwright test specs/admin.spec.js",
+        "test:ui:components": "playwright test specs/components.spec.js",
+        "test:ui:report": "playwright show-report tests/ui/report"
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.45.0",
@@ -20,6 +26,7 @@
         "react-router-dom": "^6.26.0"
     },
     "devDependencies": {
+        "@playwright/test": "^1.60.0",
         "@vitejs/plugin-react": "^4.3.1",
         "png-to-ico": "^3.0.1",
         "sharp": "^0.34.5",

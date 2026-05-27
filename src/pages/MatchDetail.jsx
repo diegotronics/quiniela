@@ -374,7 +374,7 @@ export default function MatchDetail() {
         <div style={{ display: "flex", gap: 18, borderBottom: "1px solid var(--line)" }}>
           {[
             ["familia", "Pronósticos familia"],
-            ["picadas", "Picadas"],
+            ["picadas", "Chalequeo"],
           ].map(([k, label]) => (
             <button
               key={k}
@@ -400,7 +400,7 @@ export default function MatchDetail() {
         {tab === "familia" ? (
           <FamilyPicks usuarios={usuarios} picksByUser={picksByUser} mePartial={user?.id} />
         ) : (
-          <ChatPanel partidoId={id} altura="60vh" />
+          <ChatPanel partidoId={id} altura="60dvh" />
         )}
       </div>
     </div>

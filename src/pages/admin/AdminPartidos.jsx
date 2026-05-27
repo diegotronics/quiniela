@@ -200,11 +200,10 @@ export default function AdminPartidos() {
               key={p.id}
               onClick={() => seleccionar(p)}
               style={{
-                display: "grid",
-                gridTemplateColumns: "minmax(90px, 130px) 1fr 100px 110px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
                 padding: "14px 18px",
-                alignItems: "center",
-                gap: 12,
                 borderBottom: i < filtered.length - 1 ? "0.5px solid var(--line-2)" : "none",
                 fontSize: 13,
                 background: selected?.id === p.id ? "var(--accent-soft)" : "transparent",
@@ -216,24 +215,18 @@ export default function AdminPartidos() {
                 color: "var(--ink)",
               }}
             >
-              <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>
-                {formatDate(p.fecha)}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <Flag code={code(p.equipo_local)} w={22} h={16} />
-                  <span style={{ fontWeight: 600 }}>{p.equipo_local}</span>
-                </div>
-                <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>vs</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <Flag code={code(p.equipo_visitante)} w={22} h={16} />
-                  <span style={{ fontWeight: 600 }}>{p.equipo_visitante}</span>
-                </div>
-              </div>
-              <span className="mono" style={{ fontWeight: 600, color: p.resultado_ingresado ? "var(--ink)" : "var(--ink-4)" }}>
-                {p.resultado_ingresado ? `${p.goles_local} – ${p.goles_visitante}` : "— · —"}
-              </span>
-              <div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>
+                  {formatDate(p.fecha)}
+                </span>
                 {p.resultado_ingresado ? (
                   <Pill tone="accent">
                     <Icon.Check /> Final
@@ -241,6 +234,30 @@ export default function AdminPartidos() {
                 ) : (
                   <Pill tone="outline">Programado</Pill>
                 )}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  minWidth: 0,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                  <Flag code={code(p.equipo_local)} w={22} h={16} />
+                  <span style={{ fontWeight: 600 }}>{p.equipo_local}</span>
+                </div>
+                <span
+                  className="mono"
+                  style={{ fontWeight: 600, color: p.resultado_ingresado ? "var(--ink)" : "var(--ink-4)" }}
+                >
+                  {p.resultado_ingresado ? `${p.goles_local} – ${p.goles_visitante}` : "— · —"}
+                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                  <Flag code={code(p.equipo_visitante)} w={22} h={16} />
+                  <span style={{ fontWeight: 600 }}>{p.equipo_visitante}</span>
+                </div>
               </div>
             </button>
           ))}
@@ -271,10 +288,11 @@ export default function AdminPartidos() {
               borderRadius: "var(--r-lg)",
               background: "var(--surface-2)",
               border: "0.5px solid var(--line)",
-              display: "grid",
-              gridTemplateColumns: "1fr auto 1fr",
+              display: "flex",
+              flexWrap: "wrap",
               alignItems: "center",
-              gap: 20,
+              justifyContent: "center",
+              gap: 16,
             }}
           >
             <ResultStepper
@@ -319,10 +337,29 @@ export default function AdminPartidos() {
 
 function ResultStepper({ flag, label, value, onChange, right }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, flexDirection: right ? "row-reverse" : "row" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        flexDirection: right ? "row-reverse" : "row",
+        flex: "1 1 200px",
+        minWidth: 0,
+      }}
+    >
       <Flag code={flag} w={36} h={26} rounded={4} />
-      <div style={{ flex: 1, textAlign: right ? "right" : "left" }}>
-        <div style={{ fontWeight: 600, color: "var(--ink)" }}>{label}</div>
+      <div style={{ flex: 1, minWidth: 0, textAlign: right ? "right" : "left" }}>
+        <div
+          style={{
+            fontWeight: 600,
+            color: "var(--ink)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {label}
+        </div>
         <div style={{ fontSize: 11, color: "var(--ink-3)" }}>Goles a favor</div>
       </div>
       <div

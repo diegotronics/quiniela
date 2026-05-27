@@ -21,6 +21,15 @@ export function ChatInput({
     el.style.height = Math.min(el.scrollHeight, max) + "px";
   }, [value]);
 
+  useEffect(() => {
+    if (!modoEdicion) return;
+    const el = ref.current;
+    if (!el) return;
+    el.focus();
+    const len = el.value.length;
+    el.setSelectionRange(len, len);
+  }, [modoEdicion]);
+
   const trimmed = (value || "").trim();
   const tooLong = trimmed.length > TEXTO_MAX;
   const deshabilitado = enviando || trimmed.length === 0 || tooLong;
@@ -90,7 +99,7 @@ export function ChatInput({
           onKeyDown={manejarTecla}
           placeholder={placeholder}
           rows={1}
-          maxLength={TEXTO_MAX + 50}
+          maxLength={TEXTO_MAX}
           style={{
             flex: 1,
             resize: "none",

@@ -193,7 +193,15 @@ export default function AdminMiembros() {
   return (
     <div>
       {/* Actions bar */}
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 18 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          flexWrap: "wrap",
+          gap: 8,
+          marginBottom: 18,
+        }}
+      >
         <Button variant="ghost" onClick={() => { setForm(EMPTY); setEditing(null); setModalOpen(true); }}>
           <Icon.Plus /> Crear manual
         </Button>
@@ -280,13 +288,15 @@ export default function AdminMiembros() {
         </div>
       </div>
 
-      {/* Tabla */}
+      {/* Tabla — scroll horizontal en pantallas estrechas */}
       <Card pad={0} style={{ overflow: "hidden" }}>
+        <div style={{ overflowX: "auto" }} className="scroll-hide">
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "40px 1fr 100px 100px 90px 40px",
+            gridTemplateColumns: "40px minmax(180px, 1fr) 100px 110px 90px 80px",
             padding: "10px 16px",
+            minWidth: 620,
             background: "var(--surface-2)",
             fontSize: 11,
             color: "var(--ink-3)",
@@ -310,8 +320,9 @@ export default function AdminMiembros() {
             key={u.id}
             style={{
               display: "grid",
-              gridTemplateColumns: "40px 1fr 100px 100px 90px 40px",
+              gridTemplateColumns: "40px minmax(180px, 1fr) 100px 110px 90px 80px",
               padding: "12px 16px",
+              minWidth: 620,
               alignItems: "center",
               gap: 12,
               borderBottom: i < sorted.length - 1 ? "0.5px solid var(--line-2)" : "none",
@@ -374,6 +385,7 @@ export default function AdminMiembros() {
             </div>
           </div>
         ))}
+        </div>
       </Card>
 
       {/* Modal de crear/editar */}
@@ -507,7 +519,7 @@ export default function AdminMiembros() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)" }}>
-                Compartilo por WhatsApp. Vence en 30 días o cuando lo revoques.
+                Compártelo por WhatsApp. Vence en 30 días o cuando lo revoques.
               </p>
               <div
                 style={{

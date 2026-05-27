@@ -12,3 +12,9 @@ Thumbs.db
 .idea
 .vscode/*
 !.vscode/extensions.json
+
+# Playwright — artefactos generados al correr la suite de UI
+tests/ui/test-results/
+tests/ui/report/
+tests/ui/screenshots/
+playwright-report/

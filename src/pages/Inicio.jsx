@@ -519,7 +519,7 @@ export default function Inicio() {
             </Link>
           }
         >
-          Picadas de la familia
+          El Chalequeo
         </SectionTitle>
         <ChatPreview limit={3} />
       </div>

@@ -24,20 +24,27 @@ export function agruparReacciones(rows, userId) {
   return Array.from(grupos.values());
 }
 
-export async function listarMensajes(partidoId, { limite = 200, userId = null } = {}) {
+// Devuelve la página más reciente o, si se pasa `antesDe`, la página anterior
+// a esa fecha. Forma: { mensajes (orden ascendente), hayMas }.
+export async function listarMensajes(
+  partidoId,
+  { limite = 50, userId = null, antesDe = null } = {}
+) {
   let q = supabase
     .from("mensajes")
     .select(COLS)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(limite);
   q = partidoId == null ? q.is("partido_id", null) : q.eq("partido_id", partidoId);
+  if (antesDe) q = q.lt("created_at", antesDe);
 
-  const { data: mensajes, error } = await q;
+  const { data, error } = await q;
   if (error) throw error;
 
-  const ids = (mensajes || []).map((m) => m.id);
-  if (ids.length === 0) return [];
+  const ordenados = (data || []).slice().reverse();
+  if (ordenados.length === 0) return { mensajes: [], hayMas: false };
 
+  const ids = ordenados.map((m) => m.id);
   const { data: reacs, error: errR } = await supabase
     .from("reacciones_mensaje")
     .select("mensaje_id, usuario_id, emoji")
@@ -51,10 +58,12 @@ export async function listarMensajes(partidoId, { limite = 200, userId = null } 
     porMensaje.set(r.mensaje_id, arr);
   }
 
-  return mensajes.map((m) => ({
+  const mensajes = ordenados.map((m) => ({
     ...m,
     reacciones: agruparReacciones(porMensaje.get(m.id) || [], userId),
   }));
+
+  return { mensajes, hayMas: ordenados.length >= limite };
 }
 
 export async function obtenerMensaje(id) {

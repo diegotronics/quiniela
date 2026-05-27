@@ -33,8 +33,8 @@ export function ChatPreview({ limit = 3 }) {
     return (
       <EmptyState
         illustration="chat"
-        title="Sin picadas todavía"
-        description="Sé el primero en abrir la charla del partido."
+        title="Sin chalequeo todavía"
+        description="Sé el primero en escribir."
         compact
       />
     );

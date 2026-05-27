@@ -9,14 +9,14 @@ export default function Chat() {
     <MobileShell
       header={
         <MobileHeader
-          title="Picadas familiares"
+          title="El Chalequeo"
           subtitle={GROUP_NAME}
           onBack={() => navigate(-1)}
         />
       }
     >
       <div style={{ padding: "0 16px" }}>
-        <ChatPanel partidoId={null} altura="calc(100vh - 250px)" />
+        <ChatPanel partidoId={null} altura="calc(100dvh - 250px)" />
       </div>
     </MobileShell>
   );

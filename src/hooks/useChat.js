@@ -28,9 +28,17 @@ export function useChat(partidoId) {
 
   const [mensajes, setMensajes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cargandoMas, setCargandoMas] = useState(false);
+  const [hayMas, setHayMas] = useState(false);
   const [error, setError] = useState(null);
   const mensajesRef = useRef(mensajes);
   mensajesRef.current = mensajes;
+
+  // Set de ids para lookups O(1) en handlers de realtime sin filtro (DELETE).
+  const idsRef = useRef(new Set());
+  useEffect(() => {
+    idsRef.current = new Set(mensajes.map((m) => m.id));
+  }, [mensajes]);
 
   // Fetch inicial.
   useEffect(() => {
@@ -38,7 +46,11 @@ export function useChat(partidoId) {
     setLoading(true);
     setError(null);
     listarMensajes(partidoId, { userId })
-      .then((data) => { if (!cancel) setMensajes(data); })
+      .then(({ mensajes: data, hayMas: more }) => {
+        if (cancel) return;
+        setMensajes(data);
+        setHayMas(more);
+      })
       .catch((e) => { if (!cancel) setError(e); })
       .finally(() => { if (!cancel) setLoading(false); });
     return () => { cancel = true; };
@@ -119,17 +131,16 @@ export function useChat(partidoId) {
       },
     );
 
-    // DELETE: no filtramos por partido_id (poco fiable con NULL) — filtramos
-    // en cliente por id presente en estado actual.
+    // DELETE: el WAL solo incluye la PK con REPLICA IDENTITY default, por lo
+    // que un filter sobre partido_id no es fiable. Recibimos todos los DELETE
+    // y descartamos en cliente con un Set de ids (O(1)).
     channel.on(
       "postgres_changes",
       { event: "DELETE", schema: "public", table: "mensajes" },
       (payload) => {
         const id = payload.old?.id;
         if (!id) return;
-        if (mensajesRef.current.some((m) => m.id === id)) {
-          quitarMensaje(id);
-        }
+        if (idsRef.current.has(id)) quitarMensaje(id);
       },
     );
 
@@ -139,9 +150,7 @@ export function useChat(partidoId) {
       (payload) => {
         const mensajeId = payload.new?.mensaje_id || payload.old?.mensaje_id;
         if (!mensajeId) return;
-        if (mensajesRef.current.some((m) => m.id === mensajeId)) {
-          refrescarReaccionesDe(mensajeId);
-        }
+        if (idsRef.current.has(mensajeId)) refrescarReaccionesDe(mensajeId);
       },
     );
 
@@ -255,17 +264,42 @@ export function useChat(partidoId) {
     try {
       await apiAlternarReaccion({ mensajeId, usuarioId: userId, emoji });
     } catch (e) {
-      // Revertir consultando el estado real.
+      // Revertir consultando el estado real y propagar al caller para feedback.
       refrescarReaccionesDe(mensajeId);
       setError(e);
+      throw e;
     }
   }, [userId, refrescarReaccionesDe]);
+
+  const cargarMas = useCallback(async () => {
+    if (cargandoMas || !hayMas) return;
+    const masAntiguo = mensajesRef.current[0];
+    if (!masAntiguo) return;
+    setCargandoMas(true);
+    try {
+      const { mensajes: pagina, hayMas: more } = await listarMensajes(partidoId, {
+        userId,
+        antesDe: masAntiguo.created_at,
+      });
+      setMensajes((prev) => {
+        const yaPresentes = new Set(prev.map((m) => m.id));
+        const nuevos = pagina.filter((m) => !yaPresentes.has(m.id));
+        return [...nuevos, ...prev];
+      });
+      setHayMas(more);
+    } catch (e) {
+      setError(e);
+    } finally {
+      setCargandoMas(false);
+    }
+  }, [cargandoMas, hayMas, partidoId, userId]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await listarMensajes(partidoId, { userId });
+      const { mensajes: data, hayMas: more } = await listarMensajes(partidoId, { userId });
       setMensajes(data);
+      setHayMas(more);
       setError(null);
     } catch (e) {
       setError(e);
@@ -277,11 +311,14 @@ export function useChat(partidoId) {
   return {
     mensajes,
     loading,
+    cargandoMas,
+    hayMas,
     error,
     enviar,
     editar,
     borrar,
     alternarReaccion,
+    cargarMas,
     refresh,
   };
 }

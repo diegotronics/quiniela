@@ -5,9 +5,20 @@ import { MensajeItem } from "./MensajeItem";
 import { ChatInput } from "./ChatInput";
 import { EmptyState, SkeletonChatMessages } from "@/components/ui";
 
-export function ChatPanel({ partidoId = null, altura = "60vh" }) {
+export function ChatPanel({ partidoId = null, altura = "60dvh" }) {
   const { user } = useAuth();
-  const { mensajes, loading, error, enviar, editar, borrar, alternarReaccion } = useChat(partidoId);
+  const {
+    mensajes,
+    loading,
+    cargandoMas,
+    hayMas,
+    error,
+    enviar,
+    editar,
+    borrar,
+    alternarReaccion,
+    cargarMas,
+  } = useChat(partidoId);
 
   const [borrador, setBorrador] = useState("");
   const [editandoId, setEditandoId] = useState(null);
@@ -18,6 +29,9 @@ export function ChatPanel({ partidoId = null, altura = "60vh" }) {
   const cerquitaDelFondoRef = useRef(true);
   const cantidadPrevRef = useRef(0);
   const yaHizoScrollInicialRef = useRef(false);
+  // Preservar el scroll cuando se prependen mensajes antiguos.
+  const alturaPrevRef = useRef(0);
+  const idMasAntiguoRef = useRef(null);
 
   // Auto-dismiss del error de acción.
   useEffect(() => {
@@ -32,11 +46,22 @@ export function ChatPanel({ partidoId = null, altura = "60vh" }) {
     el.scrollTo({ top: el.scrollHeight, behavior: suave ? "smooth" : "auto" });
   }, []);
 
-  // Track si el usuario está cerca del fondo (para decidir auto-scroll).
+  // Track si el usuario está cerca del fondo (para decidir auto-scroll) y
+  // detectar cuando llega cerca del tope para cargar más mensajes antiguos.
   function manejarScroll(e) {
     const el = e.currentTarget;
     const distancia = el.scrollHeight - el.scrollTop - el.clientHeight;
     cerquitaDelFondoRef.current = distancia < 80;
+    if (
+      yaHizoScrollInicialRef.current &&
+      el.scrollTop < 80 &&
+      hayMas &&
+      !cargandoMas &&
+      !loading
+    ) {
+      alturaPrevRef.current = el.scrollHeight;
+      cargarMas();
+    }
   }
 
   // Scroll inicial al final cuando llegan los primeros mensajes.
@@ -46,17 +71,31 @@ export function ChatPanel({ partidoId = null, altura = "60vh" }) {
       irAlFondo(false);
       yaHizoScrollInicialRef.current = true;
       cantidadPrevRef.current = mensajes.length;
+      idMasAntiguoRef.current = mensajes[0]?.id ?? null;
     }
   }, [loading, mensajes.length, irAlFondo]);
 
-  // Auto-scroll suave al recibir/enviar mensajes nuevos si el usuario estaba cerca del fondo.
-  useEffect(() => {
+  // Auto-scroll suave al recibir/enviar mensajes nuevos si el usuario estaba
+  // cerca del fondo. Si se prependieron mensajes antiguos (cambia el id más
+  // antiguo), preservamos la posición visual del usuario.
+  useLayoutEffect(() => {
     if (!yaHizoScrollInicialRef.current) return;
-    if (mensajes.length > cantidadPrevRef.current && cerquitaDelFondoRef.current) {
+    const el = scrollRef.current;
+    const idMasAntiguo = mensajes[0]?.id ?? null;
+    const prependidos = idMasAntiguo !== idMasAntiguoRef.current;
+    if (prependidos && el && alturaPrevRef.current > 0) {
+      const delta = el.scrollHeight - alturaPrevRef.current;
+      el.scrollTop = delta;
+      alturaPrevRef.current = 0;
+    } else if (
+      mensajes.length > cantidadPrevRef.current &&
+      cerquitaDelFondoRef.current
+    ) {
       irAlFondo(true);
     }
     cantidadPrevRef.current = mensajes.length;
-  }, [mensajes.length, irAlFondo]);
+    idMasAntiguoRef.current = idMasAntiguo;
+  }, [mensajes, irAlFondo]);
 
   const mensajeEditando = editandoId
     ? mensajes.find((m) => m.id === editandoId)
@@ -133,6 +172,18 @@ export function ChatPanel({ partidoId = null, altura = "60vh" }) {
         }}
       >
         {loading && <SkeletonChatMessages count={5} />}
+        {!loading && cargandoMas && (
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: 11,
+              color: "var(--ink-3)",
+              padding: "4px 0",
+            }}
+          >
+            Cargando mensajes anteriores…
+          </div>
+        )}
         {!loading && error && (
           <div style={{ color: "var(--danger)", textAlign: "center", padding: 20, fontSize: 13 }}>
             Error al cargar el chat.
@@ -142,7 +193,7 @@ export function ChatPanel({ partidoId = null, altura = "60vh" }) {
           <EmptyState
             illustration="chat"
             title="Chat sin mensajes"
-            description="Sé el primero en escribir. Compartí tu pronóstico o picada."
+            description="Sé el primero en escribir. Comparte tu pronóstico o chalequeo."
             compact
           />
         )}

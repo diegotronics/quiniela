@@ -56,15 +56,15 @@ export default function AdminReglas() {
               <div
                 key={f.id}
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 220px",
-                  gap: 16,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 12,
                   padding: "14px 18px",
                   borderBottom: i < fases.length - 1 ? "0.5px solid var(--line-2)" : "none",
                   alignItems: "center",
                 }}
               >
-                <div style={{ minWidth: 0 }}>
+                <div style={{ flex: "1 1 200px", minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{f.nombre}</div>
                   <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
                     {FASES_INFO[f.id] || ""}
@@ -75,6 +75,8 @@ export default function AdminReglas() {
                   disabled={busy === f.id}
                   onChange={(e) => setEstado(f.id, e.target.value)}
                   style={{
+                    flex: "0 1 180px",
+                    minWidth: 140,
                     padding: "8px 12px",
                     borderRadius: 10,
                     border: "0.5px solid var(--line)",
@@ -275,15 +277,15 @@ function CierreRow({ config, onSave }) {
   return (
     <div
       style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 280px",
-        gap: 16,
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 12,
         padding: "14px 18px",
         borderBottom: "0.5px solid var(--line-2)",
         alignItems: "center",
       }}
     >
-      <div>
+      <div style={{ flex: "1 1 200px", minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>
           Fecha de cierre
         </div>
@@ -291,13 +293,24 @@ function CierreRow({ config, onSave }) {
           Después de esta fecha, los jugadores no pueden editar sus apuestas.
         </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 8,
+          justifyContent: "flex-end",
+          flex: "0 1 auto",
+        }}
+      >
         <input
           type="datetime-local"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           disabled={busy}
           style={{
+            minWidth: 0,
+            maxWidth: "100%",
             padding: "7px 10px",
             borderRadius: 8,
             border: "0.5px solid var(--line)",
@@ -356,16 +369,16 @@ function CategoriaRow({ label, hint, ptsKey, resultKey, kind, config, onSave, la
   return (
     <div
       style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 320px",
-        gap: 16,
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 12,
         padding: "14px 18px",
         borderBottom: last ? "none" : "0.5px solid var(--line-2)",
         alignItems: "center",
       }}
     >
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{label}</span>
           {config[resultKey] && <Pill tone="accent">Resultado cargado</Pill>}
         </div>
@@ -379,7 +392,17 @@ function CategoriaRow({ label, hint, ptsKey, resultKey, kind, config, onSave, la
           </div>
         )}
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          justifyContent: "flex-end",
+          flexWrap: "wrap",
+          flex: "1 1 240px",
+          minWidth: 0,
+        }}
+      >
         {kind === "team" ? (
           <select
             value={resultado}
@@ -484,15 +507,15 @@ function RuleRow({ fase, hint, last, onSave }) {
   return (
     <div
       style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 280px",
-        gap: 16,
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 12,
         padding: "14px 18px",
         borderBottom: last ? "none" : "0.5px solid var(--line-2)",
         alignItems: "center",
       }}
     >
-      <div>
+      <div style={{ flex: "1 1 180px", minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{fase.nombre}</div>
         {hint && (
           <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.4 }}>{hint}</div>
@@ -511,7 +534,17 @@ function RuleRow({ fase, hint, last, onSave }) {
           />
         </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          justifyContent: "flex-end",
+          flexWrap: "wrap",
+          flex: "1 1 240px",
+          minWidth: 0,
+        }}
+      >
         <PtsInput label="Exacto" value={exacto} onChange={setExacto} disabled={busy} />
         <PtsInput label="Ganador" value={ganador} onChange={setGanador} disabled={busy} />
         <Button

@@ -1,9 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const EMOJIS = ["👍", "❤️", "😂", "🔥", "🎉", "😮", "😢", "⚽"];
 
+const MARGEN = 8;
+
 export function EmojiPicker({ onSelect, onClose, anclaDerecha = false }) {
   const ref = useRef(null);
+  const [pos, setPos] = useState({ vertical: "arriba", horizontal: anclaDerecha ? "derecha" : "izquierda" });
 
   useEffect(() => {
     function manejarClick(e) {
@@ -20,14 +23,38 @@ export function EmojiPicker({ onSelect, onClose, anclaDerecha = false }) {
     };
   }, [onClose]);
 
+  // Ajuste de borde: si se sale del viewport, voltea de lado correspondiente.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vertical = rect.top < MARGEN ? "abajo" : "arriba";
+    let horizontal = anclaDerecha ? "derecha" : "izquierda";
+    if (horizontal === "izquierda" && rect.right > window.innerWidth - MARGEN) {
+      horizontal = "derecha";
+    } else if (horizontal === "derecha" && rect.left < MARGEN) {
+      horizontal = "izquierda";
+    }
+    setPos((prev) =>
+      prev.vertical === vertical && prev.horizontal === horizontal ? prev : { vertical, horizontal }
+    );
+  }, [anclaDerecha]);
+
+  const verticalCss = pos.vertical === "arriba"
+    ? { bottom: "calc(100% + 6px)" }
+    : { top: "calc(100% + 6px)" };
+  const horizontalCss = pos.horizontal === "derecha"
+    ? { right: 0 }
+    : { left: 0 };
+
   return (
     <div
       ref={ref}
       role="menu"
       style={{
         position: "absolute",
-        bottom: "calc(100% + 6px)",
-        [anclaDerecha ? "right" : "left"]: 0,
+        ...verticalCss,
+        ...horizontalCss,
         zIndex: 30,
         background: "var(--surface)",
         border: "0.5px solid var(--line)",

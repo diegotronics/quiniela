@@ -16,6 +16,7 @@ import Admin from "@/pages/Admin.jsx";
 import AdminMiembros from "@/pages/admin/AdminMiembros.jsx";
 import AdminReglas from "@/pages/admin/AdminReglas.jsx";
 import AdminPartidos from "@/pages/admin/AdminPartidos.jsx";
+import UITestGallery from "@/pages/UITestGallery.jsx";
 import { useAuth } from "@/context/AuthContext";
 
 function Protected({ children, adminOnly }) {
@@ -32,6 +33,7 @@ export default function App() {
       <Route path="/" element={<Login />} />
       <Route path="/registro" element={<Register />} />
       <Route path="/invitacion/:token" element={<AceptarInvitacion />} />
+      <Route path="/dev/ui-test" element={<UITestGallery />} />
 
       <Route
         path="/app"
