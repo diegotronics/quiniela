@@ -13,8 +13,10 @@ import {
   MobileShell,
   Pill,
   SectionTitle,
+  ringFor,
 } from "@/components/ui";
-import { rankingFromUsers } from "@/lib/stats";
+import { rankingFromUsers, userScoringStats, userStreak } from "@/lib/stats";
+import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import { GROUP_NAME } from "@/lib/constants";
 
 const FILTROS = [
@@ -84,6 +86,15 @@ export default function TablaFamiliar() {
   const top3 = ranking.slice(0, 3);
   const resto = ranking.slice(3);
 
+  const rankingTotal = useMemo(
+    () => rankingFromUsers(usuarios, puntajes || []),
+    [usuarios, puntajes],
+  );
+  const meTotal = useMemo(() => rankingTotal.find((u) => u.id === user?.id), [rankingTotal, user]);
+  const { predicciones } = usePrediccionesUsuario(user?.id);
+  const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
+  const racha = useMemo(() => userStreak(prediccionesList, partidos), [prediccionesList, partidos]);
+
   return (
     <MobileShell
       activeTab="tabla"
@@ -91,7 +102,7 @@ export default function TablaFamiliar() {
         <MobileHeader
           title="Tabla familiar"
           subtitle={`${GROUP_NAME} · ${ranking.length} jugador${ranking.length === 1 ? "" : "es"}`}
-          leading={<Avatar name={user?.nombre} size={36} />}
+          leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: meTotal?.rank, streak: racha })} />}
         />
       }
     >
@@ -131,7 +142,17 @@ export default function TablaFamiliar() {
       {/* Podio */}
       {top3.length > 0 && (
         <div style={{ padding: "0 20px 14px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr 1fr", gap: 8, alignItems: "end" }}>
+          <div
+            className="dotgrid-soft"
+            style={{
+              padding: "16px 8px 6px",
+              borderRadius: "var(--r-xl)",
+              display: "grid",
+              gridTemplateColumns: "1fr 1.1fr 1fr",
+              gap: 8,
+              alignItems: "end",
+            }}
+          >
             <PodiumCard place={2} member={top3[1]} me={user?.id} />
             <PodiumCard place={1} member={top3[0]} me={user?.id} center />
             <PodiumCard place={3} member={top3[2]} me={user?.id} />
@@ -190,7 +211,8 @@ function PodiumCard({ place, member, center, me }) {
     );
   }
   const isMe = me === member.id;
-  const ringColor = place === 1 ? "var(--gold)" : place === 2 ? "oklch(0.78 0.02 80)" : "oklch(0.65 0.06 30)";
+  const ringTone = place === 1 ? "gold" : place === 2 ? "silver" : "bronze";
+  const badgeBg = place === 1 ? "var(--gold)" : place === 2 ? "oklch(0.78 0.02 80)" : "oklch(0.62 0.10 35)";
   return (
     <div
       style={{
@@ -208,29 +230,12 @@ function PodiumCard({ place, member, center, me }) {
           <Icon.Crown />
         </div>
       )}
-      <div style={{ position: "relative", display: "inline-block" }}>
-        <Avatar name={member.nombre} size={center ? 52 : 44} />
-        <div
-          style={{
-            position: "absolute",
-            bottom: -4,
-            right: -4,
-            width: 22,
-            height: 22,
-            borderRadius: "50%",
-            background: ringColor,
-            color: "#fff",
-            fontSize: 11,
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "2px solid var(--surface)",
-          }}
-        >
-          {place}
-        </div>
-      </div>
+      <Avatar
+        name={member.nombre}
+        size={center ? 52 : 44}
+        ring={ringTone}
+        badge={{ label: String(place), bg: badgeBg, fg: "#fff" }}
+      />
       <div style={{ marginTop: 8, fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>
         {(member.nombre || "").split(" ")[0]}
       </div>

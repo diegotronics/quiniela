@@ -3,6 +3,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useFases } from "@/hooks/useFases";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
 import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
+import { useUsuariosPublic } from "@/hooks/useUsuarios";
+import { useAsync } from "@/hooks/useAsync";
+import { listPuntajesGlobales } from "@/api/predicciones";
 import {
   Avatar,
   Card,
@@ -11,7 +14,9 @@ import {
   MobileHeader,
   MobileShell,
   Pill,
+  ringFor,
 } from "@/components/ui";
+import { rankingFromUsers, userStreak } from "@/lib/stats";
 import { code } from "@/lib/constants";
 
 const KNOCKOUT_PHASES = [
@@ -27,6 +32,13 @@ export default function Bracket() {
   const { fases } = useFases();
   const { partidos } = useAllPartidos(fases);
   const { predicciones } = usePrediccionesUsuario(user?.id);
+  const { usuarios } = useUsuariosPublic();
+  const { data: puntajes } = useAsync(listPuntajesGlobales, []);
+
+  const ranking = useMemo(() => rankingFromUsers(usuarios, puntajes || []), [usuarios, puntajes]);
+  const me = useMemo(() => ranking.find((u) => u.id === user?.id), [ranking, user]);
+  const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
+  const racha = useMemo(() => userStreak(prediccionesList, partidos), [prediccionesList, partidos]);
 
   const rounds = useMemo(() => {
     return KNOCKOUT_PHASES.map((kp) => {
@@ -60,7 +72,7 @@ export default function Bracket() {
         <MobileHeader
           title="Bracket"
           subtitle="Octavos · Cuartos · Semis · Final"
-          leading={<Avatar name={user?.nombre} size={36} />}
+          leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
         />
       }
     >

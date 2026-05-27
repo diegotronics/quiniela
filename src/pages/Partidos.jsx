@@ -12,7 +12,13 @@ import {
   MobileHeader,
   MobileShell,
   Pill,
+  ringFor,
 } from "@/components/ui";
+import { useUsuariosPublic } from "@/hooks/useUsuarios";
+import { useAsync } from "@/hooks/useAsync";
+import { listPuntajesGlobales } from "@/api/predicciones";
+import { useAllPartidos } from "@/hooks/useAllPartidos";
+import { rankingFromUsers, userStreak } from "@/lib/stats";
 import { code } from "@/lib/constants";
 
 const GRUPOS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
@@ -33,6 +39,14 @@ export default function Partidos() {
 
   const { partidos, loading } = usePartidosByFase(activePhase);
   const { predicciones } = usePrediccionesUsuario(user?.id);
+  const { usuarios } = useUsuariosPublic();
+  const { data: puntajes } = useAsync(listPuntajesGlobales, []);
+  const { partidos: todosPartidos } = useAllPartidos(fases);
+
+  const ranking = useMemo(() => rankingFromUsers(usuarios, puntajes || []), [usuarios, puntajes]);
+  const me = useMemo(() => ranking.find((u) => u.id === user?.id), [ranking, user]);
+  const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
+  const racha = useMemo(() => userStreak(prediccionesList, todosPartidos), [prediccionesList, todosPartidos]);
 
   const fase = useMemo(() => fases.find((f) => f.id === activePhase), [fases, activePhase]);
   const isGrupos = activePhase === "grupos";
@@ -66,7 +80,7 @@ export default function Partidos() {
         <MobileHeader
           title="Partidos"
           subtitle={fase ? `${fase.nombre} · ${guardados}/${partidosVista.length} pronosticados` : ""}
-          leading={<Avatar name={user?.nombre} size={36} />}
+          leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
         />
       }
     >

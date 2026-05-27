@@ -53,13 +53,13 @@ export function MobileHeader({ title, subtitle, leading, trailing = true, big = 
       {big && (
         <div style={{ marginTop: 14 }}>
           <h1
+            className="font-display"
             style={{
               margin: 0,
-              fontFamily: "var(--font-sans)",
               fontWeight: 600,
-              fontSize: 32,
-              lineHeight: 1.05,
-              letterSpacing: -0.6,
+              fontSize: 34,
+              lineHeight: 1.0,
+              letterSpacing: -1.1,
               color: "var(--ink)",
             }}
           >
@@ -132,6 +132,7 @@ export function TabBar({ active }) {
             >
               <span
                 aria-hidden
+                data-section={t.id}
                 style={{
                   position: "absolute",
                   top: 0,
@@ -140,7 +141,7 @@ export function TabBar({ active }) {
                   width: on ? 28 : 0,
                   height: 3,
                   borderRadius: 0,
-                  background: "var(--ink)",
+                  background: "var(--section-accent)",
                   transition: "width 200ms ease",
                 }}
               />
@@ -170,7 +171,10 @@ export function TabBar({ active }) {
 
 export function MobileShell({ children, activeTab, header, hideTabBar = false }) {
   return (
-    <div style={{ minHeight: "100vh", position: "relative", background: "var(--bg)" }}>
+    <div
+      data-section={activeTab}
+      style={{ minHeight: "100vh", position: "relative", background: "var(--bg)" }}
+    >
       {header}
       <div style={{ paddingBottom: hideTabBar ? 24 : 100 }}>{children}</div>
       {!hideTabBar && <TabBar active={activeTab} />}

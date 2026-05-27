@@ -22,6 +22,7 @@ import {
   Pill,
   SectionTitle,
   Button,
+  ringFor,
 } from "@/components/ui";
 import {
   rankingFromUsers,
@@ -100,7 +101,7 @@ export default function Inicio() {
         <MobileHeader
           title={`Hola, ${(user?.nombre || "").split(" ")[0] || "jugador"}`}
           subtitle={`${GROUP_NAME} · ${GROUP_MOTTO}`}
-          leading={<Avatar name={user?.nombre} size={36} />}
+          leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
         />
       }
     >
@@ -152,7 +153,10 @@ export default function Inicio() {
 
         {/* Puntaje + posición */}
         <Card pad={0} elevated style={{ overflow: "hidden" }}>
-          <div style={{ padding: "22px 20px 18px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+          <div
+            className="dotgrid-soft"
+            style={{ padding: "22px 20px 18px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}
+          >
             <div>
               <div style={kicker}>Tus puntos</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 8 }}>
@@ -232,7 +236,7 @@ export default function Inicio() {
                       fontWeight: 700,
                     }}
                   >
-                    <Avatar name={lider.nombre} size={18} />
+                    <Avatar name={lider.nombre} size={18} ring="gold" />
                     {(lider.nombre || "").split(" ")[0]}
                   </span>
                   <span>lidera</span>

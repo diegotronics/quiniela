@@ -18,6 +18,7 @@ import {
   MobileShell,
   Pill,
   SectionTitle,
+  ringFor,
 } from "@/components/ui";
 import {
   rankingFromUsers,
@@ -75,15 +76,22 @@ export default function Perfil() {
         <MobileHeader
           title="Perfil"
           subtitle="Tus pronósticos, racha y logros"
-          leading={<Avatar name={user?.nombre} size={36} />}
+          leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
         />
       }
     >
       <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 14 }}>
         {/* Identidad */}
-        <Card pad={18}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <Avatar name={user?.nombre} size={62} />
+        <Card pad={0} elevated style={{ overflow: "hidden" }}>
+          <div
+            className="dotgrid-soft"
+            style={{ padding: 18, display: "flex", alignItems: "center", gap: 14 }}
+          >
+            <Avatar
+              name={user?.nombre}
+              size={62}
+              ring={ringFor({ rank: me?.rank, streak: racha })}
+            />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, fontSize: 18, color: "var(--ink)" }}>{user?.nombre}</div>
               <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>

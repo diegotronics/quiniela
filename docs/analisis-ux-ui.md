@@ -99,11 +99,11 @@ Después podés iterar en identidad gráfica (motivo, tipografía display, micro
 | 4 | Pills diferenciados por tono | ✅ Implementado |
 | 5 | TabBar activa pintada | ✅ Implementado |
 | 6 | Banderas más grandes con sombra tipo cromo | ✅ Implementado |
-| 7 | Motivo gráfico recurrente | ⏳ Pendiente |
-| 8 | Tipografía display secundaria | ⏳ Pendiente |
-| 9 | Color de acento dinámico por sección | ⏳ Pendiente |
+| 7 | Motivo gráfico recurrente | ✅ Implementado |
+| 8 | Tipografía display secundaria | ✅ Implementado |
+| 9 | Color de acento dinámico por sección | ✅ Implementado |
 | 10 | Microinteracciones (hover-lift, confetti) | ⏳ Pendiente |
-| 11 | Avatar con anillo de estado | ⏳ Pendiente |
+| 11 | Avatar con anillo de estado | ✅ Implementado |
 | 12 | Barra de progreso protagonista | 🟡 Parcial (gradiente aplicado) |
 | 13 | Countdown live al próximo partido | ⏳ Pendiente |
 | 14 | Streak como elemento gráfico | ⏳ Pendiente |
