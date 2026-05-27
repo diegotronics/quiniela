@@ -85,19 +85,19 @@ export function StatTile({
         </div>
         <div style={{ marginTop: 4, display: "flex", alignItems: "baseline", gap: 4 }}>
           <span
-            className="mono"
+            className="font-score"
             style={{
-              fontSize: valueSize,
-              fontWeight: 600,
+              fontSize: valueSize + 6,
+              fontWeight: 400,
               color: t.value,
-              letterSpacing: -0.5,
+              lineHeight: 1,
               fontVariantNumeric: "tabular-nums",
             }}
           >
             {value}
           </span>
           {unit && (
-            <span style={{ fontSize: 11, color: t.unit }}>{unit}</span>
+            <span style={{ fontSize: 11, color: t.unit, textTransform: "uppercase", letterSpacing: 0.6 }}>{unit}</span>
           )}
         </div>
       </div>

@@ -96,13 +96,12 @@ export function Countdown({ targetIso, compact = false, fallbackLabel = "Sin fec
       }}
     >
       {units.map((u, i) => (
-        <div key={u.label} style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+        <div key={u.label} style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
           <span
-            className="mono"
+            className="font-score"
             style={{
-              fontSize: 22,
-              fontWeight: 700,
-              letterSpacing: -1,
+              fontSize: 30,
+              fontWeight: 400,
               lineHeight: 1,
               color: tone,
             }}

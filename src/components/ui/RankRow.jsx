@@ -19,9 +19,19 @@ export function RankRow({
   style,
 }) {
   const compact = variant === "compact";
-  const pointsSize = compact ? 14 : 16;
+  const pointsSize = compact ? 18 : 22;
   const avatarSize = compact ? 28 : 32;
   const pad = compact ? "8px 10px" : "10px 12px";
+  const rank = Number(member.rank);
+  const isPodium = rank >= 1 && rank <= 3;
+  const podiumColor =
+    rank === 1
+      ? "var(--gold-ink)"
+      : rank === 2
+        ? "var(--azure-ink)"
+        : rank === 3
+          ? "var(--coral-ink)"
+          : "var(--ink-3)";
 
   return (
     <div
@@ -43,13 +53,14 @@ export function RankRow({
       }}
     >
       <span
-        className="mono"
+        className="font-score"
         style={{
-          width: 22,
+          width: 26,
           textAlign: "center",
-          fontSize: 13,
-          fontWeight: 600,
-          color: "var(--ink-3)",
+          fontSize: isPodium ? 22 : 18,
+          fontWeight: 400,
+          color: podiumColor,
+          lineHeight: 1,
         }}
       >
         {member.rank}
@@ -76,17 +87,17 @@ export function RankRow({
       {trailing ?? (
         <div style={{ textAlign: "right" }}>
           <span
-            className="mono"
+            className="font-score"
             style={{
               fontSize: pointsSize,
-              fontWeight: 600,
+              fontWeight: 400,
               color: "var(--ink)",
-              letterSpacing: -0.3,
+              lineHeight: 1,
             }}
           >
             {member.puntos}
           </span>
-          <div style={{ fontSize: 10, color: "var(--ink-3)" }}>pts</div>
+          <div style={{ fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: 0.6, marginTop: 2 }}>pts</div>
         </div>
       )}
     </div>

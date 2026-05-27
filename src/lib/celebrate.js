@@ -4,11 +4,12 @@ const REDUCE_MOTION = () =>
   typeof window !== "undefined" &&
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+// Paleta Mundial 2026 — verde MX · rojo USA/CAN · oro · azul · magenta
 const PALETTE = {
-  exact:    ["#D4A017", "#E1794C", "#5BAA47", "#FFF1B8"],
-  win:      ["#5BAA47", "#A6E0A0", "#FFFFFF"],
-  champion: ["#D4A017", "#FFD86B", "#FFF1B8", "#E1794C"],
-  podium:   ["#D4A017", "#C8C2B5", "#B5651D", "#FFFFFF"],
+  exact:    ["#F2B91A", "#E5172E", "#2BA84A", "#FFFFFF", "#2E5BFF"],
+  win:      ["#2BA84A", "#7FE08C", "#FFFFFF", "#F2B91A"],
+  champion: ["#F2B91A", "#FFE066", "#FFFFFF", "#E5172E", "#2E5BFF"],
+  podium:   ["#F2B91A", "#2E5BFF", "#E5172E", "#FFFFFF"],
 };
 
 function vibrate(pattern) {

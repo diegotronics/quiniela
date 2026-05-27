@@ -1,14 +1,15 @@
 const HUES = [148, 32, 85, 220, 280, 0, 200, 60, 320];
 
 const RING_TONES = {
-  gold:   { color: "var(--gold)",                  width: 2.5, glow: "0 0 0 5px color-mix(in oklab, var(--gold) 18%, transparent)" },
-  silver: { color: "oklch(0.78 0.02 80)",          width: 2.5, glow: null },
-  bronze: { color: "oklch(0.62 0.10 35)",          width: 2.5, glow: null },
-  accent: { color: "var(--accent)",                width: 2,   glow: null },
-  coral:  { color: "var(--coral)",                 width: 2,   glow: null },
-  fire:   { color: "var(--coral)",                 width: 2.5, glow: "0 0 0 5px color-mix(in oklab, var(--coral) 18%, transparent)" },
-  ink:    { color: "var(--ink)",                   width: 2,   glow: null },
-  section:{ color: "var(--section-accent)",        width: 2,   glow: null },
+  gold:   { color: "var(--gold)",   width: 2.5, glow: "0 0 0 5px color-mix(in oklab, var(--gold) 22%, transparent)" },
+  silver: { color: "var(--azure)",  width: 2.5, glow: "0 0 0 5px color-mix(in oklab, var(--azure) 18%, transparent)" },
+  bronze: { color: "var(--coral)",  width: 2.5, glow: "0 0 0 5px color-mix(in oklab, var(--coral) 18%, transparent)" },
+  accent: { color: "var(--accent)", width: 2,   glow: null },
+  coral:  { color: "var(--coral)",  width: 2,   glow: null },
+  azure:  { color: "var(--azure)",  width: 2,   glow: null },
+  fire:   { color: "var(--coral)",  width: 2.5, glow: "0 0 0 5px color-mix(in oklab, var(--coral) 22%, transparent)" },
+  ink:    { color: "var(--ink)",    width: 2,   glow: null },
+  section:{ color: "var(--section-accent)", width: 2, glow: null },
 };
 
 function resolveRing(ring) {

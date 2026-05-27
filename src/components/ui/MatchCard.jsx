@@ -132,15 +132,15 @@ function MatchCardList({ match, pred, onClick, groupLabel }) {
         <div style={{ textAlign: "center" }}>
           {isFinal ? (
             <span
-              className="mono score-reveal"
+              className="font-score score-reveal"
               style={{
-                fontSize: 22,
-                fontWeight: 700,
+                fontSize: 30,
+                fontWeight: 400,
                 color: "var(--ink)",
-                letterSpacing: -0.5,
+                lineHeight: 1,
                 display: "inline-flex",
                 alignItems: "baseline",
-                gap: 4,
+                gap: 6,
               }}
             >
               <span
@@ -171,13 +171,13 @@ function MatchCardList({ match, pred, onClick, groupLabel }) {
             </span>
           ) : tienePick ? (
             <div>
-              <span className="mono" style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.3 }}>
+              <span className="font-score" style={{ fontSize: 24, fontWeight: 400, color: "var(--ink)", lineHeight: 1 }}>
                 {pred.goles_local} – {pred.goles_visitante}
               </span>
-              <div style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2 }}>tu pick</div>
+              <div style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2, textTransform: "uppercase", letterSpacing: 0.5 }}>tu pick</div>
             </div>
           ) : (
-            <span style={{ fontSize: 12, color: "var(--ink-3)" }} className="mono">
+            <span style={{ fontSize: 14, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: 1 }} className="font-score">
               vs
             </span>
           )}
@@ -209,13 +209,18 @@ function MatchCardLive({
     <Card
       pad={14}
       elevated
-      className="breathe-live"
-      style={{ background: "var(--ink)", borderColor: "var(--ink)", color: "var(--bg)" }}
+      className="breathe-live field-lines-light"
+      style={{
+        background: "var(--gradient-nocturno)",
+        borderColor: "transparent",
+        color: "#fff",
+        boxShadow: "var(--shadow-coral)",
+      }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         <LiveBadge />
         {rightLabel && (
-          <span style={{ fontSize: 11, color: "oklch(0.75 0.02 60)", fontWeight: 500 }}>
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.72)", fontWeight: 500 }}>
             {rightLabel}
           </span>
         )}
@@ -224,15 +229,15 @@ function MatchCardLive({
         <TeamRow team={match.equipo_local} size="md" theme="dark" truncate />
         {liveLocal != null && liveVisitante != null ? (
           <span
-            className="mono"
+            className="font-score"
             style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: "var(--bg)",
-              letterSpacing: -1,
+              fontSize: 38,
+              fontWeight: 400,
+              color: "#fff",
+              lineHeight: 1,
               display: "inline-flex",
               alignItems: "baseline",
-              gap: 6,
+              gap: 8,
             }}
           >
             <span
@@ -252,7 +257,7 @@ function MatchCardLive({
             </span>
           </span>
         ) : (
-          <span className="mono" style={{ fontSize: 26, fontWeight: 600, color: "var(--bg)", letterSpacing: -1 }}>
+          <span className="font-score" style={{ fontSize: 32, fontWeight: 400, color: "#fff", textTransform: "uppercase", letterSpacing: 2 }}>
             vs
           </span>
         )}
@@ -266,12 +271,12 @@ function MatchCardLive({
             alignItems: "center",
             justifyContent: "space-between",
             fontSize: 12,
-            color: "oklch(0.75 0.02 60)",
+            color: "rgba(255,255,255,0.72)",
           }}
         >
           <span>
             Tu pronóstico:{" "}
-            <span className="mono" style={{ color: "var(--bg)" }}>
+            <span className="font-score" style={{ color: "#fff", fontSize: 16, letterSpacing: 1 }}>
               {pred.goles_local}–{pred.goles_visitante}
             </span>
           </span>

@@ -30,14 +30,22 @@ export function TeamRow({
   const weight = isWinner ? 800 : preset.weight;
   const color = isLoser
     ? dark
-      ? "oklch(0.65 0.02 60)"
+      ? "rgba(255,255,255,0.55)"
       : "var(--ink-3)"
     : dark
-      ? "var(--bg)"
+      ? "#fff"
       : "var(--ink)";
 
   const teamCode = code(team);
   const label = truncate && team && team.length > 12 ? teamCode : team;
+
+  const flagWrapperClass = isFinal && isWinner ? "flag-glow-winner" : undefined;
+  const flagWrapperStyle = {
+    display: "inline-flex",
+    borderRadius: preset.flag.r,
+    overflow: "visible",
+    filter: "saturate(115%)",
+  };
 
   return (
     <div
@@ -52,7 +60,9 @@ export function TeamRow({
         ...(style || {}),
       }}
     >
-      <Flag code={teamCode} w={preset.flag.w} h={preset.flag.h} rounded={preset.flag.r} />
+      <span className={flagWrapperClass} style={flagWrapperStyle}>
+        <Flag code={teamCode} w={preset.flag.w} h={preset.flag.h} rounded={preset.flag.r} />
+      </span>
       {showName && (
         <span
           style={{

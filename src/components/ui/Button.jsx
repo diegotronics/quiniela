@@ -16,11 +16,11 @@ const sizes = {
 
 const variants = {
   primary: {
-    background: "var(--ink)",
-    color: "var(--bg)",
+    background: "var(--gradient-cancha)",
+    color: "#fff",
     border: "none",
-    fontWeight: 600,
-    boxShadow: "var(--shadow-1)",
+    fontWeight: 700,
+    boxShadow: "var(--shadow-accent)",
   },
   ghost: {
     background: "var(--surface-2)",

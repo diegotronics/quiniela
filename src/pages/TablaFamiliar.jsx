@@ -223,9 +223,9 @@ const PODIUM_VISUAL = {
   1: {
     pedestalHeight: 76,
     avatarSize: 72,
-    pedestalBg: "linear-gradient(180deg, var(--gold) 0%, var(--gold-ink) 100%)",
+    pedestalBg: "var(--gradient-trofeo)",
     pedestalShadow: "var(--shadow-gold)",
-    numberColor: "#fff",
+    numberColor: "#1A1300",
     labelColor: "var(--gold-ink)",
     ringTone: "gold",
     badgeBg: "var(--gold)",
@@ -233,22 +233,22 @@ const PODIUM_VISUAL = {
   2: {
     pedestalHeight: 52,
     avatarSize: 56,
-    pedestalBg: "linear-gradient(180deg, oklch(0.85 0.02 80) 0%, oklch(0.66 0.02 80) 100%)",
-    pedestalShadow: "var(--shadow-1)",
+    pedestalBg: "linear-gradient(180deg, oklch(0.78 0.06 250) 0%, oklch(0.50 0.10 250) 100%)",
+    pedestalShadow: "var(--shadow-azure)",
     numberColor: "#fff",
-    labelColor: "oklch(0.42 0.02 80)",
+    labelColor: "var(--azure-ink)",
     ringTone: "silver",
-    badgeBg: "oklch(0.78 0.02 80)",
+    badgeBg: "oklch(0.65 0.12 250)",
   },
   3: {
     pedestalHeight: 34,
     avatarSize: 56,
-    pedestalBg: "linear-gradient(180deg, oklch(0.70 0.10 35) 0%, oklch(0.48 0.10 35) 100%)",
-    pedestalShadow: "var(--shadow-1)",
+    pedestalBg: "linear-gradient(180deg, oklch(0.72 0.20 28) 0%, oklch(0.50 0.20 28) 100%)",
+    pedestalShadow: "var(--shadow-coral)",
     numberColor: "#fff",
-    labelColor: "oklch(0.40 0.10 35)",
+    labelColor: "var(--coral-ink)",
     ringTone: "bronze",
-    badgeBg: "oklch(0.62 0.10 35)",
+    badgeBg: "var(--coral)",
   },
 };
 
@@ -364,19 +364,18 @@ function PodiumCard({ place, member, center, me, delay = 0 }) {
         )}
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 3 }}>
           <span
-            className="mono"
+            className="font-score"
             style={{
-              fontSize: center ? 24 : 20,
-              fontWeight: 700,
+              fontSize: center ? 30 : 24,
+              fontWeight: 400,
               color: "var(--ink)",
-              letterSpacing: -0.8,
               lineHeight: 1,
               fontVariantNumeric: "tabular-nums",
             }}
           >
             {member.puntos}
           </span>
-          <span style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 500 }}>pts</span>
+          <span style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>pts</span>
         </div>
       </div>
 
@@ -413,12 +412,12 @@ function PodiumCard({ place, member, center, me, delay = 0 }) {
           }}
         />
         <span
-          className="mono"
+          className="font-score"
           style={{
-            fontSize: place === 1 ? 36 : place === 2 ? 26 : 20,
-            fontWeight: 700,
+            fontSize: place === 1 ? 44 : place === 2 ? 32 : 26,
+            fontWeight: 400,
             color: visual.numberColor,
-            letterSpacing: -1,
+            letterSpacing: 1,
             lineHeight: 1,
             textShadow: "0 1px 2px rgba(0,0,0,0.18)",
             fontVariantNumeric: "tabular-nums",

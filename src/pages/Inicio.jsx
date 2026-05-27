@@ -146,9 +146,11 @@ export default function Inicio() {
             pad={16}
             onClick={() => navigate("/app/apuestas")}
             style={{
-              background: "var(--accent-soft)",
+              background: "var(--gradient-trofeo)",
               borderColor: "transparent",
               cursor: "pointer",
+              color: "#1A1300",
+              boxShadow: "var(--shadow-gold)",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
@@ -156,26 +158,29 @@ export default function Inicio() {
                 <div
                   style={{
                     fontSize: 11,
-                    color: "var(--accent-ink)",
-                    fontWeight: 700,
-                    letterSpacing: 0.4,
+                    color: "#1A1300",
+                    fontWeight: 800,
+                    letterSpacing: 0.6,
                     textTransform: "uppercase",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
+                    opacity: 0.85,
                   }}
                 >
                   <Icon.Crown /> Apuestas especiales
                 </div>
-                <div style={{ marginTop: 4, fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+                <div style={{ marginTop: 4, fontSize: 14, fontWeight: 700, color: "#1A1300" }}>
                   {apuestaUsuario ? "Completa tus pronósticos premundiales" : "Pronostica Campeón, Goleador y más"}
                 </div>
-                <div style={{ marginTop: 2, fontSize: 12, color: "var(--ink-3)" }}>
+                <div style={{ marginTop: 2, fontSize: 12, color: "rgba(26,19,0,0.72)", fontWeight: 600 }}>
                   Hasta{" "}
-                  {(apuestasCfg?.pts_campeon ?? 0) +
-                    (apuestasCfg?.pts_subcampeon ?? 0) +
-                    (apuestasCfg?.pts_goleador ?? 0) +
-                    (apuestasCfg?.pts_sorpresa ?? 0)}{" "}
+                  <span className="font-score" style={{ fontSize: 14, letterSpacing: 0.6 }}>
+                    {(apuestasCfg?.pts_campeon ?? 0) +
+                      (apuestasCfg?.pts_subcampeon ?? 0) +
+                      (apuestasCfg?.pts_goleador ?? 0) +
+                      (apuestasCfg?.pts_sorpresa ?? 0)}
+                  </span>{" "}
                   pts en juego
                 </div>
               </div>
@@ -185,16 +190,32 @@ export default function Inicio() {
         )}
 
         {/* Puntaje + posición */}
-        <Card pad={0} elevated style={{ overflow: "hidden" }}>
+        <Card
+          pad={0}
+          elevated
+          style={{
+            overflow: "hidden",
+            position: "relative",
+            boxShadow: me?.id === lider?.id ? "var(--shadow-gold)" : "var(--shadow-accent)",
+          }}
+        >
+          <div className="tricolor-bar" style={{ borderRadius: 0, height: 4 }} />
           <div
-            className="dotgrid-soft"
-            style={{ padding: "22px 20px 18px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}
+            className="field-lines"
+            style={{
+              padding: "22px 20px 18px",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+              color: "var(--ink)",
+            }}
           >
             <div>
               <div style={kicker}>Tus puntos</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 8 }}>
-                <span className="mono" style={me?.id === lider?.id ? bigNumGold : bigNum}>{myPtsDisplay}</span>
-                <span style={{ fontSize: 14, color: "var(--ink-3)", fontWeight: 500 }}>pts</span>
+                <span style={me?.id === lider?.id ? bigNumGold : bigNum}>{myPtsDisplay}</span>
+                <span style={{ fontSize: 13, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6 }}>pts</span>
               </div>
               {stats.jugados > 0 && (
                 <div style={{ marginTop: 10 }}>
@@ -207,8 +228,8 @@ export default function Inicio() {
             <div style={{ textAlign: "right" }}>
               <div style={kicker}>Posición</div>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 4, marginTop: 8 }}>
-                <span className="mono" style={me?.id === lider?.id ? bigNumGold : bigNum}>{me?.rank ? myRankDisplay : "—"}</span>
-                <span style={{ fontSize: 14, color: "var(--ink-3)", fontWeight: 500 }}>/ {totalJugadores || 0}</span>
+                <span style={me?.id === lider?.id ? bigNumGold : bigNum}>{me?.rank ? myRankDisplay : "—"}</span>
+                <span style={{ fontSize: 13, color: "var(--ink-3)", fontWeight: 600, letterSpacing: 0.4 }}>/ {totalJugadores || 0}</span>
               </div>
               {lider && me && me.id !== lider.id && (
                 <div style={{ marginTop: 10, fontSize: 12, color: "var(--coral-ink)", fontWeight: 600 }}>
@@ -353,12 +374,38 @@ export default function Inicio() {
             <SectionTitle action={<span onClick={() => navigate("/app/partidos")} style={{ cursor: "pointer" }}>Ver todos →</span>}>
               Tu próximo pronóstico
             </SectionTitle>
-            <Card onClick={() => navigate(`/app/partido/${next.id}`)}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <Pill tone="outline">
+            <Card
+              onClick={() => navigate(`/app/partido/${next.id}`)}
+              className="field-lines-light"
+              style={{
+                background: "var(--gradient-nocturno)",
+                borderColor: "transparent",
+                color: "#fff",
+                boxShadow: "var(--shadow-azure)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, position: "relative" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "3px 9px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: 0.5,
+                    textTransform: "uppercase",
+                    color: "#fff",
+                    background: "rgba(255,255,255,0.12)",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    borderRadius: 999,
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
                   {next.grupo ? `Grupo ${next.grupo}` : faseLabel(fases, next.fase_id)}
-                </Pill>
-                <span style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: 0.3 }}>
+                </span>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", letterSpacing: 0.3 }}>
                   {formatDate(next.fecha)}
                 </span>
               </div>
@@ -366,60 +413,87 @@ export default function Inicio() {
                 style={{
                   marginBottom: 12,
                   padding: "10px 12px",
-                  background: "var(--surface-2)",
+                  background: "rgba(255,255,255,0.08)",
                   borderRadius: "var(--r-md)",
-                  border: "0.5px solid var(--line)",
+                  border: "1px solid rgba(255,255,255,0.14)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   gap: 10,
+                  backdropFilter: "blur(8px)",
                 }}
               >
                 <span
                   style={{
                     fontSize: 10,
-                    color: "var(--ink-3)",
-                    fontWeight: 600,
-                    letterSpacing: 0.5,
+                    color: "rgba(255,255,255,0.75)",
+                    fontWeight: 700,
+                    letterSpacing: 0.6,
                     textTransform: "uppercase",
                   }}
                 >
                   Empieza en
                 </span>
-                <Countdown targetIso={next.fecha} />
+                <span style={{ color: "#fff" }}>
+                  <Countdown targetIso={next.fecha} />
+                </span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12, position: "relative" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
                   <Flag code={code(next.equipo_local)} w={56} h={40} rounded={7} />
-                  <div style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)", letterSpacing: -0.2 }}>{next.equipo_local}</div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: "#fff", letterSpacing: -0.2 }}>{next.equipo_local}</div>
                 </div>
                 <div
-                  className="mono"
+                  className="font-score"
                   style={{
-                    fontSize: 10,
-                    color: "var(--ink-3)",
-                    letterSpacing: 1,
-                    fontWeight: 600,
-                    padding: "4px 8px",
+                    fontSize: 18,
+                    color: "#fff",
+                    letterSpacing: 2,
+                    fontWeight: 400,
+                    padding: "6px 12px",
                     borderRadius: 999,
-                    background: "var(--surface-2)",
-                    border: "1px solid var(--line)",
+                    background: "rgba(255,255,255,0.10)",
+                    border: "1px solid rgba(255,255,255,0.18)",
                   }}
                 >
                   VS
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
                   <Flag code={code(next.equipo_visitante)} w={56} h={40} rounded={7} />
-                  <div style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)", letterSpacing: -0.2 }}>{next.equipo_visitante}</div>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: "#fff", letterSpacing: -0.2 }}>{next.equipo_visitante}</div>
                 </div>
               </div>
-              <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface-2)", borderRadius: "var(--r-md)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Tu pronóstico</span>
-                <span className="mono" style={{ fontSize: 18, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.5 }}>
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: "10px 12px",
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  borderRadius: "var(--r-md)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>Tu pronóstico</span>
+                <span className="font-score" style={{ fontSize: 22, fontWeight: 400, color: "#fff", letterSpacing: 1 }}>
                   — · —
                 </span>
               </div>
-              <Button block size="lg" style={{ marginTop: 12 }}>
+              <Button
+                block
+                size="lg"
+                className="pulse-tricolor"
+                style={{
+                  marginTop: 14,
+                  background: "var(--gradient-anfitriones)",
+                  border: "none",
+                  color: "#0E1730",
+                  fontWeight: 700,
+                  letterSpacing: 0.3,
+                }}
+              >
                 Hacer mi pronóstico <Icon.Chevron />
               </Button>
             </Card>
@@ -462,23 +536,23 @@ const kicker = {
 };
 
 const bigNum = {
-  fontSize: 64,
-  fontWeight: 700,
+  fontFamily: "var(--font-score)",
+  fontSize: 72,
+  fontWeight: 400,
   color: "var(--ink)",
-  letterSpacing: -2.5,
-  lineHeight: 0.95,
+  letterSpacing: 0,
+  lineHeight: 0.9,
   fontVariantNumeric: "tabular-nums",
 };
 
 const bigNumGold = {
-  ...{
-    fontSize: 64,
-    fontWeight: 700,
-    letterSpacing: -2.5,
-    lineHeight: 0.95,
-    fontVariantNumeric: "tabular-nums",
-  },
-  background: "linear-gradient(135deg, var(--gold-ink) 0%, var(--gold) 100%)",
+  fontFamily: "var(--font-score)",
+  fontSize: 72,
+  fontWeight: 400,
+  letterSpacing: 0,
+  lineHeight: 0.9,
+  fontVariantNumeric: "tabular-nums",
+  background: "linear-gradient(135deg, var(--gold) 0%, var(--coral) 60%, var(--magenta) 100%)",
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
   backgroundClip: "text",

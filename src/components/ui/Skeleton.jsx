@@ -2,6 +2,57 @@
 // Cajas con shimmer animado que sustituyen a los textos "Cargando…".
 // La animación se desactiva con prefers-reduced-motion (vía CSS global).
 
+// Balón rodando — loader temático para estados de carga prolongada.
+export function BallLoader({ size = 28, label }) {
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          width: size * 4,
+          height: size,
+          position: "relative",
+          overflow: "hidden",
+          borderBottom: "1px solid var(--line)",
+        }}
+      >
+        <span
+          className="ball-roll"
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            width: size,
+            height: size,
+            display: "inline-block",
+          }}
+        >
+          <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
+            <circle cx="16" cy="16" r="14" fill="#fff" stroke="var(--ink)" strokeWidth="1.4" />
+            <path d="M16 6 L20 9.5 L18 14 L14 14 L12 9.5 Z" fill="var(--ink)" />
+            <path d="M16 2.5 L18.6 5.2 L13.4 5.2 Z" fill="var(--ink)" />
+            <path d="M27 11 L23.2 13 L23.2 8.4 Z" fill="var(--ink)" />
+            <path d="M5 11 L8.8 13 L8.8 8.4 Z" fill="var(--ink)" />
+            <path d="M22.4 23 L19.4 20.4 L22.6 18.6 Z" fill="var(--ink)" />
+            <path d="M9.6 23 L12.6 20.4 L9.4 18.6 Z" fill="var(--ink)" />
+          </svg>
+        </span>
+      </div>
+      {label && (
+        <span style={{ fontSize: 11, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 600 }}>
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function Skeleton({
   w = "100%",
   h = 12,
