@@ -12,3 +12,11 @@ export async function updateFaseEstado(id, estado) {
   const { error } = await supabase.from("fases").update({ estado }).eq("id", id);
   if (error) throw error;
 }
+
+export async function updateFasePuntos(id, pts_exacto, pts_ganador) {
+  const { error } = await supabase
+    .from("fases")
+    .update({ pts_exacto, pts_ganador })
+    .eq("id", id);
+  if (error) throw error;
+}

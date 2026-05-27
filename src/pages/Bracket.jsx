@@ -43,7 +43,8 @@ export default function Bracket() {
   }, [rounds]);
 
   // Predicción del campeón: la del partido final
-  const finalMatch = rounds.find((r) => r.id === "final")?.matches[0];
+  const finalRound = rounds.find((r) => r.id === "final");
+  const finalMatch = finalRound?.matches[0];
   const campeonPred = useMemo(() => {
     if (!finalMatch) return null;
     const pr = predicciones[finalMatch.id];
@@ -161,7 +162,7 @@ export default function Bracket() {
                 color: "var(--ink-2)",
               }}
             >
-              <span>+{finalMatch ? "—" : ""} pts si acertás</span>
+              <span>+{finalRound?.fase?.pts_exacto ?? 0} pts si acertás</span>
               <span>Final · {finalMatch.equipo_local} vs {finalMatch.equipo_visitante}</span>
             </div>
           )}

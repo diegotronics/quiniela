@@ -29,3 +29,11 @@ export async function clearResultadoPartido(id) {
     .eq("id", id);
   if (error) throw error;
 }
+
+export async function countPartidos() {
+  const { count, error } = await supabase
+    .from("partidos")
+    .select("id", { count: "exact", head: true });
+  if (error) throw error;
+  return count || 0;
+}

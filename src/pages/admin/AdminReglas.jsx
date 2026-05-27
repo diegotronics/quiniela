@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { updateFaseEstado } from "@/api/fases";
+import { useEffect, useState } from "react";
+import { updateFaseEstado, updateFasePuntos } from "@/api/fases";
 import { useFases } from "@/hooks/useFases";
-import { Card, Flag, Icon, Pill } from "@/components/ui";
+import { Button, Card, Flag, Icon, Pill } from "@/components/ui";
 import { FASES_INFO, code } from "@/lib/constants";
 
 const ESTADOS = [
@@ -22,6 +22,11 @@ export default function AdminReglas() {
     } finally {
       setBusy(null);
     }
+  };
+
+  const guardarPuntos = async (id, pts_exacto, pts_ganador) => {
+    await updateFasePuntos(id, pts_exacto, pts_ganador);
+    await refresh();
   };
 
   return (
@@ -87,23 +92,22 @@ export default function AdminReglas() {
           </div>
         </Card>
 
-        {/* Puntos por fase (solo lectura) */}
+        {/* Puntos por fase (editable) */}
         <Card pad={0}>
           <div style={{ padding: "16px 18px", borderBottom: "0.5px solid var(--line-2)" }}>
             <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>Puntos por fase</div>
             <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
-              Cuánto otorga cada acierto. Por ahora solo lectura · UI editable próximamente.
+              Cuánto otorga cada acierto. El recálculo de puntajes corre automáticamente al guardar.
             </div>
           </div>
           <div>
             {fases.map((f, i) => (
               <RuleRow
                 key={f.id}
-                label={f.nombre}
+                fase={f}
                 hint={FASES_INFO[f.id] || ""}
-                exacto={f.pts_exacto}
-                ganador={f.pts_ganador}
                 last={i === fases.length - 1}
+                onSave={guardarPuntos}
               />
             ))}
           </div>
@@ -184,13 +188,44 @@ export default function AdminReglas() {
   );
 }
 
-function RuleRow({ label, hint, exacto, ganador, last }) {
+function RuleRow({ fase, hint, last, onSave }) {
   const max = 15;
+  const [exacto, setExacto] = useState(String(fase.pts_exacto ?? 0));
+  const [ganador, setGanador] = useState(String(fase.pts_ganador ?? 0));
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setExacto(String(fase.pts_exacto ?? 0));
+    setGanador(String(fase.pts_ganador ?? 0));
+  }, [fase.pts_exacto, fase.pts_ganador]);
+
+  const exactoNum = Number.parseInt(exacto, 10);
+  const ganadorNum = Number.parseInt(ganador, 10);
+  const valid =
+    Number.isFinite(exactoNum) &&
+    Number.isFinite(ganadorNum) &&
+    exactoNum >= 0 &&
+    ganadorNum >= 0 &&
+    exactoNum >= ganadorNum;
+  const dirty = exactoNum !== fase.pts_exacto || ganadorNum !== fase.pts_ganador;
+
+  const guardar = async () => {
+    if (!dirty || !valid || busy) return;
+    setBusy(true);
+    try {
+      await onSave(fase.id, exactoNum, ganadorNum);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const fillPct = valid ? Math.min(100, (exactoNum / max) * 100) : 0;
+
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1fr 240px",
+        gridTemplateColumns: "1fr 280px",
         gap: 16,
         padding: "14px 18px",
         borderBottom: last ? "none" : "0.5px solid var(--line-2)",
@@ -198,44 +233,69 @@ function RuleRow({ label, hint, exacto, ganador, last }) {
       }}
     >
       <div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{label}</div>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{fase.nombre}</div>
         {hint && (
           <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.4 }}>{hint}</div>
         )}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ flex: 1, height: 4, background: "var(--line)", borderRadius: 4, position: "relative" }}>
+        <div style={{ marginTop: 8, height: 4, background: "var(--line)", borderRadius: 4, position: "relative", maxWidth: 220 }}>
           <div
             style={{
               position: "absolute",
               left: 0,
               top: 0,
               bottom: 0,
-              width: `${(exacto / max) * 100}%`,
+              width: `${fillPct}%`,
               background: "var(--accent)",
               borderRadius: 4,
             }}
           />
         </div>
-        <div
-          style={{
-            width: 88,
-            padding: "5px 8px",
-            borderRadius: 8,
-            background: "var(--surface-2)",
-            border: "0.5px solid var(--line)",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 600,
-            fontSize: 12,
-            color: "var(--ink)",
-            textAlign: "center",
-            whiteSpace: "nowrap",
-          }}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
+        <PtsInput label="Exacto" value={exacto} onChange={setExacto} disabled={busy} />
+        <PtsInput label="Ganador" value={ganador} onChange={setGanador} disabled={busy} />
+        <Button
+          size="sm"
+          variant={dirty && valid ? "primary" : "ghost"}
+          disabled={!dirty || !valid || busy}
+          onClick={guardar}
         >
-          {exacto} / {ganador}
-        </div>
+          <Icon.Check /> {busy ? "…" : "Guardar"}
+        </Button>
       </div>
     </div>
+  );
+}
+
+function PtsInput({ label, value, onChange, disabled }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+      <span style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 500, letterSpacing: 0.2, textTransform: "uppercase" }}>
+        {label}
+      </span>
+      <input
+        type="number"
+        min={0}
+        inputMode="numeric"
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
+        style={{
+          width: 56,
+          padding: "6px 8px",
+          borderRadius: 8,
+          background: "var(--surface-2)",
+          border: "0.5px solid var(--line)",
+          fontFamily: "var(--font-mono)",
+          fontWeight: 600,
+          fontSize: 13,
+          color: "var(--ink)",
+          textAlign: "center",
+          outline: "none",
+          boxSizing: "border-box",
+        }}
+      />
+    </label>
   );
 }
 

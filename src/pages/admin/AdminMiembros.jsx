@@ -3,6 +3,14 @@ import { createUsuario, deleteUsuario, updateUsuario } from "@/api/usuarios";
 import { useUsuariosAdmin } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
 import { listPuntajesGlobales } from "@/api/predicciones";
+import { countPartidos } from "@/api/partidos";
+import {
+  buildInviteUrl,
+  createInvitacion,
+  isInvitacionVigente,
+  listInvitaciones,
+  revokeInvitacion,
+} from "@/api/invitaciones";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, Button, Card, Icon, Pill } from "@/components/ui";
 
@@ -14,11 +22,17 @@ export default function AdminMiembros() {
   const { user: currentUser } = useAuth();
   const { usuarios, refresh } = useUsuariosAdmin();
   const { data: puntajes } = useAsync(listPuntajesGlobales, []);
+  const { data: totalPartidos } = useAsync(countPartidos, []);
+  const { data: invitaciones, refresh: refreshInvitaciones } = useAsync(listInvitaciones, []);
   const [form, setForm] = useState(EMPTY);
   const [editing, setEditing] = useState(null);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState("Todos");
   const [modalOpen, setModalOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ nombre: "", email: "" });
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [lastInvite, setLastInvite] = useState(null);
 
   const totales = useMemo(() => {
     const m = new Map();
@@ -122,61 +136,128 @@ export default function AdminMiembros() {
 
   const activos = usuarios.filter((u) => !u.es_admin).length;
   const totalPicks = (puntajes || []).length;
+  const partidosTotal = totalPartidos || 0;
+  const invitacionesPendientes = useMemo(
+    () => (invitaciones || []).filter(isInvitacionVigente),
+    [invitaciones]
+  );
+  const participacion =
+    activos > 0 && partidosTotal > 0
+      ? `${Math.round((totalPicks / (activos * partidosTotal)) * 100)}%`
+      : "—";
 
-  const copyInvite = () => {
-    navigator.clipboard?.writeText("copa.fam/familia");
-    alert("Link copiado al portapapeles");
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard?.writeText(text);
+      alert("Link copiado al portapapeles");
+    } catch {
+      alert("No se pudo copiar el link");
+    }
+  };
+
+  const abrirModalInvitacion = () => {
+    setInviteForm({ nombre: "", email: "" });
+    setLastInvite(null);
+    setInviteModalOpen(true);
+  };
+
+  const generarInvitacion = async (e) => {
+    e?.preventDefault();
+    if (inviteBusy) return;
+    setInviteBusy(true);
+    try {
+      const inv = await createInvitacion({
+        nombre: inviteForm.nombre,
+        email: inviteForm.email,
+        creada_por: currentUser?.id,
+      });
+      setLastInvite(inv);
+      await refreshInvitaciones();
+    } catch (err) {
+      alert("Error al crear la invitación: " + err.message);
+    } finally {
+      setInviteBusy(false);
+    }
+  };
+
+  const revocarInvitacion = async (token) => {
+    if (!confirm("¿Revocar esta invitación? El link dejará de funcionar.")) return;
+    try {
+      await revokeInvitacion(token);
+      await refreshInvitaciones();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
   };
 
   return (
     <div>
       {/* Actions bar */}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 18 }}>
-        <Button variant="primary" onClick={() => { setForm(EMPTY); setEditing(null); setModalOpen(true); }}>
-          <Icon.Plus /> Invitar miembro
+        <Button variant="ghost" onClick={() => { setForm(EMPTY); setEditing(null); setModalOpen(true); }}>
+          <Icon.Plus /> Crear manual
+        </Button>
+        <Button variant="primary" onClick={abrirModalInvitacion}>
+          <Icon.Send /> Invitar miembro
         </Button>
       </div>
 
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, marginBottom: 22 }}>
         <Kpi label="Miembros activos" val={String(activos)} sub={`${usuarios.length} en total`} />
-        <Kpi label="Pendientes" val="0" sub="invitaciones" />
+        <Kpi
+          label="Pendientes"
+          val={String(invitacionesPendientes.length)}
+          sub="invitaciones vigentes"
+        />
         <Kpi label="Pronósticos hechos" val={String(totalPicks)} sub="totales" />
         <Kpi
           label="% participación"
-          val={activos > 0 ? `${Math.round((totalPicks / (activos * 32)) * 100)}%` : "—"}
-          sub="estimado"
+          val={participacion}
+          sub={partidosTotal > 0 ? `sobre ${partidosTotal} partidos` : "sin partidos cargados"}
         />
       </div>
 
-      {/* Invite card */}
+      {/* Invitaciones pendientes */}
       <Card style={{ marginBottom: 22 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: invitacionesPendientes.length ? 14 : 0 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>Link de invitación familiar</div>
+            <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>Links de invitación familiar</div>
             <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>
-              Compartilo en el grupo de WhatsApp. Próximamente el flow real.
+              Generá un link único y compartilo por WhatsApp.
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <div
-              style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                background: "var(--surface-2)",
-                border: "0.5px solid var(--line)",
-                fontFamily: "var(--font-mono)",
-                fontSize: 13,
-                color: "var(--ink-2)",
-              }}
-            >
-              copa.fam/familia
-            </div>
-            <Button variant="primary" onClick={copyInvite}>
-              <Icon.Copy /> Copiar link
-            </Button>
-          </div>
+          <Button variant="primary" onClick={abrirModalInvitacion}>
+            <Icon.Plus /> Nuevo link
+          </Button>
         </div>
+
+        {invitacionesPendientes.length === 0 ? (
+          <div
+            style={{
+              padding: "14px 16px",
+              borderRadius: 10,
+              background: "var(--surface-2)",
+              border: "0.5px dashed var(--line)",
+              fontSize: 13,
+              color: "var(--ink-3)",
+              textAlign: "center",
+            }}
+          >
+            No hay invitaciones pendientes.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {invitacionesPendientes.map((inv) => (
+              <InvitacionRow
+                key={inv.token}
+                inv={inv}
+                onCopy={() => copyToClipboard(buildInviteUrl(inv.token))}
+                onRevoke={() => revocarInvitacion(inv.token)}
+              />
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Filters */}
@@ -385,6 +466,157 @@ export default function AdminMiembros() {
           </form>
         </Modal>
       )}
+
+      {/* Modal de invitación */}
+      {inviteModalOpen && (
+        <Modal
+          onClose={() => {
+            setInviteModalOpen(false);
+            setLastInvite(null);
+            setInviteForm({ nombre: "", email: "" });
+          }}
+        >
+          <h3 style={{ margin: "0 0 14px", fontSize: 16, fontWeight: 600, color: "var(--ink)" }}>
+            {lastInvite ? "Link listo" : "Invitar miembro"}
+          </h3>
+
+          {!lastInvite ? (
+            <form onSubmit={generarInvitacion} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)" }}>
+                Generamos un link único. El familiar elige su contraseña al aceptarlo.
+              </p>
+              <Input
+                label="Nombre (opcional)"
+                value={inviteForm.nombre}
+                onChange={(v) => setInviteForm({ ...inviteForm, nombre: v })}
+                placeholder="Para reconocerlo en la lista"
+              />
+              <Input
+                label="Email (opcional)"
+                type="email"
+                value={inviteForm.email}
+                onChange={(v) => setInviteForm({ ...inviteForm, email: v })}
+                placeholder="Pre-llena el formulario"
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 6 }}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setInviteModalOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={inviteBusy}>
+                  {inviteBusy ? "Generando…" : "Generar link"}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)" }}>
+                Compartilo por WhatsApp. Vence en 30 días o cuando lo revoques.
+              </p>
+              <div
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "var(--surface-2)",
+                  border: "0.5px solid var(--line)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  color: "var(--ink-2)",
+                  wordBreak: "break-all",
+                }}
+              >
+                {buildInviteUrl(lastInvite.token)}
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setInviteModalOpen(false);
+                    setLastInvite(null);
+                    setInviteForm({ nombre: "", email: "" });
+                  }}
+                >
+                  Cerrar
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={() => copyToClipboard(buildInviteUrl(lastInvite.token))}
+                >
+                  <Icon.Copy /> Copiar link
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function InvitacionRow({ inv, onCopy, onRevoke }) {
+  const url = buildInviteUrl(inv.token);
+  const venceEn = inv.expires_at
+    ? Math.max(0, Math.round((new Date(inv.expires_at).getTime() - Date.now()) / 86400000))
+    : null;
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        padding: "10px 12px",
+        borderRadius: 10,
+        background: "var(--surface-2)",
+        border: "0.5px solid var(--line)",
+        flexWrap: "wrap",
+      }}
+    >
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>
+          {inv.nombre || inv.email || "Invitación sin destinatario"}
+        </div>
+        <div
+          className="mono"
+          style={{
+            fontSize: 11,
+            color: "var(--ink-3)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            marginTop: 2,
+          }}
+          title={url}
+        >
+          {url}
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        {venceEn !== null && (
+          <Pill tone={venceEn <= 3 ? "coral" : "outline"} size="sm">
+            {venceEn === 0 ? "vence hoy" : `${venceEn}d`}
+          </Pill>
+        )}
+        <button
+          onClick={onCopy}
+          title="Copiar link"
+          style={{ background: "none", border: "none", padding: 6, borderRadius: 6, color: "var(--ink-2)", cursor: "pointer" }}
+        >
+          <Icon.Copy />
+        </button>
+        <button
+          onClick={onRevoke}
+          title="Revocar"
+          style={{ background: "none", border: "none", padding: 6, borderRadius: 6, color: "var(--danger)", cursor: "pointer" }}
+        >
+          <Icon.Trash />
+        </button>
+      </div>
     </div>
   );
 }

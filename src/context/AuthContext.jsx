@@ -63,7 +63,7 @@ export function AuthProvider({ children }) {
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nuevo));
       setUser(nuevo);
-      return { ok: true };
+      return { ok: true, user: nuevo };
     } catch (e) {
       return { ok: false, error: e.message };
     }

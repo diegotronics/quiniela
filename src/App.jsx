@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "@/pages/Login.jsx";
 import Register from "@/pages/Register.jsx";
+import AceptarInvitacion from "@/pages/AceptarInvitacion.jsx";
 import MainApp from "@/pages/MainApp.jsx";
 import Inicio from "@/pages/Inicio.jsx";
 import Bracket from "@/pages/Bracket.jsx";
@@ -27,6 +28,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/registro" element={<Register />} />
+      <Route path="/invitacion/:token" element={<AceptarInvitacion />} />
 
       <Route
         path="/app"
