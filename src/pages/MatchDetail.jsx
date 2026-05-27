@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { useFases } from "@/hooks/useFases";
-import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
-import { useUsuariosPublic } from "@/hooks/useUsuarios";
-import { useAsync } from "@/hooks/useAsync";
-import { listPartidosByFase } from "@/api/partidos";
-import { listPrediccionesByUsuario } from "@/api/predicciones";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
+import { useFases } from '@/hooks/useFases'
+import { usePrediccionesUsuario } from '@/hooks/usePredicciones'
+import { useUsuariosPublic } from '@/hooks/useUsuarios'
+import { useAsync } from '@/hooks/useAsync'
+import { listPartidosByFase } from '@/api/partidos'
+import { listPrediccionesByUsuario } from '@/api/predicciones'
+import { supabase } from '@/lib/supabase'
 import {
   Avatar,
   Card,
@@ -18,112 +18,121 @@ import {
   ScoreStepper,
   SkeletonMatchHeader,
   SkeletonText,
-} from "@/components/ui";
-import { code } from "@/lib/constants";
-import { ChatPanel } from "@/components/chat/ChatPanel";
-import { celebrateExact, celebrateWin, celebrateOnce } from "@/lib/celebrate";
+} from '@/components/ui'
+import { code } from '@/lib/constants'
+import { ChatPanel } from '@/components/chat/ChatPanel'
+import { celebrateExact, celebrateWin, celebrateOnce } from '@/lib/celebrate'
 
 export default function MatchDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { fases } = useFases();
-  const { usuarios } = useUsuariosPublic();
-  const { predicciones, setPrediccion } = usePrediccionesUsuario(user?.id);
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { fases } = useFases()
+  const { usuarios } = useUsuariosPublic()
+  const { predicciones, setPrediccion } = usePrediccionesUsuario(user?.id)
 
   // Cargar el partido específico
-  const { data: partido, loading: loadingPartido, refresh: refreshPartido } = useAsync(
-    async () => {
-      const { data, error } = await supabase
-        .from("partidos")
-        .select(
-          "id, fase_id, grupo, equipo_local, equipo_visitante, fecha, goles_local, goles_visitante, resultado_ingresado",
-        )
-        .eq("id", id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    [id],
-  );
+  const {
+    data: partido,
+    loading: loadingPartido,
+    refresh: refreshPartido,
+  } = useAsync(async () => {
+    const { data, error } = await supabase
+      .from('partidos')
+      .select(
+        'id, fase_id, grupo, equipo_local, equipo_visitante, fecha, goles_local, goles_visitante, resultado_ingresado',
+      )
+      .eq('id', id)
+      .maybeSingle()
+    if (error) throw error
+    return data
+  }, [id])
 
   // Predicciones de TODA la familia para este partido
-  const { data: picksFamilia } = useAsync(
-    async () => {
-      const { data, error } = await supabase
-        .from("predicciones")
-        .select("usuario_id, goles_local, goles_visitante, puntos_obtenidos")
-        .eq("partido_id", id);
-      if (error) throw error;
-      return data || [];
-    },
-    [id],
-  );
+  const { data: picksFamilia } = useAsync(async () => {
+    const { data, error } = await supabase
+      .from('predicciones')
+      .select('usuario_id, goles_local, goles_visitante, puntos_obtenidos')
+      .eq('partido_id', id)
+    if (error) throw error
+    return data || []
+  }, [id])
 
-  const fase = useMemo(() => fases.find((f) => f.id === partido?.fase_id), [fases, partido]);
-  const locked = !fase || fase.estado !== "activa" || partido?.resultado_ingresado;
+  const fase = useMemo(
+    () => fases.find((f) => f.id === partido?.fase_id),
+    [fases, partido],
+  )
+  const locked =
+    !fase || fase.estado !== 'activa' || partido?.resultado_ingresado
 
-  const myPred = predicciones[id];
-  const [draft, setDraft] = useState({ local: null, visitante: null });
+  const myPred = predicciones[id]
+  const [draft, setDraft] = useState({ local: null, visitante: null })
   useEffect(() => {
     setDraft({
       local: myPred?.goles_local ?? null,
       visitante: myPred?.goles_visitante ?? null,
-    });
-  }, [myPred?.goles_local, myPred?.goles_visitante]);
+    })
+  }, [myPred?.goles_local, myPred?.goles_visitante])
 
-  const [saving, setSaving] = useState(false);
-  const [savedTick, setSavedTick] = useState(0);
+  const [saving, setSaving] = useState(false)
+  const [savedTick, setSavedTick] = useState(0)
   const guardar = async () => {
-    if (draft.local == null || draft.visitante == null) return;
-    setSaving(true);
+    if (draft.local == null || draft.visitante == null) return
+    setSaving(true)
     try {
-      await setPrediccion(id, "goles_local", draft.local);
-      await setPrediccion(id, "goles_visitante", draft.visitante);
-      setSavedTick((k) => k + 1);
+      await setPrediccion(id, 'goles_local', draft.local)
+      await setPrediccion(id, 'goles_visitante', draft.visitante)
+      setSavedTick((k) => k + 1)
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   // Confetti automático cuando se entra a un partido finalizado y el usuario acertó.
   useEffect(() => {
-    if (!partido || !partido.resultado_ingresado || !myPred) return;
-    if (myPred.goles_local == null || myPred.goles_visitante == null) return;
+    if (!partido || !partido.resultado_ingresado || !myPred) return
+    if (myPred.goles_local == null || myPred.goles_visitante == null) return
     const exact =
       Number(myPred.goles_local) === Number(partido.goles_local) &&
-      Number(myPred.goles_visitante) === Number(partido.goles_visitante);
-    const won = (myPred.puntos_obtenidos || 0) > 0;
+      Number(myPred.goles_visitante) === Number(partido.goles_visitante)
+    const won = (myPred.puntos_obtenidos || 0) > 0
     if (exact) {
       celebrateOnce(`exact-${id}`, () => {
-        setTimeout(celebrateExact, 280);
-      });
+        setTimeout(celebrateExact, 280)
+      })
     } else if (won) {
       celebrateOnce(`win-${id}`, () => {
-        setTimeout(celebrateWin, 280);
-      });
+        setTimeout(celebrateWin, 280)
+      })
     }
-  }, [partido, myPred, id]);
+  }, [partido, myPred, id])
 
-  const [tab, setTab] = useState("familia");
+  const [tab, setTab] = useState('familia')
 
   if (loadingPartido) {
     return (
-      <div style={{ padding: "16px 16px 80px", display: "flex", flexDirection: "column", gap: 14 }}>
+      <div
+        style={{
+          padding: '16px 16px 80px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
         <SkeletonMatchHeader />
         <div
           style={{
-            background: "var(--surface)",
-            borderRadius: "var(--r-xl)",
-            border: "1px solid var(--line)",
+            background: 'var(--surface)',
+            borderRadius: 'var(--r-xl)',
+            border: '1px solid var(--line)',
             padding: 16,
-            boxShadow: "var(--shadow-1)",
+            boxShadow: 'var(--shadow-1)',
           }}
         >
           <SkeletonText lines={4} lastWidth="40%" />
         </div>
       </div>
-    );
+    )
   }
   if (!partido) {
     return (
@@ -133,66 +142,106 @@ export default function MatchDetail() {
           title="Partido no encontrado"
           description="Puede que el partido haya sido removido o que la URL esté mal."
           cta={{
-            label: "Volver a partidos",
-            onClick: () => navigate("/app/partidos"),
+            label: 'Volver a partidos',
+            onClick: () => navigate('/app/partidos'),
           }}
         />
       </Centered>
-    );
+    )
   }
 
-  const isFinal = partido.resultado_ingresado;
-  const picksByUser = new Map((picksFamilia || []).map((p) => [p.usuario_id, p]));
+  const isFinal = partido.resultado_ingresado
+  const picksByUser = new Map(
+    (picksFamilia || []).map((p) => [p.usuario_id, p]),
+  )
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: locked ? 60 : 140 }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        paddingBottom: locked ? 60 : 140,
+      }}
+    >
       {/* Header oscuro */}
-      <div style={{ background: "var(--ink)", color: "var(--bg)", paddingTop: 24, paddingBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 14px" }}>
+      <div
+        style={{
+          background: 'var(--ink)',
+          color: 'var(--bg)',
+          paddingTop: 24,
+          paddingBottom: 20,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 20px 14px',
+          }}
+        >
           <button
             onClick={() => navigate(-1)}
             aria-label="Volver"
-            style={{ width: 36, height: 36, background: "transparent", border: "none", color: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{
+              width: 36,
+              height: 36,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--bg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <Icon.ChevronL />
           </button>
-          <span style={{ fontSize: 13, color: "oklch(0.75 0.02 60)" }}>
-            {fase?.nombre || "Partido"}{partido.grupo ? ` · Grupo ${partido.grupo}` : ""}
+          <span style={{ fontSize: 13, color: 'oklch(0.75 0.02 60)' }}>
+            {fase?.nombre || 'Partido'}
+            {partido.grupo ? ` · Grupo ${partido.grupo}` : ''}
           </span>
           <div style={{ width: 36 }} />
         </div>
 
         {(() => {
-          const isDraw = isFinal && partido.goles_local === partido.goles_visitante;
-          const winnerSide = isFinal && !isDraw
-            ? partido.goles_local > partido.goles_visitante
-              ? "local"
-              : "visitante"
-            : null;
+          const isDraw =
+            isFinal && partido.goles_local === partido.goles_visitante
+          const winnerSide =
+            isFinal && !isDraw
+              ? partido.goles_local > partido.goles_visitante
+                ? 'local'
+                : 'visitante'
+              : null
           const HeaderTeam = ({ team, side }) => {
-            const isWinner = winnerSide === side;
-            const isLoser = winnerSide && !isWinner;
+            const isWinner = winnerSide === side
+            const isLoser = winnerSide && !isWinner
             return (
-              <div style={{ textAlign: "center", opacity: isLoser ? 0.55 : 1, transition: "opacity 320ms ease" }}>
-                <div style={{ position: "relative", display: "inline-block" }}>
+              <div
+                style={{
+                  textAlign: 'center',
+                  opacity: isLoser ? 0.55 : 1,
+                  transition: 'opacity 320ms ease',
+                }}
+              >
+                <div style={{ position: 'relative', display: 'inline-block' }}>
                   <Flag code={code(team)} w={56} h={40} rounded={6} />
                   {isWinner && (
                     <span
                       className="win-mark"
                       aria-hidden
                       style={{
-                        position: "absolute",
+                        position: 'absolute',
                         top: -8,
                         right: -8,
                         width: 22,
                         height: 22,
-                        borderRadius: "50%",
-                        background: "var(--accent)",
-                        color: "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        border: "2px solid var(--ink)",
+                        borderRadius: '50%',
+                        background: 'var(--accent)',
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid var(--ink)',
                       }}
                     >
                       <Icon.Check style={{ width: 11, height: 11 }} />
@@ -210,31 +259,48 @@ export default function MatchDetail() {
                   {team}
                 </div>
               </div>
-            );
-          };
+            )
+          }
           return (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12, padding: "8px 16px" }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto 1fr',
+                alignItems: 'center',
+                gap: 12,
+                padding: '8px 16px',
+              }}
+            >
               <HeaderTeam team={partido.equipo_local} side="local" />
 
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
                 {isFinal ? (
                   <>
                     <div
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
+                        display: 'inline-flex',
+                        alignItems: 'center',
                         gap: 6,
-                        padding: "4px 10px",
+                        padding: '4px 10px',
                         borderRadius: 999,
-                        background: isDraw ? "var(--gold)" : "rgba(255,255,255,0.1)",
-                        color: isDraw ? "var(--ink)" : "var(--bg)",
+                        background: isDraw
+                          ? 'var(--gold)'
+                          : 'rgba(255,255,255,0.1)',
+                        color: isDraw ? 'var(--ink)' : 'var(--bg)',
                         fontSize: 10,
                         fontWeight: 700,
                         letterSpacing: 0.4,
-                        textTransform: "uppercase",
+                        textTransform: 'uppercase',
                       }}
                     >
-                      {isDraw ? "Empate" : "Finalizado"}
+                      {isDraw ? 'Empate' : 'Finalizado'}
                     </div>
                     <span
                       className="mono score-reveal"
@@ -242,24 +308,45 @@ export default function MatchDetail() {
                         fontSize: 44,
                         fontWeight: 700,
                         letterSpacing: -2,
-                        color: "var(--bg)",
+                        color: 'var(--bg)',
                         lineHeight: 1,
-                        display: "inline-flex",
-                        alignItems: "baseline",
+                        display: 'inline-flex',
+                        alignItems: 'baseline',
                         gap: 6,
                       }}
                     >
-                      <span style={{ opacity: winnerSide === "visitante" ? 0.55 : 1 }}>{partido.goles_local}</span>
+                      <span
+                        style={{
+                          opacity: winnerSide === 'visitante' ? 0.55 : 1,
+                        }}
+                      >
+                        {partido.goles_local}
+                      </span>
                       <span style={{ opacity: 0.45 }}>–</span>
-                      <span style={{ opacity: winnerSide === "local" ? 0.55 : 1 }}>{partido.goles_visitante}</span>
+                      <span
+                        style={{ opacity: winnerSide === 'local' ? 0.55 : 1 }}
+                      >
+                        {partido.goles_visitante}
+                      </span>
                     </span>
                   </>
                 ) : (
                   <>
-                    <div style={{ fontSize: 11, color: "oklch(0.75 0.02 60)", textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 600 }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: 'oklch(0.75 0.02 60)',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.6,
+                        fontWeight: 600,
+                      }}
+                    >
                       vs
                     </div>
-                    <span className="mono" style={{ fontSize: 18, color: "oklch(0.75 0.02 60)" }}>
+                    <span
+                      className="mono"
+                      style={{ fontSize: 18, color: 'oklch(0.75 0.02 60)' }}
+                    >
                       {formatDateTime(partido.fecha)}
                     </span>
                   </>
@@ -268,36 +355,66 @@ export default function MatchDetail() {
 
               <HeaderTeam team={partido.equipo_visitante} side="visitante" />
             </div>
-          );
+          )
         })()}
       </div>
 
       {/* Mi pronóstico / Editor */}
-      <div style={{ padding: "14px 20px 0" }}>
+      <div style={{ padding: '14px 20px 0' }}>
         <Card pad={14}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ fontSize: 12, color: "var(--ink-3)", fontWeight: 500 }}>
-              Tu pronóstico {locked ? "(bloqueado)" : ""}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div
+              style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 500 }}
+            >
+              Tu pronóstico {locked ? '(bloqueado)' : ''}
             </div>
             {locked ? (
               <Pill tone="default" size="sm">
-                <Icon.Lock /> {isFinal ? "Finalizado" : "Bloqueado"}
+                <Icon.Lock /> {isFinal ? 'Finalizado' : 'Bloqueado'}
               </Pill>
             ) : (
-              <Pill tone="accent" size="sm">Editable</Pill>
+              <Pill tone="accent" size="sm">
+                Editable
+              </Pill>
             )}
           </div>
 
           {locked ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-              <span style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 12,
+              }}
+            >
+              <span
+                style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}
+              >
                 {myPred?.goles_local != null
                   ? `${myPred.goles_local} – ${myPred.goles_visitante}`
-                  : "Sin pronóstico"}
+                  : 'Sin pronóstico'}
               </span>
               {isFinal && myPred?.puntos_obtenidos != null && (
-                <span style={{ fontSize: 12, color: myPred.puntos_obtenidos > 0 ? "var(--accent-ink)" : "var(--ink-3)", fontWeight: 600 }}>
-                  {myPred.puntos_obtenidos > 0 ? `+${myPred.puntos_obtenidos} pts` : "0 pts"}
+                <span
+                  style={{
+                    fontSize: 12,
+                    color:
+                      myPred.puntos_obtenidos > 0
+                        ? 'var(--accent-ink)'
+                        : 'var(--ink-3)',
+                    fontWeight: 600,
+                  }}
+                >
+                  {myPred.puntos_obtenidos > 0
+                    ? `+${myPred.puntos_obtenidos} pts`
+                    : '0 pts'}
                 </span>
               )}
             </div>
@@ -305,13 +422,13 @@ export default function MatchDetail() {
             <div style={{ marginTop: 14 }}>
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr auto 1fr",
-                  alignItems: "center",
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto 1fr',
+                  alignItems: 'center',
                   gap: 16,
                   padding: 16,
-                  background: "var(--surface-2)",
-                  borderRadius: "var(--r-md)",
+                  background: 'var(--surface-2)',
+                  borderRadius: 'var(--r-md)',
                 }}
               >
                 <ScoreStepper
@@ -319,7 +436,16 @@ export default function MatchDetail() {
                   value={draft.local}
                   onChange={(v) => setDraft((d) => ({ ...d, local: v }))}
                 />
-                <span className="mono" style={{ fontSize: 18, fontWeight: 600, color: "var(--ink-3)" }}>–</span>
+                <span
+                  className="mono"
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: 'var(--ink-3)',
+                  }}
+                >
+                  –
+                </span>
                 <ScoreStepper
                   label={partido.equipo_visitante}
                   value={draft.visitante}
@@ -328,25 +454,31 @@ export default function MatchDetail() {
               </div>
               <button
                 onClick={guardar}
-                disabled={saving || draft.local == null || draft.visitante == null}
+                disabled={
+                  saving || draft.local == null || draft.visitante == null
+                }
                 className="btn-interactive"
                 style={{
-                  width: "100%",
+                  width: '100%',
                   marginTop: 12,
-                  padding: "12px 16px",
-                  background: savedTick > 0 ? "var(--accent-ink)" : "var(--ink)",
-                  color: "var(--bg)",
-                  border: "none",
-                  borderRadius: "var(--r-md)",
+                  padding: '12px 16px',
+                  background:
+                    savedTick > 0 ? 'var(--accent-ink)' : 'var(--ink)',
+                  color: 'var(--bg)',
+                  border: 'none',
+                  borderRadius: 'var(--r-md)',
                   fontWeight: 600,
                   fontSize: 14,
-                  cursor: saving ? "wait" : "pointer",
-                  opacity: saving || draft.local == null || draft.visitante == null ? 0.6 : 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  cursor: saving ? 'wait' : 'pointer',
+                  opacity:
+                    saving || draft.local == null || draft.visitante == null
+                      ? 0.6
+                      : 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 8,
-                  boxShadow: "var(--shadow-1)",
+                  boxShadow: 'var(--shadow-1)',
                 }}
               >
                 {saving ? (
@@ -355,7 +487,11 @@ export default function MatchDetail() {
                   </>
                 ) : savedTick > 0 ? (
                   <>
-                    <span key={savedTick} className="save-check" style={{ display: "inline-flex" }}>
+                    <span
+                      key={savedTick}
+                      className="save-check"
+                      style={{ display: 'inline-flex' }}
+                    >
                       <Icon.Check style={{ width: 14, height: 14 }} />
                     </span>
                     Pronóstico guardado
@@ -370,21 +506,27 @@ export default function MatchDetail() {
       </div>
 
       {/* Tabs */}
-      <div style={{ padding: "18px 20px 0" }}>
-        <div style={{ display: "flex", gap: 18, borderBottom: "1px solid var(--line)" }}>
+      <div style={{ padding: '18px 20px 0' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 18,
+            borderBottom: '1px solid var(--line)',
+          }}
+        >
           {[
-            ["familia", "Pronósticos familia"],
-            ["picadas", "Chalequeo"],
+            ['familia', 'Pronósticos familia'],
+            ['picadas', 'Chalequeo'],
           ].map(([k, label]) => (
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={tab === k ? "tabline" : ""}
+              className={tab === k ? 'tabline' : ''}
               style={{
-                background: "none",
-                border: "none",
-                padding: "10px 0",
-                color: tab === k ? "var(--ink)" : "var(--ink-3)",
+                background: 'none',
+                border: 'none',
+                padding: '10px 0',
+                color: tab === k ? 'var(--ink)' : 'var(--ink-3)',
                 fontWeight: tab === k ? 600 : 500,
                 fontSize: 14,
                 letterSpacing: -0.1,
@@ -396,75 +538,128 @@ export default function MatchDetail() {
         </div>
       </div>
 
-      <div style={{ padding: "14px 20px 24px" }}>
-        {tab === "familia" ? (
-          <FamilyPicks usuarios={usuarios} picksByUser={picksByUser} mePartial={user?.id} />
+      <div style={{ padding: '14px 20px 24px' }}>
+        {tab === 'familia' ? (
+          <FamilyPicks
+            usuarios={usuarios}
+            picksByUser={picksByUser}
+            mePartial={user?.id}
+          />
         ) : (
           <ChatPanel partidoId={id} altura="60dvh" />
         )}
       </div>
     </div>
-  );
+  )
 }
 
 function FamilyPicks({ usuarios, picksByUser, mePartial }) {
-  const players = (usuarios || []).filter((u) => !u.es_admin);
+  const players = (usuarios || []).filter((u) => !u.es_admin)
   if (players.length === 0) {
-    return <p style={{ color: "var(--ink-3)", textAlign: "center" }}>Sin participantes.</p>;
+    return (
+      <p style={{ color: 'var(--ink-3)', textAlign: 'center' }}>
+        Sin participantes.
+      </p>
+    )
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ fontSize: 12, color: "var(--ink-3)", padding: "0 4px 4px" }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div
+        style={{ fontSize: 12, color: 'var(--ink-3)', padding: '0 4px 4px' }}
+      >
         {picksByUser.size} de {players.length} pronosticaron
       </div>
       {players.map((p) => {
-        const pick = picksByUser.get(p.id);
-        const isMe = p.id === mePartial;
+        const pick = picksByUser.get(p.id)
+        const isMe = p.id === mePartial
         return (
           <Card
             key={p.id}
             pad={12}
             style={{
-              background: isMe ? "var(--accent-soft)" : "var(--surface)",
-              borderColor: isMe ? "transparent" : "var(--line)",
+              background: isMe ? 'var(--accent-soft)' : 'var(--surface)',
+              borderColor: isMe ? 'transparent' : 'var(--line)',
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Avatar name={p.nombre} size={32} />
               <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{p.nombre}</span>
-                  {isMe && <Pill tone="accent" size="sm">Vos</Pill>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                    }}
+                  >
+                    {p.nombre}
+                  </span>
+                  {isMe && (
+                    <Pill tone="accent" size="sm">
+                      Vos
+                    </Pill>
+                  )}
                 </div>
               </div>
-              <div style={{ textAlign: "right" }}>
+              <div style={{ textAlign: 'right' }}>
                 {pick?.goles_local != null ? (
                   <>
-                    <span className="mono" style={{ fontSize: 20, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.5 }}>
+                    <span
+                      className="mono"
+                      style={{
+                        fontSize: 20,
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                        letterSpacing: -0.5,
+                      }}
+                    >
                       {pick.goles_local} – {pick.goles_visitante}
                     </span>
-                    {pick.puntos_obtenidos != null && pick.puntos_obtenidos > 0 && (
-                      <div style={{ fontSize: 11, color: "var(--accent-ink)", fontWeight: 600 }}>
-                        +{pick.puntos_obtenidos} pts
-                      </div>
-                    )}
+                    {pick.puntos_obtenidos != null &&
+                      pick.puntos_obtenidos > 0 && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: 'var(--accent-ink)',
+                            fontWeight: 600,
+                          }}
+                        >
+                          +{pick.puntos_obtenidos} pts
+                        </div>
+                      )}
                   </>
                 ) : (
-                  <span style={{ fontSize: 12, color: "var(--ink-4)" }}>Sin pick</span>
+                  <span style={{ fontSize: 12, color: 'var(--ink-4)' }}>
+                    Sin pick
+                  </span>
                 )}
               </div>
             </div>
           </Card>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
 function Spinner() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden style={{ display: "inline-block" }}>
-      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.6" strokeOpacity="0.25" fill="none" />
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      aria-hidden
+      style={{ display: 'inline-block' }}
+    >
+      <circle
+        cx="7"
+        cy="7"
+        r="5.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeOpacity="0.25"
+        fill="none"
+      />
       <path
         d="M7 1.5 a 5.5 5.5 0 0 1 5.5 5.5"
         stroke="currentColor"
@@ -482,37 +677,50 @@ function Spinner() {
         />
       </path>
     </svg>
-  );
+  )
 }
 
 function Centered({ children }) {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--bg)",
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg)',
       }}
     >
       {children}
     </div>
-  );
+  )
 }
 
 function formatDateTime(iso) {
-  if (!iso) return "";
+  if (!iso) return ''
   try {
-    const d = new Date(iso);
-    const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-    const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    const h = d.getHours();
-    const ampm = h >= 12 ? "p. m." : "a. m.";
-    const h12 = h % 12 || 12;
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, "0")} ${ampm}`;
+    const d = new Date(iso)
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+    const months = [
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
+    ]
+    const h = d.getHours()
+    const ampm = h >= 12 ? 'pm' : 'am'
+    const h12 = h % 12 || 12
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`
   } catch {
-    return iso;
+    return iso
   }
 }

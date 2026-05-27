@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 import {
   useApuestasEspecialesConfig,
   useApuestaEspecialUsuario,
-} from "@/hooks/useApuestasEspeciales";
+} from '@/hooks/useApuestasEspeciales'
 import {
   Button,
   Card,
@@ -15,81 +15,88 @@ import {
   Pill,
   SectionTitle,
   Skeleton,
-} from "@/components/ui";
-import { code, TEAMS_MUNDIAL_2026 } from "@/lib/constants";
+} from '@/components/ui'
+import { code, TEAMS_MUNDIAL_2026 } from '@/lib/constants'
 
 export default function ApuestasEspeciales() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { config, loading: loadingCfg } = useApuestasEspecialesConfig();
-  const { apuesta, loading: loadingApuesta, guardar } = useApuestaEspecialUsuario(
-    user?.id
-  );
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { config, loading: loadingCfg } = useApuestasEspecialesConfig()
+  const {
+    apuesta,
+    loading: loadingApuesta,
+    guardar,
+  } = useApuestaEspecialUsuario(user?.id)
 
   const [draft, setDraft] = useState({
-    campeon: "",
-    subcampeon: "",
-    goleador: "",
-    sorpresa: "",
-  });
-  const [busy, setBusy] = useState(false);
-  const [savedAt, setSavedAt] = useState(null);
+    campeon: '',
+    subcampeon: '',
+    goleador: '',
+    sorpresa: '',
+  })
+  const [busy, setBusy] = useState(false)
+  const [savedAt, setSavedAt] = useState(null)
 
   useEffect(() => {
     if (apuesta) {
       setDraft({
-        campeon: apuesta.campeon || "",
-        subcampeon: apuesta.subcampeon || "",
-        goleador: apuesta.goleador || "",
-        sorpresa: apuesta.sorpresa || "",
-      });
+        campeon: apuesta.campeon || '',
+        subcampeon: apuesta.subcampeon || '',
+        goleador: apuesta.goleador || '',
+        sorpresa: apuesta.sorpresa || '',
+      })
     }
-  }, [apuesta]);
+  }, [apuesta])
 
-  const cierraEn = config?.cierra_en ? new Date(config.cierra_en) : null;
-  const ahora = Date.now();
-  const cerrada = cierraEn ? cierraEn.getTime() <= ahora : false;
+  const cierraEn = config?.cierra_en ? new Date(config.cierra_en) : null
+  const ahora = Date.now()
+  const cerrada = cierraEn ? cierraEn.getTime() <= ahora : false
   const torneoFinalizado = Boolean(
-    config?.campeon || config?.subcampeon || config?.goleador || config?.sorpresa
-  );
+    config?.campeon ||
+    config?.subcampeon ||
+    config?.goleador ||
+    config?.sorpresa,
+  )
 
   const dirty = useMemo(() => {
     if (!apuesta) {
-      return Boolean(draft.campeon || draft.subcampeon || draft.goleador || draft.sorpresa);
+      return Boolean(
+        draft.campeon || draft.subcampeon || draft.goleador || draft.sorpresa,
+      )
     }
     return (
-      (draft.campeon || "") !== (apuesta.campeon || "") ||
-      (draft.subcampeon || "") !== (apuesta.subcampeon || "") ||
-      (draft.goleador || "") !== (apuesta.goleador || "") ||
-      (draft.sorpresa || "") !== (apuesta.sorpresa || "")
-    );
-  }, [draft, apuesta]);
+      (draft.campeon || '') !== (apuesta.campeon || '') ||
+      (draft.subcampeon || '') !== (apuesta.subcampeon || '') ||
+      (draft.goleador || '') !== (apuesta.goleador || '') ||
+      (draft.sorpresa || '') !== (apuesta.sorpresa || '')
+    )
+  }, [draft, apuesta])
 
   const completa =
     draft.campeon &&
     draft.subcampeon &&
     draft.goleador.trim() &&
-    draft.sorpresa.trim();
+    draft.sorpresa.trim()
 
   const onGuardar = async () => {
-    if (!dirty || cerrada || busy) return;
-    setBusy(true);
+    if (!dirty || cerrada || busy) return
+    setBusy(true)
     try {
       await guardar({
         campeon: draft.campeon || null,
         subcampeon: draft.subcampeon || null,
         goleador: draft.goleador.trim() || null,
         sorpresa: draft.sorpresa.trim() || null,
-      });
-      setSavedAt(Date.now());
+      })
+      setSavedAt(Date.now())
     } catch (e) {
-      alert("Error al guardar: " + (e?.message || e));
+      alert('Error al guardar: ' + (e?.message || e))
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
-  const loading = loadingCfg || loadingApuesta;
+  const loading = loadingCfg || loadingApuesta
 
   return (
     <MobileShell
@@ -102,18 +109,49 @@ export default function ApuestasEspeciales() {
         />
       }
     >
-      <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+      <div
+        style={{
+          padding: '0 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
         <Card pad={16}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase" }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: 'var(--ink-3)',
+                  fontWeight: 600,
+                  letterSpacing: 0.4,
+                  textTransform: 'uppercase',
+                }}
+              >
                 Cómo funciona
               </div>
-              <div style={{ marginTop: 4, fontSize: 13, color: "var(--ink-2)", lineHeight: 1.45 }}>
-                Haz tus apuestas antes de que arranque el Mundial. Cuando termine el torneo, el admin carga los resultados oficiales y se reparten los puntos.
+              <div
+                style={{
+                  marginTop: 4,
+                  fontSize: 13,
+                  color: 'var(--ink-2)',
+                  lineHeight: 1.45,
+                }}
+              >
+                Haz tus apuestas antes de que arranque el Mundial. Cuando
+                termine el torneo, el admin carga los resultados oficiales y se
+                reparten los puntos.
               </div>
             </div>
-            <Pill tone={cerrada ? "coral" : "accent"}>
+            <Pill tone={cerrada ? 'coral' : 'accent'}>
               {cerrada ? (
                 <>
                   <Icon.Lock /> Cerradas
@@ -126,9 +164,9 @@ export default function ApuestasEspeciales() {
             </Pill>
           </div>
           {cierraEn && (
-            <div style={{ marginTop: 10, fontSize: 12, color: "var(--ink-3)" }}>
-              {cerrada ? "Cierre: " : "Cierra: "}
-              <span className="mono" style={{ color: "var(--ink)" }}>
+            <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>
+              {cerrada ? 'Cierre: ' : 'Cierra: '}
+              <span className="mono" style={{ color: 'var(--ink)' }}>
                 {formatDate(cierraEn)}
               </span>
             </div>
@@ -139,7 +177,9 @@ export default function ApuestasEspeciales() {
           <>
             {Array.from({ length: 3 }).map((_, i) => (
               <Card key={i} pad={18}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+                >
                   <Skeleton w={90} h={14} r={999} />
                   <Skeleton w="65%" h={18} />
                   <Skeleton w="100%" h={48} r={12} />
@@ -241,50 +281,109 @@ export default function ApuestasEspeciales() {
 
             {/* Resumen + acción */}
             <Card pad={16}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ fontSize: 12, color: "var(--ink-3)", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase" }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
+                >
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--ink-3)',
+                      fontWeight: 600,
+                      letterSpacing: 0.4,
+                      textTransform: 'uppercase',
+                    }}
+                  >
                     Puntos posibles
                   </div>
-                  <div className="mono" style={{ fontSize: 24, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.5 }}>
+                  <div
+                    className="mono"
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      letterSpacing: -0.5,
+                    }}
+                  >
                     {(config?.pts_campeon ?? 0) +
                       (config?.pts_subcampeon ?? 0) +
                       (config?.pts_goleador ?? 0) +
-                      (config?.pts_sorpresa ?? 0)}{" "}
-                    <span style={{ fontSize: 13, color: "var(--ink-3)", fontWeight: 500 }}>pts</span>
+                      (config?.pts_sorpresa ?? 0)}{' '}
+                    <span
+                      style={{
+                        fontSize: 13,
+                        color: 'var(--ink-3)',
+                        fontWeight: 500,
+                      }}
+                    >
+                      pts
+                    </span>
                   </div>
                   {torneoFinalizado && apuesta && (
-                    <div style={{ marginTop: 4, fontSize: 12, color: "var(--accent-ink)", fontWeight: 600 }}>
+                    <div
+                      style={{
+                        marginTop: 4,
+                        fontSize: 12,
+                        color: 'var(--accent-ink)',
+                        fontWeight: 600,
+                      }}
+                    >
                       Obtuviste {apuesta.puntos_obtenidos || 0} pts
                     </div>
                   )}
                 </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-end',
+                  }}
+                >
                   <Button
                     variant="ghost"
-                    onClick={() => navigate("/app/inicio")}
+                    onClick={() => navigate('/app/inicio')}
                   >
                     Volver
                   </Button>
                   {!cerrada && (
-                    <Button
-                      onClick={onGuardar}
-                      disabled={!dirty || busy}
-                    >
+                    <Button onClick={onGuardar} disabled={!dirty || busy}>
                       <Icon.Check />
-                      {busy ? "Guardando…" : "Guardar apuestas"}
+                      {busy ? 'Guardando…' : 'Guardar apuestas'}
                     </Button>
                   )}
                 </div>
               </div>
               {!cerrada && !completa && (
-                <div style={{ marginTop: 10, fontSize: 12, color: "var(--ink-3)" }}>
+                <div
+                  style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}
+                >
                   Puedes guardar parcialmente y volver más tarde para completar.
                 </div>
               )}
               {savedAt && (
-                <div style={{ marginTop: 10, fontSize: 12, color: "var(--accent-ink)", fontWeight: 600 }}>
-                  Guardado · {new Date(savedAt).toLocaleTimeString("es", { hour: "numeric", minute: "2-digit", hour12: true })}
+                <div
+                  style={{
+                    marginTop: 10,
+                    fontSize: 12,
+                    color: 'var(--accent-ink)',
+                    fontWeight: 600,
+                  }}
+                >
+                  Guardado ·{' '}
+                  {new Date(savedAt).toLocaleTimeString('es', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}
                 </div>
               )}
             </Card>
@@ -292,82 +391,102 @@ export default function ApuestasEspeciales() {
         )}
       </div>
     </MobileShell>
-  );
+  )
 }
 
 function PickCard({ kicker, titulo, hint, pts, resultado, acierto, children }) {
-  const torneoFinalizado = Boolean(resultado);
+  const torneoFinalizado = Boolean(resultado)
   return (
-    <Card pad={0} style={{ overflow: "hidden" }}>
+    <Card pad={0} style={{ overflow: 'hidden' }}>
       <div
         style={{
-          padding: "14px 16px",
-          borderBottom: "0.5px solid var(--line-2)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          padding: '14px 16px',
+          borderBottom: '0.5px solid var(--line-2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           gap: 10,
         }}
       >
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase" }}>
+          <div
+            style={{
+              fontSize: 10,
+              color: 'var(--ink-3)',
+              fontWeight: 600,
+              letterSpacing: 0.4,
+              textTransform: 'uppercase',
+            }}
+          >
             {kicker}
           </div>
-          <div style={{ marginTop: 2, fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>
+          <div
+            style={{
+              marginTop: 2,
+              fontSize: 15,
+              fontWeight: 600,
+              color: 'var(--ink)',
+            }}
+          >
             {titulo}
           </div>
-          <div style={{ marginTop: 2, fontSize: 12, color: "var(--ink-3)" }}>{hint}</div>
+          <div style={{ marginTop: 2, fontSize: 12, color: 'var(--ink-3)' }}>
+            {hint}
+          </div>
         </div>
         <Pill tone="accent">+{pts} pts</Pill>
       </div>
-      <div style={{ padding: "14px 16px" }}>{children}</div>
+      <div style={{ padding: '14px 16px' }}>{children}</div>
       {torneoFinalizado && (
         <div
           style={{
-            padding: "10px 16px",
-            borderTop: "0.5px dashed var(--line-2)",
-            background: acierto ? "var(--accent-soft)" : "var(--surface-2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            padding: '10px 16px',
+            borderTop: '0.5px dashed var(--line-2)',
+            background: acierto ? 'var(--accent-soft)' : 'var(--surface-2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             gap: 10,
             fontSize: 12,
           }}
         >
-          <span style={{ color: "var(--ink-3)" }}>Resultado oficial</span>
-          <span className="mono" style={{ color: "var(--ink)", fontWeight: 600 }}>
+          <span style={{ color: 'var(--ink-3)' }}>Resultado oficial</span>
+          <span
+            className="mono"
+            style={{ color: 'var(--ink)', fontWeight: 600 }}
+          >
             {resultado}
-            {acierto && " ✓"}
+            {acierto && ' ✓'}
           </span>
         </div>
       )}
     </Card>
-  );
+  )
 }
 
 function TeamSelect({ value, onChange, excluir, disabled, placeholder }) {
   const opciones = useMemo(
     () => TEAMS_MUNDIAL_2026.filter((t) => t !== excluir),
-    [excluir]
-  );
+    [excluir],
+  )
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       {value && <Flag code={code(value)} w={32} h={22} rounded={4} />}
       <select
-        value={value || ""}
+        value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         style={{
           flex: 1,
-          padding: "10px 12px",
+          padding: '10px 12px',
           borderRadius: 10,
-          border: "0.5px solid var(--line)",
-          background: "var(--surface-2)",
+          border: '0.5px solid var(--line)',
+          background: 'var(--surface-2)',
           fontSize: 14,
           fontWeight: 500,
-          color: value ? "var(--ink)" : "var(--ink-3)",
-          fontFamily: "var(--font-sans)",
-          cursor: disabled ? "not-allowed" : "pointer",
+          color: value ? 'var(--ink)' : 'var(--ink-3)',
+          fontFamily: 'var(--font-sans)',
+          cursor: disabled ? 'not-allowed' : 'pointer',
         }}
       >
         <option value="">{placeholder}</option>
@@ -378,7 +497,7 @@ function TeamSelect({ value, onChange, excluir, disabled, placeholder }) {
         ))}
       </select>
     </div>
-  );
+  )
 }
 
 function TextField({ value, onChange, placeholder, disabled }) {
@@ -390,38 +509,48 @@ function TextField({ value, onChange, placeholder, disabled }) {
       placeholder={placeholder}
       disabled={disabled}
       style={{
-        width: "100%",
-        padding: "10px 12px",
+        width: '100%',
+        padding: '10px 12px',
         borderRadius: 10,
-        border: "0.5px solid var(--line)",
-        background: "var(--surface-2)",
+        border: '0.5px solid var(--line)',
+        background: 'var(--surface-2)',
         fontSize: 14,
         fontWeight: 500,
-        color: "var(--ink)",
-        fontFamily: "var(--font-sans)",
-        boxSizing: "border-box",
-        outline: "none",
+        color: 'var(--ink)',
+        fontFamily: 'var(--font-sans)',
+        boxSizing: 'border-box',
+        outline: 'none',
       }}
     />
-  );
+  )
 }
 
 function norm(s) {
-  return (s || "").toString().trim().toLowerCase();
+  return (s || '').toString().trim().toLowerCase()
 }
 
 function formatDate(d) {
   try {
-    const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
     const months = [
-      "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-      "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
-    ];
-    const h = d.getHours();
-    const ampm = h >= 12 ? "p. m." : "a. m.";
-    const h12 = h % 12 || 12;
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, "0")} ${ampm}`;
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
+    ]
+    const h = d.getHours()
+    const ampm = h >= 12 ? 'pm' : 'am'
+    const h12 = h % 12 || 12
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`
   } catch {
-    return "";
+    return ''
   }
 }
