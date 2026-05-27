@@ -43,7 +43,7 @@ export function BannerPredicciones({ picks }) {
               color: urgente ? "var(--coral)" : "var(--accent-ink)",
             }}
           >
-            {urgente ? "¡Apurate!" : "Tu quiniela"}
+            {urgente ? "¡Apúrate!" : "Tu quiniela"}
           </div>
           <div
             style={{

@@ -29,11 +29,11 @@ export default function AceptarInvitacion() {
         if (!inv) {
           setLoadError("Esta invitación no existe.");
         } else if (inv.estado === "aceptada") {
-          setLoadError("Esta invitación ya fue usada. Iniciá sesión con tu cuenta.");
+          setLoadError("Esta invitación ya fue usada. Inicia sesión con tu cuenta.");
         } else if (inv.estado === "revocada") {
           setLoadError("Esta invitación fue revocada por el administrador.");
         } else if (!isInvitacionVigente(inv)) {
-          setLoadError("Esta invitación venció. Pedile una nueva al administrador.");
+          setLoadError("Esta invitación venció. Pídele una nueva al administrador.");
         } else {
           setInvitacion(inv);
           setForm((f) => ({
@@ -80,7 +80,7 @@ export default function AceptarInvitacion() {
 
   if (loading) {
     return (
-      <AuthLayout title="Invitación familiar" subtitle="Verificando link…">
+      <AuthLayout title="Invitación familiar" subtitle="Verificando enlace…">
         <Card pad={24}>
           <div style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center" }}>
             Un momento…
@@ -92,7 +92,7 @@ export default function AceptarInvitacion() {
 
   if (loadError) {
     return (
-      <AuthLayout title="Invitación familiar" subtitle="No pudimos abrir el link">
+      <AuthLayout title="Invitación familiar" subtitle="No pudimos abrir el enlace">
         <Card pad={24}>
           <div
             style={{
@@ -127,7 +127,7 @@ export default function AceptarInvitacion() {
   }
 
   return (
-    <AuthLayout title="Sumate a la quiniela" subtitle="Completá tus datos para entrar">
+    <AuthLayout title="Únete a la quiniela" subtitle="Completa tus datos para entrar">
       <Card pad={24}>
         <Field label="Nombre">
           <input
@@ -195,7 +195,7 @@ export default function AceptarInvitacion() {
             marginBottom: 0,
           }}
         >
-          ¿Ya tenés cuenta?{" "}
+          ¿Ya tienes cuenta?{" "}
           <Link to="/" style={{ color: "var(--accent-ink)", fontWeight: 600 }}>
             Iniciar sesión
           </Link>

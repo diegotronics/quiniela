@@ -64,7 +64,7 @@ export default function Onboarding() {
   if (ordered.length === 0) {
     return (
       <CenteredLoader>
-        No encontramos los partidos. Recargá la página o avisá al admin.
+        No encontramos los partidos. Recarga la página o avísale al admin.
       </CenteredLoader>
     );
   }
@@ -336,8 +336,8 @@ function WizardPartido({
           }}
         >
           {index === 0
-            ? "Elegí un atajo rápido o ajustá el marcador exacto. Se guarda solo."
-            : "¿Quién gana? Ajustá el marcador si querés afinar tu predicción."}
+            ? "Elige un atajo rápido o ajusta el marcador exacto. Se guarda solo."
+            : "¿Quién gana? Ajusta el marcador si quieres afinar tu predicción."}
         </div>
 
         {/* Quick picks */}
@@ -546,7 +546,7 @@ function PantallaFinal({ completados, total, countdown, onIrInicio, onRevisar })
         <p style={{ marginTop: 8, color: "oklch(0.78 0.02 60)", fontSize: 14, lineHeight: 1.4 }}>
           {completo
             ? "Las 72 predicciones quedaron guardadas."
-            : `Llevás ${completados} de ${total} predicciones. Podés volver cuando quieras antes del cierre.`}
+            : `Llevas ${completados} de ${total} predicciones. Puedes volver cuando quieras antes del cierre.`}
         </p>
       </div>
 

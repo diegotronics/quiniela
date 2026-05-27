@@ -192,7 +192,7 @@ export default function Bracket() {
                       <span style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{campeonReal}</span>
                       {campeonPred && (
                         <span style={{ marginLeft: 6, fontSize: 11, color: "var(--ink-3)" }}>
-                          (vos pronosticaste {campeonPred})
+                          (tú pronosticaste {campeonPred})
                         </span>
                       )}
                     </>
@@ -203,7 +203,7 @@ export default function Bracket() {
                     </>
                   ) : (
                     <span style={{ fontSize: 14, color: "var(--ink-3)" }}>
-                      Pronosticá el partido final para definirlo.
+                      Pronostica el partido final para definirlo.
                     </span>
                   )}
                 </div>
@@ -222,7 +222,7 @@ export default function Bracket() {
                   color: "var(--ink-2)",
                 }}
               >
-                <span>+{finalRound?.fase?.pts_exacto ?? 0} pts si acertás</span>
+                <span>+{finalRound?.fase?.pts_exacto ?? 0} pts si aciertas</span>
                 <span>Final · {finalMatch.equipo_local} vs {finalMatch.equipo_visitante}</span>
               </div>
             )}

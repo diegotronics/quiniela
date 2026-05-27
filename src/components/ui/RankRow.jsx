@@ -67,7 +67,7 @@ export function RankRow({
           }}
         >
           {member.nombre}
-          {isMe && <span style={{ fontWeight: 400, color: "var(--ink-3)" }}> · vos</span>}
+          {isMe && <span style={{ fontWeight: 400, color: "var(--ink-3)" }}> · tú</span>}
         </div>
         {showPagoStatus && member.pagado === false && (
           <div style={{ fontSize: 11, color: "var(--coral)" }}>Pago pendiente</div>

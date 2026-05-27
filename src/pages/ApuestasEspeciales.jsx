@@ -97,7 +97,7 @@ export default function ApuestasEspeciales() {
       header={
         <MobileHeader
           title="Apuestas especiales"
-          subtitle="Pronósticos pre-mundial: Campeón, Sub-campeón, Goleador y Sorpresa"
+          subtitle="Pronósticos premundiales: Campeón, Subcampeón, Goleador y Sorpresa"
           onBack={() => navigate(-1)}
         />
       }
@@ -110,7 +110,7 @@ export default function ApuestasEspeciales() {
                 Cómo funciona
               </div>
               <div style={{ marginTop: 4, fontSize: 13, color: "var(--ink-2)", lineHeight: 1.45 }}>
-                Hacé tus apuestas antes de que arranque el Mundial. Cuando termine el torneo, el admin carga los resultados oficiales y se reparten los puntos.
+                Haz tus apuestas antes de que arranque el Mundial. Cuando termine el torneo, el admin carga los resultados oficiales y se reparten los puntos.
               </div>
             </div>
             <Pill tone={cerrada ? "coral" : "accent"}>
@@ -168,14 +168,14 @@ export default function ApuestasEspeciales() {
                 onChange={(v) => setDraft((d) => ({ ...d, campeon: v }))}
                 excluir={draft.subcampeon}
                 disabled={cerrada}
-                placeholder="Elegí el campeón"
+                placeholder="Elige el campeón"
               />
             </PickCard>
 
-            {/* Sub-campeón */}
+            {/* Subcampeón */}
             <PickCard
               kicker="Categoría 2"
-              titulo="Sub-campeón"
+              titulo="Subcampeón"
               hint="Finalista que pierde la final"
               pts={config?.pts_subcampeon ?? 0}
               resultado={config?.subcampeon}
@@ -191,7 +191,7 @@ export default function ApuestasEspeciales() {
                 onChange={(v) => setDraft((d) => ({ ...d, subcampeon: v }))}
                 excluir={draft.campeon}
                 disabled={cerrada}
-                placeholder="Elegí el sub-campeón"
+                placeholder="Elige al subcampeón"
               />
             </PickCard>
 
@@ -279,7 +279,7 @@ export default function ApuestasEspeciales() {
               </div>
               {!cerrada && !completa && (
                 <div style={{ marginTop: 10, fontSize: 12, color: "var(--ink-3)" }}>
-                  Podés guardar parcialmente y volver más tarde para completar.
+                  Puedes guardar parcialmente y volver más tarde para completar.
                 </div>
               )}
               {savedAt && (

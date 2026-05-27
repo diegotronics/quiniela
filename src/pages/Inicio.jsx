@@ -168,7 +168,7 @@ export default function Inicio() {
                   <Icon.Crown /> Apuestas especiales
                 </div>
                 <div style={{ marginTop: 4, fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-                  {apuestaUsuario ? "Completá tus picks pre-mundial" : "Pronosticá Campeón, Goleador y más"}
+                  {apuestaUsuario ? "Completa tus pronósticos premundiales" : "Pronostica Campeón, Goleador y más"}
                 </div>
                 <div style={{ marginTop: 2, fontSize: 12, color: "var(--ink-3)" }}>
                   Hasta{" "}
@@ -263,7 +263,7 @@ export default function Inicio() {
                 {me?.id === lider?.id ? "100%" : `${ratio}%`}
               </span>
               <span style={{ color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                {me?.id === lider?.id ? "Sos el líder" : "del líder"}
+                {me?.id === lider?.id ? "Eres el líder" : "del líder"}
               </span>
             </div>
             <div

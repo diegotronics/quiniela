@@ -52,9 +52,9 @@ export const MILESTONES = {
   1:  { emoji: "🚀", texto: "¡Arrancaste! 71 más y tu quiniela queda lista." },
   10: { emoji: "🎯", texto: "10 listos. El grupo A casi cubierto, vas con todo." },
   20: { emoji: "💪", texto: "Casi un tercio del camino. Tu mano viene firme." },
-  36: { emoji: "🔥", texto: "¡La mitad! De acá en adelante todo es bajada." },
-  50: { emoji: "⚡", texto: "Solo 22 más. Se nota que conocés el fútbol." },
-  65: { emoji: "🏁", texto: "7 partidos para el final. No aflojés ahora." },
+  36: { emoji: "🔥", texto: "¡La mitad! De aquí en adelante todo es bajada." },
+  50: { emoji: "⚡", texto: "Solo 22 más. Se nota que conoces el fútbol." },
+  65: { emoji: "🏁", texto: "7 partidos para el final. No aflojes ahora." },
   72: { emoji: "🏆", texto: "¡Predicciones completas! Que ruede la pelota." },
 };
 

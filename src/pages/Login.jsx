@@ -83,9 +83,9 @@ export default function Login() {
             marginBottom: 0,
           }}
         >
-          ¿No tenés cuenta?{" "}
+          ¿No tienes cuenta?{" "}
           <Link to="/registro" style={{ color: "var(--accent-ink)", fontWeight: 600 }}>
-            Registrate
+            Regístrate
           </Link>
         </p>
       </Card>

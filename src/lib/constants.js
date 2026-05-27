@@ -63,7 +63,7 @@ export const GROUP_MOTTO = "Mundial 2026";
 
 // Selecciones clasificadas al Mundial 2026 (48 equipos del sorteo oficial).
 // Lista mantenida en sincronía con supabase/09_partidos_reales_mundial_2026.sql.
-// Se usa en el desplegable de Apuestas especiales (Campeón / Sub-campeón).
+// Se usa en el desplegable de Apuestas especiales (Campeón / Subcampeón).
 export const TEAMS_MUNDIAL_2026 = [
   "Alemania", "Arabia Saudita", "Argelia", "Argentina", "Australia",
   "Austria", "Bélgica", "Bosnia y Herzegovina", "Brasil", "Cabo Verde",

@@ -48,7 +48,7 @@ export default function AdminReglas() {
           <div style={{ padding: "16px 18px", borderBottom: "0.5px solid var(--line-2)" }}>
             <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>Estado de las fases</div>
             <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
-              Activá la fase para que la familia pueda enviar pronósticos. Bloqueala para ocultarla.
+              Activa la fase para que la familia pueda enviar pronósticos. Bloquéala para ocultarla.
             </div>
           </div>
           <div>
@@ -191,7 +191,7 @@ function ApuestasEspecialesAdminCard() {
           Apuestas especiales
         </div>
         <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
-          Predicciones pre-mundial. Cada jugador elige Campeón, Sub-campeón, Goleador y Sorpresa.
+          Predicciones premundiales. Cada jugador elige Campeón, Subcampeón, Goleador y Sorpresa.
         </div>
       </div>
 
@@ -214,7 +214,7 @@ function ApuestasEspecialesAdminCard() {
             onSave={refresh}
           />
           <CategoriaRow
-            label="Sub-campeón"
+            label="Subcampeón"
             hint="Finalista que pierde la final."
             ptsKey="pts_subcampeon"
             resultKey="subcampeon"

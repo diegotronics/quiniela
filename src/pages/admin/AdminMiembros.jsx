@@ -149,9 +149,9 @@ export default function AdminMiembros() {
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard?.writeText(text);
-      alert("Link copiado al portapapeles");
+      alert("Enlace copiado al portapapeles");
     } catch {
-      alert("No se pudo copiar el link");
+      alert("No se pudo copiar el enlace");
     }
   };
 
@@ -181,7 +181,7 @@ export default function AdminMiembros() {
   };
 
   const revocarInvitacion = async (token) => {
-    if (!confirm("¿Revocar esta invitación? El link dejará de funcionar.")) return;
+    if (!confirm("¿Revocar esta invitación? El enlace dejará de funcionar.")) return;
     try {
       await revokeInvitacion(token);
       await refreshInvitaciones();
@@ -222,13 +222,13 @@ export default function AdminMiembros() {
       <Card style={{ marginBottom: 22 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: invitacionesPendientes.length ? 14 : 0 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>Links de invitación familiar</div>
+            <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>Enlaces de invitación familiar</div>
             <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 2 }}>
-              Generá un link único y compartilo por WhatsApp.
+              Genera un enlace único y compártelo por WhatsApp.
             </div>
           </div>
           <Button variant="primary" onClick={abrirModalInvitacion}>
-            <Icon.Plus /> Nuevo link
+            <Icon.Plus /> Nuevo enlace
           </Button>
         </div>
 
@@ -236,7 +236,7 @@ export default function AdminMiembros() {
           <EmptyState
             illustration="envelope"
             title="Sin invitaciones pendientes"
-            description="Cuando generes un link de invitación aparecerá acá hasta que se use o expire."
+            description="Cuando generes un enlace de invitación aparecerá aquí hasta que se use o expire."
             compact
           />
         ) : (
@@ -470,13 +470,13 @@ export default function AdminMiembros() {
           }}
         >
           <h3 style={{ margin: "0 0 14px", fontSize: 16, fontWeight: 600, color: "var(--ink)" }}>
-            {lastInvite ? "Link listo" : "Invitar miembro"}
+            {lastInvite ? "Enlace listo" : "Invitar miembro"}
           </h3>
 
           {!lastInvite ? (
             <form onSubmit={generarInvitacion} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)" }}>
-                Generamos un link único. El familiar elige su contraseña al aceptarlo.
+                Generamos un enlace único. El familiar elige su contraseña al aceptarlo.
               </p>
               <Input
                 label="Nombre (opcional)"
@@ -500,7 +500,7 @@ export default function AdminMiembros() {
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={inviteBusy}>
-                  {inviteBusy ? "Generando…" : "Generar link"}
+                  {inviteBusy ? "Generando…" : "Generar enlace"}
                 </Button>
               </div>
             </form>
@@ -540,7 +540,7 @@ export default function AdminMiembros() {
                   variant="primary"
                   onClick={() => copyToClipboard(buildInviteUrl(lastInvite.token))}
                 >
-                  <Icon.Copy /> Copiar link
+                  <Icon.Copy /> Copiar enlace
                 </Button>
               </div>
             </div>
@@ -597,7 +597,7 @@ function InvitacionRow({ inv, onCopy, onRevoke }) {
         )}
         <button
           onClick={onCopy}
-          title="Copiar link"
+          title="Copiar enlace"
           style={{ background: "none", border: "none", padding: 6, borderRadius: 6, color: "var(--ink-2)", cursor: "pointer" }}
         >
           <Icon.Copy />

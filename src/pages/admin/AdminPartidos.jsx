@@ -187,7 +187,7 @@ export default function AdminPartidos() {
             title={tab === "live" ? "Sin partidos en vivo" : "Vista vacía"}
             description={
               tab === "live"
-                ? "Cuando empiece un partido aparecerá acá durante las 2 hs siguientes."
+                ? "Cuando empiece un partido aparecerá aquí durante las 2 hs siguientes."
                 : "No hay partidos cargados para los filtros actuales."
             }
             compact

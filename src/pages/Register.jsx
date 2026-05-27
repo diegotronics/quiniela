@@ -26,7 +26,7 @@ export default function Register() {
   };
 
   return (
-    <AuthLayout title="Crear cuenta" subtitle="Unite a la quiniela familiar">
+    <AuthLayout title="Crear cuenta" subtitle="Únete a la quiniela familiar">
       <Card pad={24}>
         <Field label="Nombre">
           <input
@@ -94,7 +94,7 @@ export default function Register() {
             marginBottom: 0,
           }}
         >
-          ¿Ya tenés cuenta?{" "}
+          ¿Ya tienes cuenta?{" "}
           <Link to="/" style={{ color: "var(--accent-ink)", fontWeight: 600 }}>
             Iniciar sesión
           </Link>

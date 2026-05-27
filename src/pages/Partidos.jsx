@@ -176,7 +176,7 @@ export default function Partidos() {
             description={
               isGrupos
                 ? `Aún no se cargaron partidos del grupo ${activeGrupo}.`
-                : "Cuando se publique el fixture aparecerá acá."
+                : "Cuando se publique el fixture aparecerá aquí."
             }
           />
         ) : (

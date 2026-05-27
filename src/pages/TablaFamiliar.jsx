@@ -211,7 +211,7 @@ export default function TablaFamiliar() {
           <EmptyState
             illustration="trophy"
             title="Tabla todavía vacía"
-            description="Cuando se carguen partidos y predicciones, los puntajes se mostrarán acá."
+            description="Cuando se carguen partidos y predicciones, los puntajes se mostrarán aquí."
           />
         )}
       </div>
