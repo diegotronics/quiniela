@@ -24,8 +24,23 @@
 
     <!-- PWA / móvil -->
     <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0F0D0A" />
     <meta name="theme-color" content="#F6F3EC" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1B2A52" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#0F0D0A" media="(prefers-color-scheme: dark)" />
+
+    <!-- Tema (anti-FOUC) — aplica data-theme antes de React.
+         Default: dark. Respeta la preferencia guardada en localStorage. -->
+    <script>
+      (function () {
+        try {
+          var stored = window.localStorage.getItem('lcf-theme');
+          var theme = stored === 'light' || stored === 'dark' ? stored : 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Copa Familiar" />

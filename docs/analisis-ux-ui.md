@@ -288,6 +288,40 @@ Tarjeta compacta de métrica. Cuatro tonos (`default`, `accent`, `gold`, `coral`
 
 ---
 
+## Modo oscuro (punto 21)
+
+Séptima iteración: convertir el tema en variable controlada por el usuario, con **modo oscuro como default** y persistencia en `localStorage`.
+
+**Tokens oscuros** ([globals.css](../src/styles/globals.css))
+
+- Bloque `[data-theme="dark"]` con override completo de la paleta. Familia *warm-neutral* preservada: fondos cálidos casi-negros (`#0F0D0A`, `#1A1612`, `#231E18`) con tinta crema (`#F6F0E5`) — evita el cliché del *pure black* + frío azulado.
+- Acentos en OKLCH manteniendo el matiz original y subiendo lightness para legibilidad:
+  - `--accent` 0.52 → 0.68 · `--gold` 0.74 → 0.78 · `--coral` 0.68 → 0.72 · `--danger` 0.58 → 0.66.
+  - Variantes `-soft` reescaladas a lightness 0.28-0.30 para servir como background sutil sobre superficies oscuras.
+  - Variantes `-ink` (texto/iconos sobre `-soft`) subidas a 0.82-0.86 para alcanzar contraste AA.
+- Sombras reformuladas con `rgba(0,0,0,…)` y opacidades 0.35-0.65 para que se perciban sobre fondo oscuro (las sombras claras del modo light desaparecerían).
+- Tokens auxiliares parametrizados: `--flag-chip-inset/outer/shadow` (las banderas-cromo invierten su brillo interno) y `--shine-highlight` (el barrido luminoso de la barra de progreso se atenúa de blanco a crema-translúcido).
+- `color-scheme: dark` declarado para que los controles nativos (scrollbars, inputs de fecha) se rendericen acordes.
+
+**ThemeContext** ([ThemeContext.jsx](../src/context/ThemeContext.jsx))
+
+- Provider expone `{ theme, setTheme, toggleTheme }`. Estado inicial lee `localStorage["lcf-theme"]`; si no hay valor previo, **default `"dark"`**.
+- `useEffect` aplica `data-theme` sobre `<html>` y persiste el cambio. Actualiza también el `<meta name="theme-color">` neutral para que la status bar en iOS/Android coincida con el fondo.
+- Envuelve la app dentro de `<BrowserRouter>` en [main.jsx](../src/main.jsx).
+
+**Anti-FOUC** ([index.html](../index.html))
+
+- Script inline antes del bundle: lee `localStorage["lcf-theme"]` y aplica el atributo en `<html>` antes de que React monte. Evita el flash de tema claro durante la primera carga.
+- Meta `theme-color` default `#0F0D0A` (mantiene las variantes con `prefers-color-scheme` como fallback para usuarios sin JS).
+
+**Toggle en Perfil** ([Perfil.jsx](../src/pages/Perfil.jsx))
+
+- Fila tipo switch dentro de la columna de acciones — ícono `Moon`/`Sun` en cápsula con color contextual + texto "Modo oscuro · Activado/Desactivado" + switch animado (`role="switch"`, `aria-checked`).
+- Track del switch usa `--accent` cuando está on, `--line-strong` cuando está off; el thumb se traslada 18px con cubic-bezier estándar.
+- Íconos `Icon.Sun` e `Icon.Moon` agregados al sistema unificado ([Icon.jsx](../src/components/ui/Icon.jsx)) siguiendo los mismos principios de stroke 1.75 y viewBox 24×24.
+
+---
+
 ## Estado de implementación
 
 | ID | Mejora | Estado |
@@ -313,4 +347,4 @@ Tarjeta compacta de métrica. Cuatro tonos (`default`, `accent`, `gold`, `coral`
 | 18 | Escala de elevación de 4 niveles | ✅ Implementado |
 | 19 | Sistema de iconografía unificado | ✅ Implementado |
 | 20 | Componentes especializados (MatchCard, etc.) | ✅ Implementado |
-| 21 | Modo oscuro | ⏳ Pendiente |
+| 21 | Modo oscuro (default) | ✅ Implementado |

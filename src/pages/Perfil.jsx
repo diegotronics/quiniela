@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { useFases } from "@/hooks/useFases";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
 import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
@@ -30,6 +31,8 @@ import { code, GROUP_NAME } from "@/lib/constants";
 export default function Perfil() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
   const { fases } = useFases();
   const { partidos } = useAllPartidos(fases);
   const { predicciones } = usePrediccionesUsuario(user?.id);
@@ -211,6 +214,7 @@ export default function Perfil() {
 
         {/* Acciones */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+          <ThemeToggleRow isDark={isDark} onToggle={toggleTheme} />
           <Button
             variant="ghost"
             size="lg"
@@ -251,6 +255,84 @@ export default function Perfil() {
         </div>
       </div>
     </MobileShell>
+  );
+}
+
+function ThemeToggleRow({ isDark, onToggle }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isDark}
+      onClick={onToggle}
+      className="btn-interactive"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        width: "100%",
+        padding: "14px 16px",
+        borderRadius: "var(--r-lg)",
+        background: "var(--surface)",
+        border: "1px solid var(--line)",
+        boxShadow: "var(--shadow-1)",
+        color: "var(--ink)",
+        cursor: "pointer",
+        fontFamily: "var(--font-sans)",
+      }}
+    >
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+        <span
+          aria-hidden
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            borderRadius: 999,
+            background: isDark ? "var(--surface-2)" : "var(--gold-soft)",
+            color: isDark ? "var(--ink)" : "var(--gold-ink)",
+            transition: "background 200ms ease, color 200ms ease",
+          }}
+        >
+          {isDark ? <Icon.Moon /> : <Icon.Sun />}
+        </span>
+        <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>Modo oscuro</span>
+          <span style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 1 }}>
+            {isDark ? "Activado" : "Desactivado"}
+          </span>
+        </span>
+      </span>
+      <span
+        aria-hidden
+        style={{
+          position: "relative",
+          width: 44,
+          height: 26,
+          borderRadius: 999,
+          background: isDark ? "var(--accent)" : "var(--line-strong)",
+          transition: "background 200ms ease",
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            position: "absolute",
+            top: 3,
+            left: isDark ? 21 : 3,
+            width: 20,
+            height: 20,
+            borderRadius: "50%",
+            background: "#fff",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(0,0,0,0.08)",
+            transition: "left 200ms cubic-bezier(.2,.7,.2,1)",
+          }}
+        />
+      </span>
+    </button>
   );
 }
 

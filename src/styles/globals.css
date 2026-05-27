@@ -6,7 +6,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* Color — Light */
+  color-scheme: light dark;
+
+  /* Color — Light (default-light tokens, sobrescritos por [data-theme="dark"]) */
   --bg: #F6F3EC;
   --surface: #FFFFFF;
   --surface-2: #FAF7F0;
@@ -59,6 +61,63 @@
   --shadow-3: 0 16px 32px rgba(20,17,13,0.18), 0 32px 64px rgba(20,17,13,0.10), 0 2px 6px rgba(20,17,13,0.06);
   --shadow-gold: 0 4px 14px rgba(212,160,23,0.22), 0 1px 3px rgba(20,17,13,0.08);
   --shadow-coral: 0 4px 14px rgba(225,121,76,0.20), 0 1px 3px rgba(20,17,13,0.08);
+
+  /* Brillo interior del flag-chip — invertido en dark */
+  --flag-chip-inset: rgba(255,255,255,0.4);
+  --flag-chip-outer: rgba(0,0,0,0.18);
+  --flag-chip-shadow: rgba(20,17,13,0.18);
+
+  /* Reflejo del shine sweep */
+  --shine-highlight: rgba(255,255,255,0.45);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Tema oscuro (punto 21) — default de la app
+   Activado por data-theme="dark" en <html>.
+   Mantiene la familia warm-neutral: fondos cálidos casi-negros
+   y crema como tinta. Los acentos (accent/gold/coral) suben en
+   lightness para legibilidad sobre superficies oscuras.
+   ────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0F0D0A;
+  --surface: #1A1612;
+  --surface-2: #231E18;
+  --ink: #F6F0E5;
+  --ink-2: #C2BAA9;
+  --ink-3: #8A8174;
+  --ink-4: #5A5247;
+  --line: #2C2620;
+  --line-2: #221D17;
+  --line-strong: #3D362E;
+  --hover: rgba(246,240,229,0.06);
+  --pressed: rgba(246,240,229,0.10);
+
+  --accent: oklch(0.68 0.13 148);
+  --accent-soft: oklch(0.28 0.07 148);
+  --accent-ink: oklch(0.84 0.12 148);
+  --coral: oklch(0.72 0.16 32);
+  --coral-ink: oklch(0.84 0.13 32);
+  --coral-soft: oklch(0.30 0.09 32);
+  --gold: oklch(0.78 0.16 80);
+  --gold-ink: oklch(0.86 0.13 80);
+  --gold-soft: oklch(0.30 0.09 80);
+  --danger: oklch(0.66 0.18 25);
+  --danger-soft: oklch(0.30 0.10 25);
+
+  --shadow-0: 0 0.5px 0 rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.35);
+  --shadow-1: 0 1px 3px rgba(0,0,0,0.50), 0 2px 8px rgba(0,0,0,0.40);
+  --shadow-2: 0 4px 12px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.40);
+  --shadow-3: 0 16px 32px rgba(0,0,0,0.65), 0 32px 64px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.45);
+  --shadow-gold: 0 4px 14px rgba(217,167,57,0.22), 0 1px 3px rgba(0,0,0,0.45);
+  --shadow-coral: 0 4px 14px rgba(225,121,76,0.22), 0 1px 3px rgba(0,0,0,0.45);
+
+  --flag-chip-inset: rgba(255,255,255,0.10);
+  --flag-chip-outer: rgba(0,0,0,0.45);
+  --flag-chip-shadow: rgba(0,0,0,0.55);
+
+  --shine-highlight: rgba(246,240,229,0.18);
 }
 
 * { box-sizing: border-box; }
@@ -186,7 +245,7 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   top: 0; bottom: 0;
   width: 40%;
-  background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.45) 50%, transparent 80%);
+  background: linear-gradient(120deg, transparent 20%, var(--shine-highlight) 50%, transparent 80%);
   animation: lcfShine 3.6s ease-in-out infinite;
   pointer-events: none;
 }
@@ -386,9 +445,9 @@ a { color: inherit; text-decoration: none; }
 
 .flag-chip {
   box-shadow:
-    0 1px 2px rgba(20,17,13,0.18),
-    0 0 0 1px rgba(255,255,255,0.4) inset,
-    0 0 0 0.5px rgba(0,0,0,0.18);
+    0 1px 2px var(--flag-chip-shadow),
+    0 0 0 1px var(--flag-chip-inset) inset,
+    0 0 0 0.5px var(--flag-chip-outer);
 }
 
 /* ───────── Barra de progreso protagonista (punto 12) ───────── */
