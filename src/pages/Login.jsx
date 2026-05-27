@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button, Card, Icon } from "@/components/ui";
-import { AuthLayout, Field, inputStyle } from "./_authShared.jsx";
+import {
+  AuthLayout,
+  Field,
+  IconInput,
+  PasswordInput,
+} from "./_authShared.jsx";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -26,46 +31,76 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout title="La Copa Familiar" subtitle="Mundial 2026 · pronósticos en familia">
-      <Card pad={24}>
-        <Field label="Email">
-          <input
+    <AuthLayout
+      title="La Copa Familiar"
+      subtitle="Mundial 2026 · pronósticos en familia"
+      footer={
+        <div
+          style={{
+            marginTop: 22,
+            display: "flex",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            gap: 8,
+          }}
+        >
+          <span className="auth-footnote-chip">
+            <Icon.Group /> Familia
+          </span>
+          <span className="auth-footnote-chip">
+            <Icon.Trophy /> Premios
+          </span>
+          <span className="auth-footnote-chip">
+            <Icon.Cal /> Jun–Jul 2026
+          </span>
+        </div>
+      }
+    >
+      <Card pad={26}>
+        <Field label="Correo">
+          <IconInput
             type="email"
             placeholder="tu@email.com"
             autoComplete="email"
             value={form.email}
             onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-            style={inputStyle}
+            leading={<Icon.Mail size={18} />}
             autoFocus
           />
         </Field>
         <Field label="Contraseña">
-          <input
-            type="password"
+          <PasswordInput
             placeholder="••••••"
+            autoComplete="current-password"
             value={form.password}
-            onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, password: e.target.value }))
+            }
             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-            style={inputStyle}
+            leading={<Icon.Lock size={16} />}
           />
         </Field>
 
         {error && (
           <div
+            role="alert"
             style={{
-              padding: "8px 12px",
+              padding: "10px 12px",
               borderRadius: 10,
               background: "var(--danger-soft)",
               color: "var(--danger)",
               fontSize: 13,
-              marginBottom: 12,
+              marginBottom: 14,
               display: "flex",
               alignItems: "center",
-              gap: 6,
+              gap: 8,
+              border:
+                "1px solid color-mix(in oklab, var(--danger) 25%, transparent)",
             }}
           >
-            <Icon.X /> {error}
+            <Icon.X />
+            <span>{error}</span>
           </div>
         )}
 
@@ -74,44 +109,44 @@ export default function Login() {
           {!busy && <Icon.Arrow />}
         </Button>
 
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            margin: "18px 0 14px",
+            color: "var(--ink-4)",
+            fontSize: 11,
+            letterSpacing: 0.4,
+            textTransform: "uppercase",
+          }}
+        >
+          <span style={{ flex: 1, height: 1, background: "var(--line)" }} />
+          <span>o</span>
+          <span style={{ flex: 1, height: 1, background: "var(--line)" }} />
+        </div>
+
         <p
           style={{
             color: "var(--ink-3)",
-            fontSize: 13,
+            fontSize: 13.5,
             textAlign: "center",
-            marginTop: 16,
-            marginBottom: 0,
+            margin: 0,
           }}
         >
           ¿No tienes cuenta?{" "}
-          <Link to="/registro" style={{ color: "var(--accent-ink)", fontWeight: 600 }}>
+          <Link
+            to="/registro"
+            style={{
+              color: "var(--accent-ink)",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
             Regístrate
           </Link>
         </p>
       </Card>
-
-      <div
-        style={{
-          marginTop: 22,
-          display: "flex",
-          justifyContent: "center",
-          gap: 22,
-          color: "var(--ink-3)",
-          fontSize: 12,
-        }}
-      >
-        <Footnote icon={<Icon.Group />} label="Familia" />
-        <Footnote icon={<Icon.Trophy />} label="Premios" />
-        <Footnote icon={<Icon.Cal />} label="Jun–Jul 2026" />
-      </div>
     </AuthLayout>
-  );
-}
-
-function Footnote({ icon, label }) {
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-      {icon} {label}
-    </span>
   );
 }

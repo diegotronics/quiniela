@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button, Card, Icon } from "@/components/ui";
-import { AuthLayout, Field, inputStyle } from "./_authShared.jsx";
+import {
+  AuthLayout,
+  Field,
+  IconInput,
+  PasswordInput,
+} from "./_authShared.jsx";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -25,58 +30,103 @@ export default function Register() {
     else navigate("/app/onboarding", { replace: true });
   };
 
+  const meetsMin = form.password.length >= 4;
+
   return (
-    <AuthLayout title="Crear cuenta" subtitle="Únete a la quiniela familiar">
-      <Card pad={24}>
+    <AuthLayout
+      title="Crear cuenta"
+      subtitle="Únete a la quiniela familiar"
+      footer={
+        <p
+          style={{
+            margin: "20px 0 0",
+            textAlign: "center",
+            color: "var(--ink-4)",
+            fontSize: 11.5,
+            lineHeight: 1.5,
+          }}
+        >
+          Al registrarte aceptas participar en la quiniela familiar
+          <br />
+          del Mundial 2026.
+        </p>
+      }
+    >
+      <Card pad={26}>
         <Field label="Nombre">
-          <input
+          <IconInput
             type="text"
             placeholder="Tu nombre"
             value={form.nombre}
-            onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, nombre: e.target.value }))
+            }
             onKeyDown={(e) => e.key === "Enter" && handleRegister()}
-            style={inputStyle}
+            leading={<Icon.User size={18} />}
+            autoComplete="name"
             autoFocus
           />
         </Field>
-        <Field label="Email">
-          <input
+        <Field label="Correo">
+          <IconInput
             type="email"
             placeholder="tu@email.com"
             autoComplete="email"
             value={form.email}
             onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
             onKeyDown={(e) => e.key === "Enter" && handleRegister()}
-            style={inputStyle}
+            leading={<Icon.Mail size={18} />}
           />
         </Field>
-        <Field label="Contraseña">
-          <input
-            type="password"
+        <Field
+          label="Contraseña"
+          hint={
+            form.password.length > 0 && (
+              <span
+                style={{
+                  color: meetsMin ? "var(--accent-ink)" : "var(--ink-3)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                {meetsMin ? <Icon.Check /> : null}
+                {meetsMin ? "Mínimo cumplido" : "Mínimo 4 caracteres"}
+              </span>
+            )
+          }
+        >
+          <PasswordInput
             placeholder="Mínimo 4 caracteres"
             autoComplete="new-password"
             value={form.password}
-            onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, password: e.target.value }))
+            }
             onKeyDown={(e) => e.key === "Enter" && handleRegister()}
-            style={inputStyle}
+            leading={<Icon.Lock size={16} />}
           />
         </Field>
 
         {error && (
           <div
+            role="alert"
             style={{
-              padding: "8px 12px",
+              padding: "10px 12px",
               borderRadius: 10,
               background: "var(--danger-soft)",
               color: "var(--danger)",
               fontSize: 13,
-              marginBottom: 12,
+              marginBottom: 14,
               display: "flex",
               alignItems: "center",
-              gap: 6,
+              gap: 8,
+              border:
+                "1px solid color-mix(in oklab, var(--danger) 25%, transparent)",
             }}
           >
-            <Icon.X /> {error}
+            <Icon.X />
+            <span>{error}</span>
           </div>
         )}
 
@@ -85,17 +135,40 @@ export default function Register() {
           {!busy && <Icon.Arrow />}
         </Button>
 
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            margin: "18px 0 14px",
+            color: "var(--ink-4)",
+            fontSize: 11,
+            letterSpacing: 0.4,
+            textTransform: "uppercase",
+          }}
+        >
+          <span style={{ flex: 1, height: 1, background: "var(--line)" }} />
+          <span>o</span>
+          <span style={{ flex: 1, height: 1, background: "var(--line)" }} />
+        </div>
+
         <p
           style={{
             color: "var(--ink-3)",
-            fontSize: 13,
+            fontSize: 13.5,
             textAlign: "center",
-            marginTop: 16,
-            marginBottom: 0,
+            margin: 0,
           }}
         >
           ¿Ya tienes cuenta?{" "}
-          <Link to="/" style={{ color: "var(--accent-ink)", fontWeight: 600 }}>
+          <Link
+            to="/"
+            style={{
+              color: "var(--accent-ink)",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
             Iniciar sesión
           </Link>
         </p>
