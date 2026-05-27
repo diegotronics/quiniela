@@ -104,7 +104,7 @@ export function TabBar({ active }) {
         borderTop: "0.5px solid var(--line)",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-around", maxWidth: 520, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-around", maxWidth: 520, margin: "0 auto", gap: 4 }}>
         {DEFAULT_TABS.map((t) => {
           const on = t.id === active;
           const TabIcon = t.icon;
@@ -114,21 +114,51 @@ export function TabBar({ active }) {
               onClick={() => navigate(t.path)}
               style={{
                 flex: 1,
+                position: "relative",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 3,
-                padding: "6px 0",
+                gap: 2,
+                padding: "8px 4px 6px",
                 background: "none",
                 border: "none",
                 color: on ? "var(--ink)" : "var(--ink-3)",
                 fontFamily: "var(--font-sans)",
                 fontSize: 10.5,
-                fontWeight: on ? 600 : 500,
+                fontWeight: on ? 700 : 500,
                 letterSpacing: -0.1,
+                transition: "color 160ms ease",
               }}
             >
-              <TabIcon />
+              <span
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: on ? 28 : 0,
+                  height: 3,
+                  borderRadius: 0,
+                  background: "var(--ink)",
+                  transition: "width 200ms ease",
+                }}
+              />
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 38,
+                  height: 28,
+                  borderRadius: 999,
+                  background: on ? "var(--ink)" : "transparent",
+                  color: on ? "var(--bg)" : "var(--ink-3)",
+                  transition: "background 180ms ease, color 180ms ease",
+                }}
+              >
+                <TabIcon />
+              </span>
               {t.label}
             </button>
           );

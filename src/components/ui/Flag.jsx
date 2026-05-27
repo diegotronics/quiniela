@@ -211,9 +211,10 @@ export function Flag({ code, w = 22, h = 16, rounded = 3 }) {
       style={{
         flexShrink: 0,
         display: "block",
-        boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.15)",
         borderRadius: rounded,
         overflow: "hidden",
+        boxShadow:
+          "0 1px 2px rgba(20,17,13,0.16), 0 0 0 0.5px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.25)",
       }}
     >
       <defs>

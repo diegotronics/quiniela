@@ -213,14 +213,14 @@ function MatchListItem({ m, pred, onClick }) {
             <Icon.Check style={{ width: 11, height: 11 }} /> Pronosticado
           </Pill>
         ) : (
-          <Pill tone="coral">Pendiente</Pill>
+          <Pill tone="coral" dot>Pendiente</Pill>
         )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 1fr", alignItems: "center", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Flag code={code(m.equipo_local)} w={26} h={18} rounded={3} />
-          <span style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>{m.equipo_local}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Flag code={code(m.equipo_local)} w={32} h={22} rounded={4} />
+          <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", letterSpacing: -0.2 }}>{m.equipo_local}</span>
         </div>
         <div style={{ textAlign: "center" }}>
           {isFinal ? (
@@ -240,35 +240,46 @@ function MatchListItem({ m, pred, onClick }) {
             </span>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: "row-reverse" }}>
-          <Flag code={code(m.equipo_visitante)} w={26} h={18} rounded={3} />
-          <span style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>{m.equipo_visitante}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: "row-reverse" }}>
+          <Flag code={code(m.equipo_visitante)} w={32} h={22} rounded={4} />
+          <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", letterSpacing: -0.2 }}>{m.equipo_visitante}</span>
         </div>
       </div>
 
-      {isFinal && tienePick && (pred.puntos_obtenidos != null) && (
-        <div
-          style={{
-            marginTop: 10,
-            padding: "8px 10px",
-            borderRadius: "var(--r-sm)",
-            background: pred.puntos_obtenidos > 0 ? "var(--accent-soft)" : "var(--surface-2)",
-            color: pred.puntos_obtenidos > 0 ? "var(--accent-ink)" : "var(--ink-3)",
-            fontSize: 12,
-            fontWeight: 500,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <span>
-            {pred.puntos_obtenidos > 0
-              ? `+${pred.puntos_obtenidos} pts`
-              : "0 pts"}
-          </span>
-          <Icon.Chevron />
-        </div>
-      )}
+      {isFinal && tienePick && (pred.puntos_obtenidos != null) && (() => {
+        const exacto =
+          Number(pred.goles_local) === Number(m.goles_local) &&
+          Number(pred.goles_visitante) === Number(m.goles_visitante);
+        const ganado = pred.puntos_obtenidos > 0;
+        const palette = exacto
+          ? { bg: "var(--gold-soft)", fg: "var(--gold-ink)", bd: "var(--gold)" }
+          : ganado
+            ? { bg: "var(--accent-soft)", fg: "var(--accent-ink)", bd: "color-mix(in oklab, var(--accent) 30%, transparent)" }
+            : { bg: "var(--surface-2)", fg: "var(--ink-3)", bd: "var(--line)" };
+        return (
+          <div
+            style={{
+              marginTop: 10,
+              padding: "8px 12px",
+              borderRadius: "var(--r-md)",
+              background: palette.bg,
+              color: palette.fg,
+              border: `1px solid ${palette.bd}`,
+              fontSize: 12,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <span>
+              {exacto ? "Resultado exacto · " : ""}
+              {ganado ? `+${pred.puntos_obtenidos} pts` : "0 pts"}
+            </span>
+            <Icon.Chevron />
+          </div>
+        );
+      })()}
     </Card>
   );
 }

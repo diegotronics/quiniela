@@ -151,16 +151,16 @@ export default function Inicio() {
         )}
 
         {/* Puntaje + posición */}
-        <Card pad={0} style={{ overflow: "hidden" }}>
-          <div style={{ padding: "18px 18px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Card pad={0} elevated style={{ overflow: "hidden" }}>
+          <div style={{ padding: "22px 20px 18px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
             <div>
               <div style={kicker}>Tus puntos</div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 6 }}>
-                <span className="mono" style={bigNum}>{myPts}</span>
-                <span style={{ fontSize: 14, color: "var(--ink-3)" }}>pts</span>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 8 }}>
+                <span className="mono" style={me?.id === lider?.id ? bigNumGold : bigNum}>{myPts}</span>
+                <span style={{ fontSize: 14, color: "var(--ink-3)", fontWeight: 500 }}>pts</span>
               </div>
               {stats.jugados > 0 && (
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: 10 }}>
                   <Pill tone="accent">
                     {stats.exactos} exactos · {stats.ganador} ganadores
                   </Pill>
@@ -169,39 +169,82 @@ export default function Inicio() {
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={kicker}>Posición</div>
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 4, marginTop: 6 }}>
-                <span className="mono" style={bigNum}>{me?.rank || "—"}</span>
-                <span style={{ fontSize: 14, color: "var(--ink-3)" }}>/ {totalJugadores || 0}</span>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 4, marginTop: 8 }}>
+                <span className="mono" style={me?.id === lider?.id ? bigNumGold : bigNum}>{me?.rank || "—"}</span>
+                <span style={{ fontSize: 14, color: "var(--ink-3)", fontWeight: 500 }}>/ {totalJugadores || 0}</span>
               </div>
               {lider && me && me.id !== lider.id && (
-                <div style={{ marginTop: 8, fontSize: 12, color: "var(--ink-3)" }}>
-                  {diff} pts del 1°
+                <div style={{ marginTop: 10, fontSize: 12, color: "var(--coral-ink)", fontWeight: 600 }}>
+                  −{diff} pts del 1°
                 </div>
               )}
               {lider && me?.id === lider.id && (
-                <div style={{ marginTop: 8, fontSize: 12, color: "var(--accent-ink)", fontWeight: 600 }}>
-                  ¡Vas primero!
+                <div
+                  style={{
+                    marginTop: 10,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "3px 8px",
+                    borderRadius: 999,
+                    background: "var(--gold-soft)",
+                    border: "1px solid var(--gold)",
+                    color: "var(--gold-ink)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: 0.3,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  <Icon.Crown /> Vas primero
                 </div>
               )}
             </div>
           </div>
 
-          <div style={{ height: 4, background: "var(--line-2)", position: "relative" }}>
-            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${ratio}%`, background: "var(--accent)" }} />
+          <div style={{ height: 6, background: "var(--line-2)", position: "relative", overflow: "hidden" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: `${ratio}%`,
+                background: "linear-gradient(90deg, var(--accent) 0%, var(--gold) 130%)",
+                transition: "width 360ms ease",
+              }}
+            />
           </div>
           <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12 }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)" }}>
               {lider && (
                 <>
-                  <Avatar name={lider.nombre} size={18} />
-                  Lidera{" "}
-                  <span style={{ color: "var(--ink)", fontWeight: 600 }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "2px 8px 2px 2px",
+                      borderRadius: 999,
+                      background: "var(--gold-soft)",
+                      border: "1px solid var(--gold)",
+                      color: "var(--gold-ink)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <Avatar name={lider.nombre} size={18} />
                     {(lider.nombre || "").split(" ")[0]}
                   </span>
+                  <span>lidera</span>
                 </>
               )}
             </span>
-            <span style={{ color: "var(--ink-3)" }}>
+            <span
+              style={{
+                color: pendientes > 0 ? "var(--coral-ink)" : "var(--ink-3)",
+                fontWeight: pendientes > 0 ? 600 : 400,
+              }}
+            >
               {pendientes > 0 ? `Quedan ${pendientes} partidos` : "Torneo cerrado"}
             </span>
           </div>
@@ -209,11 +252,11 @@ export default function Inicio() {
 
         {/* Partido en vivo */}
         {live && (
-          <Card pad={14} style={{ background: "var(--ink)", borderColor: "var(--ink)", color: "var(--bg)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="live-dot" />
-              <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, color: "oklch(0.85 0.04 32)" }}>
-                Partido en vivo
+          <Card pad={14} elevated style={{ background: "var(--ink)", borderColor: "var(--ink)", color: "var(--bg)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <Pill tone="live">En vivo</Pill>
+              <span style={{ fontSize: 11, color: "oklch(0.75 0.02 60)", fontWeight: 500 }}>
+                {live.grupo ? `Grupo ${live.grupo}` : faseLabel(fases, live.fase_id)}
               </span>
             </div>
             <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -254,15 +297,29 @@ export default function Inicio() {
                   <Icon.Clock /> {formatDate(next.fecha)}
                 </span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 10 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                  <Flag code={code(next.equipo_local)} w={44} h={32} rounded={6} />
-                  <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink)" }}>{next.equipo_local}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
+                  <Flag code={code(next.equipo_local)} w={56} h={40} rounded={7} />
+                  <div style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)", letterSpacing: -0.2 }}>{next.equipo_local}</div>
                 </div>
-                <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: 0.6 }}>VS</div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-                  <Flag code={code(next.equipo_visitante)} w={44} h={32} rounded={6} />
-                  <div style={{ fontWeight: 600, fontSize: 16, color: "var(--ink)" }}>{next.equipo_visitante}</div>
+                <div
+                  className="mono"
+                  style={{
+                    fontSize: 10,
+                    color: "var(--ink-3)",
+                    letterSpacing: 1,
+                    fontWeight: 600,
+                    padding: "4px 8px",
+                    borderRadius: 999,
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--line)",
+                  }}
+                >
+                  VS
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+                  <Flag code={code(next.equipo_visitante)} w={56} h={40} rounded={7} />
+                  <div style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)", letterSpacing: -0.2 }}>{next.equipo_visitante}</div>
                 </div>
               </div>
               <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--surface-2)", borderRadius: "var(--r-md)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -312,11 +369,26 @@ const kicker = {
 };
 
 const bigNum = {
-  fontSize: 44,
-  fontWeight: 600,
+  fontSize: 64,
+  fontWeight: 700,
   color: "var(--ink)",
-  letterSpacing: -1.5,
-  lineHeight: 1,
+  letterSpacing: -2.5,
+  lineHeight: 0.95,
+  fontVariantNumeric: "tabular-nums",
+};
+
+const bigNumGold = {
+  ...{
+    fontSize: 64,
+    fontWeight: 700,
+    letterSpacing: -2.5,
+    lineHeight: 0.95,
+    fontVariantNumeric: "tabular-nums",
+  },
+  background: "linear-gradient(135deg, var(--gold-ink) 0%, var(--gold) 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  backgroundClip: "text",
 };
 
 function MiniStat({ label, value, unit }) {
@@ -346,12 +418,12 @@ function TeamMini({ code: c, label, dark, right }) {
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 8,
+        gap: 10,
         flexDirection: right ? "row-reverse" : "row",
       }}
     >
-      <Flag code={c} w={28} h={20} rounded={3} />
-      <span style={{ fontSize: 13, fontWeight: 600, color: dark ? "var(--bg)" : "var(--ink)" }}>
+      <Flag code={c} w={38} h={26} rounded={5} />
+      <span style={{ fontSize: 14, fontWeight: 700, color: dark ? "var(--bg)" : "var(--ink)", letterSpacing: -0.2 }}>
         {(label || "").length > 12 ? c : label}
       </span>
     </div>
