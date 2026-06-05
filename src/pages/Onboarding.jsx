@@ -163,13 +163,14 @@ function WizardPartido({
     setDraft((d) => ({ ...d, [campo]: valor }));
   };
 
-  const puedeConfirmar = draft.local != null && draft.visitante != null;
+  // Basta con ajustar un lado: el que no toques cuenta como 0 (el marcador ya muestra 0).
+  const puedeConfirmar = draft.local != null || draft.visitante != null;
 
   const handleConfirmar = async () => {
     if (!puedeConfirmar || saving) return;
     setSaving(true);
     try {
-      await onConfirmar(draft.local, draft.visitante);
+      await onConfirmar(draft.local ?? 0, draft.visitante ?? 0);
     } finally {
       setSaving(false);
     }
