@@ -43,8 +43,8 @@ export function AuthProvider({ children }) {
 
     if (!nombreLimpio) return { ok: false, error: "Escribe tu nombre" };
     if (!EMAIL_RE.test(emailLimpio)) return { ok: false, error: "Email inválido" };
-    if (!password || password.length < 4)
-      return { ok: false, error: "La contraseña debe tener al menos 4 caracteres" };
+    if (!password || password.length < 6)
+      return { ok: false, error: "La contraseña debe tener al menos 6 caracteres" };
 
     try {
       if (await findUsuarioByEmail(emailLimpio)) {

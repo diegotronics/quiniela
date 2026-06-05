@@ -1,4 +1,11 @@
 // Derivación de stats de usuario a partir de predicciones y partidos.
+import { fechaYmdCaracas } from "./fechas";
+
+// Marca de tiempo (ms) de una fecha ISO; las inválidas van al final.
+function ts(fecha) {
+  const t = fecha ? new Date(fecha).getTime() : NaN;
+  return Number.isNaN(t) ? Infinity : t;
+}
 
 export function rankingFromUsers(usuarios, predicciones) {
   const totales = new Map();
@@ -39,7 +46,7 @@ export function userStreak(preds, partidos) {
   const jugados = (preds || [])
     .map((pr) => ({ pr, m: byPartido.get(pr.partido_id) }))
     .filter(({ m }) => m && m.resultado_ingresado)
-    .sort((a, b) => (a.m.fecha || "").localeCompare(b.m.fecha || ""))
+    .sort((a, b) => ts(a.m.fecha) - ts(b.m.fecha))
     .reverse();
   let streak = 0;
   for (const { pr, m } of jugados) {
@@ -60,16 +67,17 @@ export function proximoPartido(partidos, predicciones, fases) {
   return (partidos || [])
     .filter((p) => fasesActivas.has(p.fase_id) && !p.resultado_ingresado)
     .filter((p) => !predicciones[p.id] || predicciones[p.id].goles_local == null)
-    .sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""))[0];
+    .sort((a, b) => ts(a.fecha) - ts(b.fecha))[0];
 }
 
 // Partido "en vivo" — el más reciente sin resultado de hoy/ayer.
 export function partidoEnVivo(partidos) {
-  const hoy = new Date();
-  const ymd = hoy.toISOString().slice(0, 10);
+  // "Hoy" según el horario de Venezuela (la fecha del partido ya está en
+  // hora local de Venezuela, así que su porción YYYY-MM-DD es comparable).
+  const ymd = fechaYmdCaracas(new Date());
   return (partidos || [])
     .filter((p) => !p.resultado_ingresado && (p.fecha || "").slice(0, 10) === ymd)
-    .sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""))[0];
+    .sort((a, b) => ts(a.fecha) - ts(b.fecha))[0];
 }
 
 // Carga partidos de varias fases en paralelo.

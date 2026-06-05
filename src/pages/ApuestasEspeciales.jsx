@@ -17,6 +17,7 @@ import {
   Skeleton,
 } from '@/components/ui'
 import { code, TEAMS_MUNDIAL_2026 } from '@/lib/constants'
+import { formatearFechaHora } from '@/lib/fechas'
 
 export default function ApuestasEspeciales() {
   const navigate = useNavigate()
@@ -167,7 +168,7 @@ export default function ApuestasEspeciales() {
             <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>
               {cerrada ? 'Cierre: ' : 'Cierra: '}
               <span className="mono" style={{ color: 'var(--ink)' }}>
-                {formatDate(cierraEn)}
+                {formatearFechaHora(cierraEn)}
               </span>
             </div>
           )}
@@ -529,28 +530,3 @@ function norm(s) {
   return (s || '').toString().trim().toLowerCase()
 }
 
-function formatDate(d) {
-  try {
-    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-    const months = [
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ]
-    const h = d.getHours()
-    const ampm = h >= 12 ? 'pm' : 'am'
-    const h12 = h % 12 || 12
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`
-  } catch {
-    return ''
-  }
-}

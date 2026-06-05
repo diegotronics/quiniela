@@ -17,8 +17,10 @@ import {
 import { useUsuariosPublic } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
 import { listPuntajesGlobales } from "@/api/predicciones";
+import { listPuntajesApuestasEspeciales } from "@/api/apuestasEspeciales";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
 import { rankingFromUsers, userStreak } from "@/lib/stats";
+import { formatearDiaLargo } from "@/lib/fechas";
 
 const GRUPOS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
@@ -40,9 +42,17 @@ export default function Partidos() {
   const { predicciones } = usePrediccionesUsuario(user?.id);
   const { usuarios } = useUsuariosPublic();
   const { data: puntajes } = useAsync(listPuntajesGlobales, []);
+  const { data: puntajesEspeciales } = useAsync(listPuntajesApuestasEspeciales, []);
   const { partidos: todosPartidos } = useAllPartidos(fases);
 
-  const ranking = useMemo(() => rankingFromUsers(usuarios, puntajes || []), [usuarios, puntajes]);
+  const ranking = useMemo(
+    () =>
+      rankingFromUsers(usuarios, [
+        ...(puntajes || []),
+        ...(puntajesEspeciales || []),
+      ]),
+    [usuarios, puntajes, puntajesEspeciales],
+  );
   const me = useMemo(() => ranking.find((u) => u.id === user?.id), [ranking, user]);
   const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
   const racha = useMemo(() => userStreak(prediccionesList, todosPartidos), [prediccionesList, todosPartidos]);
@@ -65,7 +75,7 @@ export default function Partidos() {
     [...partidosVista]
       .sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""))
       .forEach((p) => {
-        const key = dayKey(p.fecha);
+        const key = formatearDiaLargo(p.fecha);
         if (!map.has(key)) map.set(key, []);
         map.get(key).push(p);
       });
@@ -214,14 +224,3 @@ export default function Partidos() {
   );
 }
 
-function dayKey(iso) {
-  if (!iso) return "Sin fecha";
-  try {
-    const d = new Date(iso);
-    const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-    const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
-  } catch {
-    return iso.slice(0, 10);
-  }
-}

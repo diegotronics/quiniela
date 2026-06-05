@@ -7,6 +7,7 @@ import { useAsync } from "@/hooks/useAsync";
 import { useFases } from "@/hooks/useFases";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
 import { listPuntajesGlobales } from "@/api/predicciones";
+import { listPuntajesApuestasEspeciales } from "@/api/apuestasEspeciales";
 import {
   Avatar,
   EmptyState,
@@ -45,6 +46,7 @@ export default function TablaFamiliar() {
   const navigate = useNavigate();
   const { usuarios } = useUsuariosPublic();
   const { data: puntajes, loading } = useAsync(listPuntajesGlobales, []);
+  const { data: puntajesEspeciales } = useAsync(listPuntajesApuestasEspeciales, []);
   const { fases } = useFases();
   const { partidos } = useAllPartidos(fases);
   const [filtro, setFiltro] = useState("total");
@@ -57,7 +59,10 @@ export default function TablaFamiliar() {
 
   const puntajesFiltrados = useMemo(() => {
     const todos = puntajes || [];
-    if (filtro === "total") return todos;
+    // El "Total" incluye las apuestas especiales (Campeón, Goleador, etc.),
+    // igual que el ranking de Inicio. Los filtros por fase solo aplican a
+    // predicciones de partidos, así que ahí no se suman.
+    if (filtro === "total") return [...todos, ...(puntajesEspeciales || [])];
     if (filtro === "grupos") {
       return todos.filter((p) => {
         const m = partidosById.get(p.partido_id);
@@ -82,7 +87,7 @@ export default function TablaFamiliar() {
       });
     }
     return todos;
-  }, [puntajes, filtro, partidosById]);
+  }, [puntajes, puntajesEspeciales, filtro, partidosById]);
 
   const ranking = useMemo(
     () => rankingFromUsers(usuarios, puntajesFiltrados),
@@ -92,8 +97,12 @@ export default function TablaFamiliar() {
   const resto = ranking.slice(3);
 
   const rankingTotal = useMemo(
-    () => rankingFromUsers(usuarios, puntajes || []),
-    [usuarios, puntajes],
+    () =>
+      rankingFromUsers(usuarios, [
+        ...(puntajes || []),
+        ...(puntajesEspeciales || []),
+      ]),
+    [usuarios, puntajes, puntajesEspeciales],
   );
   const meTotal = useMemo(() => rankingTotal.find((u) => u.id === user?.id), [rankingTotal, user]);
   const { predicciones } = usePrediccionesUsuario(user?.id);
@@ -359,7 +368,7 @@ function PodiumCard({ place, member, center, me, delay = 0 }) {
               border: "1px solid color-mix(in oklab, var(--accent) 25%, transparent)",
             }}
           >
-            Vos
+            Tú
           </div>
         )}
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 3 }}>

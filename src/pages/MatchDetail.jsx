@@ -20,6 +20,7 @@ import {
   SkeletonText,
 } from '@/components/ui'
 import { code } from '@/lib/constants'
+import { formatearFechaHora } from '@/lib/fechas'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import { celebrateExact, celebrateWin, celebrateOnce } from '@/lib/celebrate'
 
@@ -29,7 +30,7 @@ export default function MatchDetail() {
   const { user } = useAuth()
   const { fases } = useFases()
   const { usuarios } = useUsuariosPublic()
-  const { predicciones, setPrediccion } = usePrediccionesUsuario(user?.id)
+  const { predicciones, setMarcador } = usePrediccionesUsuario(user?.id)
 
   // Cargar el partido específico
   const {
@@ -62,8 +63,17 @@ export default function MatchDetail() {
     () => fases.find((f) => f.id === partido?.fase_id),
     [fases, partido],
   )
+  // El partido se considera iniciado cuando su hora de saque ya pasó.
+  const yaComenzo = (() => {
+    if (!partido?.fecha) return false
+    const inicio = new Date(partido.fecha).getTime()
+    return Number.isFinite(inicio) && inicio <= Date.now()
+  })()
   const locked =
-    !fase || fase.estado !== 'activa' || partido?.resultado_ingresado
+    !fase ||
+    fase.estado !== 'activa' ||
+    partido?.resultado_ingresado ||
+    yaComenzo
 
   const myPred = predicciones[id]
   const [draft, setDraft] = useState({ local: null, visitante: null })
@@ -76,16 +86,28 @@ export default function MatchDetail() {
 
   const [saving, setSaving] = useState(false)
   const [savedTick, setSavedTick] = useState(0)
+  const [saveError, setSaveError] = useState('')
   // El pronóstico queda listo en cuanto ajustas al menos un lado; el lado que
   // no toques cuenta como 0 (el marcador ya muestra 0).
   const sinTocar = draft.local == null && draft.visitante == null
   const guardar = async () => {
     if (sinTocar) return
     setSaving(true)
+    setSaveError('')
     try {
-      await setPrediccion(id, 'goles_local', draft.local ?? 0)
-      await setPrediccion(id, 'goles_visitante', draft.visitante ?? 0)
+      // Una sola escritura atómica del marcador completo.
+      await setMarcador(id, draft.local ?? 0, draft.visitante ?? 0)
       setSavedTick((k) => k + 1)
+    } catch (e) {
+      const msg = String(e?.message || e)
+      if (msg.includes('PARTIDO_INICIADO')) {
+        setSaveError('El partido ya comenzó: el pronóstico quedó cerrado.')
+      } else if (msg.includes('PARTIDO_CERRADO')) {
+        setSaveError('El partido ya tiene resultado: no se puede editar.')
+      } else {
+        setSaveError('No se pudo guardar. Intenta de nuevo.')
+      }
+      await refreshPartido()
     } finally {
       setSaving(false)
     }
@@ -350,7 +372,7 @@ export default function MatchDetail() {
                       className="mono"
                       style={{ fontSize: 18, color: 'oklch(0.75 0.02 60)' }}
                     >
-                      {formatDateTime(partido.fecha)}
+                      {formatearFechaHora(partido.fecha)}
                     </span>
                   </>
                 )}
@@ -498,6 +520,18 @@ export default function MatchDetail() {
                   <>Guardar pronóstico</>
                 )}
               </button>
+              {saveError && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    fontSize: 12,
+                    color: 'var(--danger)',
+                    fontWeight: 600,
+                  }}
+                >
+                  {saveError}
+                </div>
+              )}
             </div>
           )}
         </Card>
@@ -594,7 +628,7 @@ function FamilyPicks({ usuarios, picksByUser, mePartial }) {
                   </span>
                   {isMe && (
                     <Pill tone="accent" size="sm">
-                      Vos
+                      Tú
                     </Pill>
                   )}
                 </div>
@@ -695,30 +729,3 @@ function Centered({ children }) {
   )
 }
 
-function formatDateTime(iso) {
-  if (!iso) return ''
-  try {
-    const d = new Date(iso)
-    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-    const months = [
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ]
-    const h = d.getHours()
-    const ampm = h >= 12 ? 'pm' : 'am'
-    const h12 = h % 12 || 12
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`
-  } catch {
-    return iso
-  }
-}

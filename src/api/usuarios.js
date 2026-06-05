@@ -19,21 +19,22 @@ export async function listUsuariosAdmin() {
 }
 
 export async function findUsuarioByCredenciales(email, password) {
-  const { data, error } = await supabase
-    .from("usuarios")
-    .select(PUBLIC_COLS)
-    .ilike("email", email)
-    .eq("password", password)
-    .maybeSingle();
+  // La verificación de la contraseña ocurre en el servidor (RPC con bcrypt);
+  // el cliente nunca recibe el hash. Devuelve los datos públicos o null.
+  const { data, error } = await supabase.rpc("login_usuario", {
+    p_email: email,
+    p_password: password,
+  });
   if (error) throw error;
-  return data;
+  return data || null;
 }
 
 export async function findUsuarioByEmail(email) {
+  // `eq` con email normalizado: evita que `%`/`_` actúen como comodines.
   const { data, error } = await supabase
     .from("usuarios")
     .select("id")
-    .ilike("email", email)
+    .eq("email", (email || "").trim().toLowerCase())
     .maybeSingle();
   if (error) throw error;
   return data;

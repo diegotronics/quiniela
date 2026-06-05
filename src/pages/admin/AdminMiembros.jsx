@@ -55,11 +55,11 @@ export default function AdminMiembros() {
     e?.preventDefault();
     if (!form.nombre || !form.email) return;
     if (editing) {
-      if (form.password && form.password.length < 4) {
-        return alert("La contraseña debe tener al menos 4 caracteres.");
+      if (form.password && form.password.length < 6) {
+        return alert("La contraseña debe tener al menos 6 caracteres.");
       }
-    } else if (!form.password || form.password.length < 4) {
-      return alert("La contraseña debe tener al menos 4 caracteres.");
+    } else if (!form.password || form.password.length < 6) {
+      return alert("La contraseña debe tener al menos 6 caracteres.");
     }
     setBusy(true);
     try {
@@ -401,7 +401,7 @@ export default function AdminMiembros() {
               label={editing ? "Nueva contraseña" : "Contraseña"}
               type="text"
               autoComplete="new-password"
-              placeholder={editing ? "Dejar vacío para no cambiar" : "Mínimo 4 caracteres"}
+              placeholder={editing ? "Dejar vacío para no cambiar" : "Mínimo 6 caracteres"}
               value={form.password}
               onChange={(v) => setForm({ ...form, password: v })}
             />

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { clearResultadoPartido, setResultadoPartido } from '@/api/partidos'
+import { formatearFechaHora } from '@/lib/fechas'
 import { useFases } from '@/hooks/useFases'
 import { usePartidosByFase } from '@/hooks/usePartidos'
 import { useAllPartidos } from '@/hooks/useAllPartidos'
@@ -515,29 +516,5 @@ const qtyBtn = {
 }
 
 function formatDate(iso) {
-  if (!iso) return ''
-  try {
-    const d = new Date(iso)
-    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-    const months = [
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ]
-    const h = d.getHours()
-    const ampm = h >= 12 ? 'pm' : 'am'
-    const h12 = h % 12 || 12
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`
-  } catch {
-    return iso
-  }
+  return formatearFechaHora(iso)
 }

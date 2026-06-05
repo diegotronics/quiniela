@@ -154,7 +154,7 @@ export default function AceptarInvitacion() {
         <Field label="Contraseña">
           <input
             type="password"
-            placeholder="Mínimo 4 caracteres"
+            placeholder="Mínimo 6 caracteres"
             autoComplete="new-password"
             value={form.password}
             onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}

@@ -30,7 +30,7 @@ export default function Register() {
     else navigate("/app/onboarding", { replace: true });
   };
 
-  const meetsMin = form.password.length >= 4;
+  const meetsMin = form.password.length >= 6;
 
   return (
     <AuthLayout
@@ -91,13 +91,13 @@ export default function Register() {
                 }}
               >
                 {meetsMin ? <Icon.Check /> : null}
-                {meetsMin ? "Mínimo cumplido" : "Mínimo 4 caracteres"}
+                {meetsMin ? "Mínimo cumplido" : "Mínimo 6 caracteres"}
               </span>
             )
           }
         >
           <PasswordInput
-            placeholder="Mínimo 4 caracteres"
+            placeholder="Mínimo 6 caracteres"
             autoComplete="new-password"
             value={form.password}
             onChange={(e) =>

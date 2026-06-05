@@ -38,6 +38,7 @@ import {
   partidoEnVivo,
 } from '@/lib/stats'
 import { code, GROUP_NAME, GROUP_MOTTO } from '@/lib/constants'
+import { formatearFechaHora } from '@/lib/fechas'
 import { ChatPreview } from '@/components/chat/ChatPreview'
 import { BannerPredicciones } from '@/components/BannerPredicciones'
 import { TOTAL_PARTIDOS_GRUPOS, countPredicciones } from '@/lib/onboarding'
@@ -578,7 +579,7 @@ export default function Inicio() {
                     letterSpacing: 0.3,
                   }}
                 >
-                  {formatDate(next.fecha)}
+                  {formatearFechaHora(next.fecha)}
                 </span>
               </div>
               <div
@@ -826,7 +827,7 @@ function StreakCard({ streak }) {
         ? 'Racha caliente'
         : 'Racha'
   const subtitle = isCold
-    ? 'Acertá el próximo'
+    ? 'Acierta el próximo'
     : `${streak} acierto${streak === 1 ? '' : 's'} seguido${streak === 1 ? '' : 's'}`
   const borderColor = isBlaze
     ? 'color-mix(in oklab, var(--danger) 35%, transparent)'
@@ -904,30 +905,3 @@ function faseLabel(fases, faseId) {
   return f ? f.nombre : 'Partido'
 }
 
-function formatDate(iso) {
-  if (!iso) return ''
-  try {
-    const d = new Date(iso)
-    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-    const months = [
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ]
-    const h = d.getHours()
-    const ampm = h >= 12 ? 'pm' : 'am'
-    const h12 = h % 12 || 12
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${h12}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`
-  } catch {
-    return iso
-  }
-}

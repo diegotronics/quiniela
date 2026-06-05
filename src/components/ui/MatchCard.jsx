@@ -3,6 +3,7 @@ import { Pill } from './Pill.jsx'
 import { Icon } from './Icon.jsx'
 import { TeamRow } from './TeamRow.jsx'
 import { LiveBadge } from './LiveBadge.jsx'
+import { formatearHoraCorta } from '@/lib/fechas'
 
 function winnerSideOf(m) {
   if (!m || !m.resultado_ingresado) return null
@@ -86,16 +87,7 @@ function PointsBanner({ pred, match }) {
 }
 
 function hour(iso) {
-  if (!iso) return ''
-  try {
-    const d = new Date(iso)
-    const h = d.getHours()
-    const ampm = h >= 12 ? 'pm' : 'am'
-    const h12 = h % 12 || 12
-    return `${h12}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`
-  } catch {
-    return ''
-  }
+  return formatearHoraCorta(iso)
 }
 
 /**
