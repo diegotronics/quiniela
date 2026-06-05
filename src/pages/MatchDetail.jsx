@@ -191,8 +191,8 @@ export default function MatchDetail() {
       {/* Header oscuro */}
       <div
         style={{
-          background: 'var(--ink)',
-          color: 'var(--bg)',
+          background: 'var(--header-bg)',
+          color: 'var(--header-ink)',
           paddingTop: 24,
           paddingBottom: 20,
         }}
@@ -213,7 +213,7 @@ export default function MatchDetail() {
               height: 36,
               background: 'transparent',
               border: 'none',
-              color: 'var(--bg)',
+              color: 'var(--header-ink)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -266,7 +266,7 @@ export default function MatchDetail() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        border: '2px solid var(--ink)',
+                        border: '2px solid var(--header-bg)',
                       }}
                     >
                       <Icon.Check style={{ width: 11, height: 11 }} />
@@ -318,7 +318,7 @@ export default function MatchDetail() {
                         background: isDraw
                           ? 'var(--gold)'
                           : 'rgba(255,255,255,0.1)',
-                        color: isDraw ? 'var(--ink)' : 'var(--bg)',
+                        color: isDraw ? 'var(--header-bg)' : 'var(--header-ink)',
                         fontSize: 10,
                         fontWeight: 700,
                         letterSpacing: 0.4,
@@ -333,7 +333,7 @@ export default function MatchDetail() {
                         fontSize: 44,
                         fontWeight: 700,
                         letterSpacing: -2,
-                        color: 'var(--bg)',
+                        color: 'var(--header-ink)',
                         lineHeight: 1,
                         display: 'inline-flex',
                         alignItems: 'baseline',

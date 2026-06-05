@@ -183,9 +183,10 @@ function WizardPartido({
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
       {/* Header oscuro */}
-      <div style={{ background: "var(--ink)", color: "var(--bg)", paddingTop: 16, paddingBottom: 14 }}>
+      <div style={{ background: "var(--header-bg)", color: "var(--header-ink)", paddingTop: 16, paddingBottom: 14 }}>
         <div
           style={{
+            position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -202,7 +203,7 @@ function WizardPartido({
               height: 36,
               background: "transparent",
               border: "none",
-              color: "var(--bg)",
+              color: "var(--header-ink)",
               opacity: index === 0 ? 0.3 : 1,
               cursor: index === 0 ? "default" : "pointer",
               display: "flex",
@@ -212,7 +213,15 @@ function WizardPartido({
           >
             <Icon.ChevronL />
           </button>
-          <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
+              textAlign: "center",
+              pointerEvents: "none",
+            }}
+          >
             <div className="mono" style={{ fontSize: 18, fontWeight: 600, letterSpacing: -0.5 }}>
               {Math.min(index + 1, total)} <span style={{ color: "oklch(0.65 0.02 60)" }}>/ {total}</span>
             </div>
@@ -222,17 +231,24 @@ function WizardPartido({
           </div>
           <button
             onClick={onPospuesto}
+            aria-label="Omitir las predicciones por ahora"
             style={{
-              background: "transparent",
-              border: "none",
-              color: "oklch(0.85 0.02 60)",
-              fontSize: 12,
-              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.22)",
+              borderRadius: 999,
+              color: "var(--header-ink)",
+              fontSize: 12.5,
+              fontWeight: 600,
               cursor: "pointer",
-              padding: "8px 6px",
+              padding: "7px 12px",
+              whiteSpace: "nowrap",
             }}
           >
-            Después
+            Omitir por ahora
+            <Icon.Arrow size={14} />
           </button>
         </div>
 
@@ -529,7 +545,7 @@ function PantallaFinal({ completados, total, countdown, onIrInicio, onRevisar })
         flexDirection: "column",
       }}
     >
-      <div style={{ background: "var(--ink)", color: "var(--bg)", padding: "32px 20px 28px", textAlign: "center" }}>
+      <div style={{ background: "var(--header-bg)", color: "var(--header-ink)", padding: "32px 20px 28px", textAlign: "center" }}>
         <div style={{ fontSize: 52, lineHeight: 1, marginBottom: 8 }} aria-hidden>
           {completo ? "🏆" : "✨"}
         </div>

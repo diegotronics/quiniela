@@ -23,6 +23,11 @@
   --hover: rgba(14,23,48,0.05);
   --pressed: rgba(14,23,48,0.09);
 
+  /* Encabezado oscuro — barra superior que se mantiene oscura en ambos temas
+     (Onboarding, detalle de partido). No se invierte con el tema. */
+  --header-bg: #0E1730;
+  --header-ink: #F4F1E8;
+
   /* Acentos Mundial 2026 — croma alto, anfitriones tricolor */
   --accent: oklch(0.58 0.22 150);             /* verde cancha vibrante */
   --accent-soft: oklch(0.94 0.07 150);
@@ -112,6 +117,11 @@
   --line-strong: #364368;
   --hover: rgba(246,240,229,0.06);
   --pressed: rgba(246,240,229,0.10);
+
+  /* Encabezado oscuro — permanece oscuro en modo oscuro, ligeramente elevado
+     sobre --bg para que la barra se distinga del fondo. */
+  --header-bg: #141D38;
+  --header-ink: #F6F0E5;
 
   --accent: oklch(0.72 0.20 150);
   --accent-soft: oklch(0.32 0.12 150);
