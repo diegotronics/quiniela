@@ -365,7 +365,7 @@ function perfilSubtitle({ rank, total, puntos, racha }) {
 function deriveBadges({ stats, racha, ranking, total, puntos }) {
   const pts = puntos || 0;
   return [
-    { label: "1ª picada", on: stats.jugados >= 1, hue: 148 },
+    { label: "1er acierto", on: stats.ganador >= 1, hue: 148 },
     { label: "Racha 3", on: racha >= 3, hue: 32 },
     { label: "Exacto", on: stats.exactos >= 1, hue: 220 },
     { label: "Top 3", on: pts > 0 && ranking != null && ranking <= 3 && total >= 3, hue: 85 },
