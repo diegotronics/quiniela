@@ -70,7 +70,7 @@ export default function Perfil() {
       .map((pr) => ({ pr, m: byPartido.get(pr.partido_id) }));
   }, [prediccionesList, partidos]);
 
-  const logros = useMemo(() => deriveBadges({ stats, racha, ranking: me?.rank, total: ranking.length }), [stats, racha, me, ranking]);
+  const logros = useMemo(() => deriveBadges({ stats, racha, ranking: me?.rank, total: ranking.length, puntos: me?.puntos }), [stats, racha, me, ranking]);
 
   return (
     <MobileShell
@@ -362,15 +362,16 @@ function perfilSubtitle({ rank, total, puntos, racha }) {
   return partes.join(" · ");
 }
 
-function deriveBadges({ stats, racha, ranking, total }) {
+function deriveBadges({ stats, racha, ranking, total, puntos }) {
+  const pts = puntos || 0;
   return [
-    { label: "1ª picada", on: stats.jugados >= 1, hue: 148 },
+    { label: "1er acierto", on: stats.ganador >= 1, hue: 148 },
     { label: "Racha 3", on: racha >= 3, hue: 32 },
     { label: "Exacto", on: stats.exactos >= 1, hue: 220 },
-    { label: "Top 3", on: ranking != null && ranking <= 3 && total >= 3, hue: 85 },
+    { label: "Top 3", on: pts > 0 && ranking != null && ranking <= 3 && total >= 3, hue: 85 },
     { label: "10 aciertos", on: stats.ganador >= 10, hue: 280 },
-    { label: "Líder", on: ranking === 1 && total >= 2, hue: 200 },
-    { label: "Mil pts", on: stats.jugados >= 100, hue: 0 },
+    { label: "Líder", on: pts > 0 && ranking === 1 && total >= 2, hue: 200 },
+    { label: "150 pts", on: pts >= 150, hue: 0 },
     { label: "Coleccionista", on: stats.exactos >= 5, hue: 320 },
   ];
 }
