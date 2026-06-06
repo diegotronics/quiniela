@@ -36,6 +36,20 @@ SUPABASE_DB_URL="postgresql://postgres:..." npm run migrate
 
 > Los partidos de eliminatorias (1/16, octavos, etc.) se insertan después, cuando se conozcan los clasificados — basta con agregar un nuevo `05_*.sql` y desplegar.
 
+#### Reiniciar la base para arrancar la quiniela
+
+Si necesitas vaciar todo (usuarios, predicciones, apuestas, mensajes,
+invitaciones y resultados) y empezar desde cero, corre una sola vez el
+script [`scripts/reset-quiniela.sql`](scripts/reset-quiniela.sql) en
+Supabase → **SQL Editor**. Vacía todas las tablas y recarga los seeds
+mínimos (fases, admin, partidos de grupos y configuración de apuestas),
+dejándola lista para jugar. Tras correrlo, el admin entra con
+`admin@quiniela.local` / `admin123`.
+
+> ⚠️ Es irreversible. Vive en `/scripts` (no en `/supabase`) a propósito,
+> para que el migrador automático del deploy nunca lo ejecute solo. Haz un
+> respaldo antes si quieres conservar algo.
+
 ### 4) Configurar variables de entorno
 
 En Supabase → **Settings → API**, copia:
