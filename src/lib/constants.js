@@ -109,3 +109,79 @@ export function parseSorpresa(value) {
     fase: value.slice(idx + SORPRESA_SEP.length).trim(),
   };
 }
+
+// ------------------------------------------------------------
+// Avance de cada selección en las eliminatorias.
+//
+// La "Sorpresa del Mundial" ya no tiene una respuesta única: cada jugador
+// acierta si la selección que eligió llega AL MENOS hasta la fase que
+// predijo. La fase alcanzada por cada equipo se deriva automáticamente de
+// los partidos (un equipo "llegó" a una fase si aparece en algún partido
+// de esa fase). Estos helpers reflejan, en el cliente, la misma lógica que
+// las funciones SQL de supabase/13_sorpresa_automatica.sql.
+// ------------------------------------------------------------
+
+// Profundidad numérica de cada fase (mayor = más lejos en el torneo).
+// Debe coincidir con la función SQL `profundidad_fase`.
+export const FASE_PROFUNDIDAD = {
+  grupos: 0,
+  dieciseisavos: 1,
+  octavos: 2,
+  cuartos: 3,
+  semifinal: 4,
+  tercerpuesto: 4, // jugar el 3.º puesto implica haber llegado a semifinal
+  final: 5,
+};
+
+// Profundidad que exige cada opción de la Sorpresa (SORPRESA_FASES).
+// Debe coincidir con la función SQL `profundidad_sorpresa`.
+export const SORPRESA_FASE_PROFUNDIDAD = {
+  "Octavos de final": 2,
+  "Cuartos de final": 3,
+  "Semifinal": 4,
+  "Final": 5,
+};
+
+// Etiqueta legible de una profundidad alcanzada.
+export const PROFUNDIDAD_ETIQUETA = {
+  1: "16avos de final",
+  2: "Octavos de final",
+  3: "Cuartos de final",
+  4: "Semifinal",
+  5: "Final",
+};
+
+function normNombre(s) {
+  return (s || "").toString().trim().toLowerCase();
+}
+
+// Fase más profunda que alcanzó un equipo, derivada de los partidos de
+// eliminatorias (aparición = llegó). Devuelve la profundidad (1..5) o null
+// si la selección aún no aparece en ninguna eliminatoria.
+export function profundidadAlcanzada(equipo, partidos) {
+  if (!equipo || !partidos || partidos.length === 0) return null;
+  const e = normNombre(equipo);
+  let max = null;
+  for (const p of partidos) {
+    if (!p || p.fase_id === "grupos") continue;
+    if (normNombre(p.equipo_local) === e || normNombre(p.equipo_visitante) === e) {
+      const d = FASE_PROFUNDIDAD[p.fase_id] ?? 0;
+      if (max === null || d > max) max = d;
+    }
+  }
+  return max;
+}
+
+// Evalúa la apuesta "Sorpresa" de un jugador contra el avance real.
+// Devuelve { equipo, faseReq, profReq, profAlcanzada, acierto, resuelta }.
+//   - resuelta: la selección ya apareció en alguna eliminatoria.
+//   - acierto: llegó al menos hasta la fase predicha.
+export function evaluarSorpresa(valorSorpresa, partidos) {
+  const { equipo, fase } = parseSorpresa(valorSorpresa);
+  const profReq = SORPRESA_FASE_PROFUNDIDAD[fase] ?? null;
+  const profAlcanzada = profundidadAlcanzada(equipo, partidos);
+  const resuelta = profAlcanzada != null;
+  const acierto =
+    resuelta && profReq != null && profAlcanzada >= profReq;
+  return { equipo, faseReq: fase, profReq, profAlcanzada, acierto, resuelta };
+}

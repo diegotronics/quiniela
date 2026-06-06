@@ -5,6 +5,8 @@ import {
   useApuestasEspecialesConfig,
   useApuestaEspecialUsuario,
 } from '@/hooks/useApuestasEspeciales'
+import { useFases } from '@/hooks/useFases'
+import { useAllPartidos } from '@/hooks/useAllPartidos'
 import {
   Button,
   Card,
@@ -19,8 +21,10 @@ import {
 } from '@/components/ui'
 import {
   code,
+  evaluarSorpresa,
   formatSorpresa,
   parseSorpresa,
+  PROFUNDIDAD_ETIQUETA,
   SORPRESA_FASES,
   TEAMS_MUNDIAL_2026,
 } from '@/lib/constants'
@@ -31,6 +35,8 @@ export default function ApuestasEspeciales() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { config, loading: loadingCfg } = useApuestasEspecialesConfig()
+  const { fases } = useFases()
+  const { partidos } = useAllPartidos(fases)
   const {
     apuesta,
     loading: loadingApuesta,
@@ -60,11 +66,10 @@ export default function ApuestasEspeciales() {
   const cierraEn = config?.cierra_en ? new Date(config.cierra_en) : null
   const ahora = Date.now()
   const cerrada = cierraEn ? cierraEn.getTime() <= ahora : false
+  // Campeón / Subcampeón / Goleador muestran su resultado cuando el admin lo
+  // carga. La Sorpresa se evalúa aparte, contra el avance real del bracket.
   const torneoFinalizado = Boolean(
-    config?.campeon ||
-    config?.subcampeon ||
-    config?.goleador ||
-    config?.sorpresa,
+    config?.campeon || config?.subcampeon || config?.goleador,
   )
 
   const dirty = useMemo(() => {
@@ -86,6 +91,14 @@ export default function ApuestasEspeciales() {
     draft.subcampeon &&
     draft.goleador.trim() &&
     draft.sorpresa.trim()
+
+  // Evaluación automática de la Sorpresa: la selección elegida acierta si
+  // llega al menos hasta la fase predicha, según el avance real en el
+  // bracket. No hay respuesta única ni la carga el admin.
+  const sorpresaEval = useMemo(
+    () => evaluarSorpresa(apuesta?.sorpresa, partidos),
+    [apuesta?.sorpresa, partidos],
+  )
 
   const onGuardar = async () => {
     if (!dirty || cerrada || busy) return
@@ -155,9 +168,11 @@ export default function ApuestasEspeciales() {
                   lineHeight: 1.45,
                 }}
               >
-                Haz tus apuestas antes de que arranque el Mundial. Cuando
-                termine el torneo, el admin carga los resultados oficiales y se
-                reparten los puntos.
+                Haz tus apuestas antes de que arranque el Mundial. El admin
+                carga el Campeón, el Subcampeón y el Goleador. La Sorpresa se
+                reparte automáticamente: aciertas si tu selección llega al
+                menos hasta la fase que elegiste, así que puede haber varios
+                ganadores.
               </div>
             </div>
             <Pill tone={cerrada ? 'coral' : 'accent'}>
@@ -273,15 +288,15 @@ export default function ApuestasEspeciales() {
             <PickCard
               kicker="Categoría 4"
               titulo="Sorpresa del Mundial"
-              hint="Selección revelación y hasta qué fase llega"
+              hint="Aciertas si tu selección llega al menos a la fase que elijas"
               pts={config?.pts_sorpresa ?? 0}
-              resultado={config?.sorpresa}
-              acierto={
-                torneoFinalizado &&
-                apuesta?.sorpresa &&
-                config?.sorpresa &&
-                norm(apuesta.sorpresa) === norm(config.sorpresa)
+              resultadoLabel="Tu selección"
+              resultado={
+                sorpresaEval.resuelta
+                  ? `${sorpresaEval.equipo} · llegó a ${PROFUNDIDAD_ETIQUETA[sorpresaEval.profAlcanzada] || '—'}`
+                  : null
               }
+              acierto={sorpresaEval.acierto}
             >
               <SorpresaSelect
                 value={draft.sorpresa}
@@ -405,7 +420,16 @@ export default function ApuestasEspeciales() {
   )
 }
 
-function PickCard({ kicker, titulo, hint, pts, resultado, acierto, children }) {
+function PickCard({
+  kicker,
+  titulo,
+  hint,
+  pts,
+  resultado,
+  resultadoLabel = 'Resultado oficial',
+  acierto,
+  children,
+}) {
   const torneoFinalizado = Boolean(resultado)
   return (
     <Card pad={0} style={{ overflow: 'hidden' }}>
@@ -461,7 +485,7 @@ function PickCard({ kicker, titulo, hint, pts, resultado, acierto, children }) {
             fontSize: 12,
           }}
         >
-          <span style={{ color: 'var(--ink-3)' }}>Resultado oficial</span>
+          <span style={{ color: 'var(--ink-3)' }}>{resultadoLabel}</span>
           <span
             className="mono"
             style={{ color: 'var(--ink)', fontWeight: 600 }}

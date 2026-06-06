@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { updateFaseEstado, updateFasePuntos } from "@/api/fases";
 import { useFases } from "@/hooks/useFases";
+import { useAllPartidos } from "@/hooks/useAllPartidos";
 import {
   useApuestasEspecialesConfig,
   updateApuestasEspecialesConfig,
@@ -9,9 +10,8 @@ import { Button, Card, Flag, Icon, Pill, SearchSelect, Skeleton } from "@/compon
 import {
   FASES_INFO,
   code,
-  formatSorpresa,
-  parseSorpresa,
-  SORPRESA_FASES,
+  PROFUNDIDAD_ETIQUETA,
+  profundidadAlcanzada,
   TEAMS_MUNDIAL_2026,
 } from "@/lib/constants";
 import { GOLEADOR_OPTIONS } from "@/lib/jugadores";
@@ -186,6 +186,7 @@ export default function AdminReglas() {
         </Card>
 
         <ApuestasEspecialesAdminCard />
+        <PosicionSeleccionesCard />
       </div>
     </div>
   );
@@ -241,17 +242,189 @@ function ApuestasEspecialesAdminCard() {
             config={config}
             onSave={refresh}
           />
-          <CategoriaRow
-            label="Sorpresa"
-            hint="Selección revelación y hasta qué fase llega."
-            ptsKey="pts_sorpresa"
-            resultKey="sorpresa"
-            kind="sorpresa"
-            config={config}
-            onSave={refresh}
-            last
-          />
+          <SorpresaAutoRow config={config} onSave={refresh} last />
         </>
+      )}
+    </Card>
+  );
+}
+
+// Fila de la "Sorpresa": ya no se carga una respuesta única. Se reparte
+// automáticamente según el avance de cada selección en el bracket, así que
+// aquí solo se ajustan los puntos. La verificación de posiciones vive en la
+// tarjeta `PosicionSeleccionesCard`.
+function SorpresaAutoRow({ config, onSave, last }) {
+  const [pts, setPts] = useState(String(config.pts_sorpresa ?? 0));
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setPts(String(config.pts_sorpresa ?? 0));
+  }, [config.pts_sorpresa]);
+
+  const ptsNum = Number.parseInt(pts, 10);
+  const ptsValid = Number.isFinite(ptsNum) && ptsNum >= 0;
+  const dirty = ptsValid && ptsNum !== config.pts_sorpresa;
+
+  const guardar = async () => {
+    if (!dirty || !ptsValid || busy) return;
+    setBusy(true);
+    try {
+      await updateApuestasEspecialesConfig({ pts_sorpresa: ptsNum });
+      await onSave();
+    } catch (e) {
+      alert("Error: " + e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 12,
+        padding: "14px 18px",
+        borderBottom: last ? "none" : "0.5px solid var(--line-2)",
+        alignItems: "center",
+      }}
+    >
+      <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>Sorpresa</span>
+          <Pill tone="accent">Automática</Pill>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.4 }}>
+          Se reparte sola según el bracket: acierta quien haya elegido una
+          selección que llegue al menos hasta la fase que predijo. Puede haber
+          varios ganadores; no hace falta cargar una respuesta.
+        </div>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          justifyContent: "flex-end",
+          flexWrap: "wrap",
+          flex: "0 1 auto",
+          minWidth: 0,
+        }}
+      >
+        <PtsInput label="Pts" value={pts} onChange={setPts} disabled={busy} />
+        <Button
+          size="sm"
+          variant={dirty && ptsValid ? "primary" : "ghost"}
+          disabled={!dirty || !ptsValid || busy}
+          onClick={guardar}
+        >
+          <Icon.Check /> {busy ? "…" : "Guardar"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Verificación automática de la posición de cada selección, derivada de los
+// partidos de eliminatorias. Sirve al admin para comprobar de un vistazo
+// hasta dónde llegó cada equipo y, con eso, qué sorpresas aciertan.
+function PosicionSeleccionesCard() {
+  const { fases } = useFases();
+  const { partidos, loading } = useAllPartidos(fases);
+
+  // Equipos que aparecen en alguna eliminatoria, con su fase más profunda.
+  const grupos = useMemo(() => {
+    const knockout = (partidos || []).filter((p) => p.fase_id !== "grupos");
+    const equipos = new Set();
+    for (const p of knockout) {
+      if (p.equipo_local) equipos.add(p.equipo_local);
+      if (p.equipo_visitante) equipos.add(p.equipo_visitante);
+    }
+    const porProf = new Map();
+    for (const eq of equipos) {
+      const prof = profundidadAlcanzada(eq, partidos);
+      if (prof == null) continue;
+      if (!porProf.has(prof)) porProf.set(prof, []);
+      porProf.get(prof).push(eq);
+    }
+    return [...porProf.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([prof, eqs]) => ({
+        prof,
+        etiqueta: PROFUNDIDAD_ETIQUETA[prof] || "—",
+        equipos: eqs.sort((a, b) => a.localeCompare(b, "es")),
+      }));
+  }, [partidos]);
+
+  return (
+    <Card pad={0}>
+      <div style={{ padding: "16px 18px", borderBottom: "0.5px solid var(--line-2)" }}>
+        <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>
+          Posición de cada selección
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
+          Hasta dónde llegó cada equipo, según el bracket. La Sorpresa usa estas
+          posiciones para repartir los puntos automáticamente.
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 10 }}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} h={40} r={10} />
+          ))}
+        </div>
+      ) : grupos.length === 0 ? (
+        <div style={{ padding: 18, fontSize: 13, color: "var(--ink-3)", lineHeight: 1.5 }}>
+          Aún no hay partidos de eliminatorias cargados. En cuanto arranquen,
+          aquí verás hasta qué fase llegó cada selección.
+        </div>
+      ) : (
+        <div>
+          {grupos.map((g, i) => (
+            <div
+              key={g.prof}
+              style={{
+                padding: "12px 18px",
+                borderBottom: i < grupos.length - 1 ? "0.5px solid var(--line-2)" : "none",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "var(--ink-3)",
+                  fontWeight: 600,
+                  letterSpacing: 0.3,
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                Llegó a {g.etiqueta}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {g.equipos.map((eq) => (
+                  <span
+                    key={eq}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "5px 10px",
+                      borderRadius: 999,
+                      background: "var(--surface-2)",
+                      border: "0.5px solid var(--line)",
+                      fontSize: 12,
+                      color: "var(--ink-2)",
+                    }}
+                  >
+                    <Flag code={code(eq)} w={18} h={13} rounded={2} />
+                    {eq}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </Card>
   );
@@ -437,12 +610,6 @@ function CategoriaRow({ label, hint, ptsKey, resultKey, kind, config, onSave, la
               emptyLabel="Ningún jugador coincide"
             />
           </div>
-        ) : kind === "sorpresa" ? (
-          <SorpresaResultSelect
-            value={resultado}
-            onChange={setResultado}
-            disabled={busy}
-          />
         ) : (
           <input
             type="text"
@@ -479,61 +646,6 @@ const teamSelectStyle = {
   fontFamily: "var(--font-sans)",
   outline: "none",
 };
-
-// Resultado oficial de la "Sorpresa": selección revelación + fase, combinados
-// en el mismo valor canónico que usa la apuesta del usuario.
-function SorpresaResultSelect({ value, onChange, disabled }) {
-  const [equipo, setEquipo] = useState(() => parseSorpresa(value).equipo);
-  const [fase, setFase] = useState(() => parseSorpresa(value).fase);
-
-  useEffect(() => {
-    const parsed = parseSorpresa(value);
-    if (
-      formatSorpresa(parsed.equipo, parsed.fase) !== formatSorpresa(equipo, fase)
-    ) {
-      setEquipo(parsed.equipo);
-      setFase(parsed.fase);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-
-  const setParte = (nextEquipo, nextFase) => {
-    setEquipo(nextEquipo);
-    setFase(nextFase);
-    onChange(formatSorpresa(nextEquipo, nextFase));
-  };
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 200px", minWidth: 180 }}>
-      <select
-        value={equipo}
-        onChange={(e) => setParte(e.target.value, fase)}
-        disabled={disabled}
-        style={teamSelectStyle}
-      >
-        <option value="">— Sin selección —</option>
-        {TEAMS_MUNDIAL_2026.map((t) => (
-          <option key={t} value={t}>
-            {t}
-          </option>
-        ))}
-      </select>
-      <select
-        value={fase}
-        onChange={(e) => setParte(equipo, e.target.value)}
-        disabled={disabled}
-        style={teamSelectStyle}
-      >
-        <option value="">— Sin fase —</option>
-        {SORPRESA_FASES.map((f) => (
-          <option key={f} value={f}>
-            {f}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
 
 function toLocalInput(iso) {
   if (!iso) return "";
