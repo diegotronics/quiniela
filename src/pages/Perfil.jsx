@@ -368,10 +368,10 @@ function deriveBadges({ stats, racha, ranking, total, puntos }) {
     { label: "1ª picada", on: stats.jugados >= 1, hue: 148 },
     { label: "Racha 3", on: racha >= 3, hue: 32 },
     { label: "Exacto", on: stats.exactos >= 1, hue: 220 },
-    { label: "Top 3", on: ranking != null && ranking <= 3 && total >= 3, hue: 85 },
+    { label: "Top 3", on: pts > 0 && ranking != null && ranking <= 3 && total >= 3, hue: 85 },
     { label: "10 aciertos", on: stats.ganador >= 10, hue: 280 },
-    { label: "Líder", on: ranking === 1 && total >= 2, hue: 200 },
-    { label: "Mil pts", on: pts >= 1000, hue: 0 },
+    { label: "Líder", on: pts > 0 && ranking === 1 && total >= 2, hue: 200 },
+    { label: "150 pts", on: pts >= 150, hue: 0 },
     { label: "Coleccionista", on: stats.exactos >= 5, hue: 320 },
   ];
 }
