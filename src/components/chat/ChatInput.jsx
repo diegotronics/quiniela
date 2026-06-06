@@ -10,6 +10,7 @@ export function ChatInput({
   modoEdicion = false,
   onCancelar,
   enviando = false,
+  bloqueado = false,
 }) {
   const ref = useRef(null);
 
@@ -32,7 +33,7 @@ export function ChatInput({
 
   const trimmed = (value || "").trim();
   const tooLong = trimmed.length > TEXTO_MAX;
-  const deshabilitado = enviando || trimmed.length === 0 || tooLong;
+  const deshabilitado = bloqueado || enviando || trimmed.length === 0 || tooLong;
 
   function manejarTecla(e) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -100,6 +101,7 @@ export function ChatInput({
           placeholder={placeholder}
           rows={1}
           maxLength={TEXTO_MAX}
+          disabled={bloqueado}
           style={{
             flex: 1,
             resize: "none",

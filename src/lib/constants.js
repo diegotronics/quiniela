@@ -76,3 +76,36 @@ export const TEAMS_MUNDIAL_2026 = [
   "Senegal", "Sudáfrica", "Suecia", "Suiza", "Túnez",
   "Turquía", "Uruguay", "Uzbekistán",
 ];
+
+// ------------------------------------------------------------
+// Apuesta especial "Sorpresa del Mundial": selección revelación + hasta
+// qué fase llega. Se guarda como un único texto canónico para que el
+// cálculo de puntos del servidor (comparación case-insensitive) coincida
+// con el resultado oficial que carga el admin.
+// ------------------------------------------------------------
+export const SORPRESA_FASES = [
+  "Octavos de final",
+  "Cuartos de final",
+  "Semifinal",
+  "Final",
+];
+
+const SORPRESA_SEP = " — ";
+
+// Construye el valor canónico: "Selección — Fase". Devuelve "" si falta algo.
+export function formatSorpresa(equipo, fase) {
+  if (!equipo || !fase) return "";
+  return `${equipo}${SORPRESA_SEP}${fase}`;
+}
+
+// Descompone un valor guardado en { equipo, fase }. Tolera datos antiguos
+// en texto libre (sin separador): los devuelve como `equipo` y `fase` vacía.
+export function parseSorpresa(value) {
+  if (!value) return { equipo: "", fase: "" };
+  const idx = value.indexOf(SORPRESA_SEP);
+  if (idx === -1) return { equipo: value.trim(), fase: "" };
+  return {
+    equipo: value.slice(0, idx).trim(),
+    fase: value.slice(idx + SORPRESA_SEP.length).trim(),
+  };
+}

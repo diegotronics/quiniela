@@ -4,9 +4,14 @@
 -- cambios en partidos y predicciones, no en la tabla `fases`.
 -- ============================================================
 
+-- SECURITY DEFINER: 11_seguridad.sql revoca el UPDATE de `puntos_obtenidos`
+-- a los roles del cliente (anon/authenticated). Este trigger debe poder
+-- escribir esa columna, así que corre con los privilegios del dueño.
 create or replace function recalcular_puntos_por_fase()
 returns trigger
 language plpgsql
+security definer
+set search_path = public
 as $$
 begin
   if new.pts_exacto is distinct from old.pts_exacto

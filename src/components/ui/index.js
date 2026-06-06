@@ -28,3 +28,4 @@ export { MatchCard } from "./MatchCard.jsx";
 export { RankRow } from "./RankRow.jsx";
 export { LiveBadge } from "./LiveBadge.jsx";
 export { StatTile } from "./StatTile.jsx";
+export { SearchSelect } from "./SearchSelect.jsx";

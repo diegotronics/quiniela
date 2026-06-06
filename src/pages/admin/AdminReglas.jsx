@@ -5,8 +5,16 @@ import {
   useApuestasEspecialesConfig,
   updateApuestasEspecialesConfig,
 } from "@/hooks/useApuestasEspeciales";
-import { Button, Card, Flag, Icon, Pill, Skeleton } from "@/components/ui";
-import { FASES_INFO, code, TEAMS_MUNDIAL_2026 } from "@/lib/constants";
+import { Button, Card, Flag, Icon, Pill, SearchSelect, Skeleton } from "@/components/ui";
+import {
+  FASES_INFO,
+  code,
+  formatSorpresa,
+  parseSorpresa,
+  SORPRESA_FASES,
+  TEAMS_MUNDIAL_2026,
+} from "@/lib/constants";
+import { GOLEADOR_OPTIONS } from "@/lib/jugadores";
 
 const ESTADOS = [
   { value: "activa", label: "Activa", tone: "accent" },
@@ -229,16 +237,16 @@ function ApuestasEspecialesAdminCard() {
             hint="Jugador con más goles (Bota de Oro)."
             ptsKey="pts_goleador"
             resultKey="goleador"
-            kind="text"
+            kind="goleador"
             config={config}
             onSave={refresh}
           />
           <CategoriaRow
             label="Sorpresa"
-            hint="Evento inesperado del torneo. Coincidencia case-insensitive."
+            hint="Selección revelación y hasta qué fase llega."
             ptsKey="pts_sorpresa"
             resultKey="sorpresa"
-            kind="text"
+            kind="sorpresa"
             config={config}
             onSave={refresh}
             last
@@ -408,18 +416,7 @@ function CategoriaRow({ label, hint, ptsKey, resultKey, kind, config, onSave, la
             value={resultado}
             onChange={(e) => setResultado(e.target.value)}
             disabled={busy}
-            style={{
-              flex: "1 1 140px",
-              minWidth: 140,
-              padding: "7px 10px",
-              borderRadius: 8,
-              border: "0.5px solid var(--line)",
-              background: "var(--surface-2)",
-              fontSize: 12,
-              color: "var(--ink)",
-              fontFamily: "var(--font-sans)",
-              outline: "none",
-            }}
+            style={teamSelectStyle}
           >
             <option value="">— Sin resultado —</option>
             {TEAMS_MUNDIAL_2026.map((t) => (
@@ -428,6 +425,24 @@ function CategoriaRow({ label, hint, ptsKey, resultKey, kind, config, onSave, la
               </option>
             ))}
           </select>
+        ) : kind === "goleador" ? (
+          <div style={{ flex: "1 1 220px", minWidth: 200 }}>
+            <SearchSelect
+              value={resultado}
+              onChange={setResultado}
+              options={GOLEADOR_OPTIONS}
+              placeholder="— Sin resultado —"
+              searchPlaceholder="Buscar jugador o selección…"
+              disabled={busy}
+              emptyLabel="Ningún jugador coincide"
+            />
+          </div>
+        ) : kind === "sorpresa" ? (
+          <SorpresaResultSelect
+            value={resultado}
+            onChange={setResultado}
+            disabled={busy}
+          />
         ) : (
           <input
             type="text"
@@ -435,18 +450,7 @@ function CategoriaRow({ label, hint, ptsKey, resultKey, kind, config, onSave, la
             onChange={(e) => setResultado(e.target.value)}
             disabled={busy}
             placeholder="Sin resultado"
-            style={{
-              flex: "1 1 140px",
-              minWidth: 140,
-              padding: "7px 10px",
-              borderRadius: 8,
-              border: "0.5px solid var(--line)",
-              background: "var(--surface-2)",
-              fontSize: 12,
-              color: "var(--ink)",
-              fontFamily: "var(--font-sans)",
-              outline: "none",
-            }}
+            style={teamSelectStyle}
           />
         )}
         <PtsInput label="Pts" value={pts} onChange={setPts} disabled={busy} />
@@ -459,6 +463,74 @@ function CategoriaRow({ label, hint, ptsKey, resultKey, kind, config, onSave, la
           <Icon.Check /> {busy ? "…" : "Guardar"}
         </Button>
       </div>
+    </div>
+  );
+}
+
+const teamSelectStyle = {
+  flex: "1 1 140px",
+  minWidth: 140,
+  padding: "7px 10px",
+  borderRadius: 8,
+  border: "0.5px solid var(--line)",
+  background: "var(--surface-2)",
+  fontSize: 12,
+  color: "var(--ink)",
+  fontFamily: "var(--font-sans)",
+  outline: "none",
+};
+
+// Resultado oficial de la "Sorpresa": selección revelación + fase, combinados
+// en el mismo valor canónico que usa la apuesta del usuario.
+function SorpresaResultSelect({ value, onChange, disabled }) {
+  const [equipo, setEquipo] = useState(() => parseSorpresa(value).equipo);
+  const [fase, setFase] = useState(() => parseSorpresa(value).fase);
+
+  useEffect(() => {
+    const parsed = parseSorpresa(value);
+    if (
+      formatSorpresa(parsed.equipo, parsed.fase) !== formatSorpresa(equipo, fase)
+    ) {
+      setEquipo(parsed.equipo);
+      setFase(parsed.fase);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const setParte = (nextEquipo, nextFase) => {
+    setEquipo(nextEquipo);
+    setFase(nextFase);
+    onChange(formatSorpresa(nextEquipo, nextFase));
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 200px", minWidth: 180 }}>
+      <select
+        value={equipo}
+        onChange={(e) => setParte(e.target.value, fase)}
+        disabled={disabled}
+        style={teamSelectStyle}
+      >
+        <option value="">— Sin selección —</option>
+        {TEAMS_MUNDIAL_2026.map((t) => (
+          <option key={t} value={t}>
+            {t}
+          </option>
+        ))}
+      </select>
+      <select
+        value={fase}
+        onChange={(e) => setParte(equipo, e.target.value)}
+        disabled={disabled}
+        style={teamSelectStyle}
+      >
+        <option value="">— Sin fase —</option>
+        {SORPRESA_FASES.map((f) => (
+          <option key={f} value={f}>
+            {f}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

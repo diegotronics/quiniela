@@ -33,7 +33,7 @@ export function ChatPreview({ limit = 3 }) {
     return (
       <EmptyState
         illustration="chat"
-        title="Sin chalequeo todavía"
+        title="Aún no hay chalequeo"
         description="Sé el primero en escribir."
         compact
       />

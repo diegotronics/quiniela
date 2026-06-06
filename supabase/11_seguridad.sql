@@ -149,7 +149,8 @@ begin
        set puntos_obtenidos = calcular_puntos_apuesta_especial(
              campeon, subcampeon, goleador, sorpresa
            ),
-           updated_at = now();
+           updated_at = now()
+     where true;  -- recalcula todas; `where true` satisface a safeupdate
   end if;
   return new;
 end;

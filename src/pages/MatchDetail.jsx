@@ -49,20 +49,27 @@ export default function MatchDetail() {
     return data
   }, [id])
 
-  // Predicciones de TODA la familia para este partido
+  const fase = useMemo(
+    () => fases.find((f) => f.id === partido?.fase_id),
+    [fases, partido],
+  )
+  // Los pronósticos del resto de la familia solo se revelan cuando la fase
+  // ya está cerrada. Mientras la fase siga abierta cada quien ve únicamente
+  // el suyo, para que nadie copie marcadores antes de tiempo.
+  const revealOthers = fase?.estado === 'cerrada'
+
+  // Predicciones de TODA la familia para este partido. Solo se piden al
+  // servidor cuando la fase está cerrada; mientras siga abierta el cliente
+  // ni siquiera descarga los marcadores ajenos.
   const { data: picksFamilia } = useAsync(async () => {
+    if (!revealOthers) return []
     const { data, error } = await supabase
       .from('predicciones')
       .select('usuario_id, goles_local, goles_visitante, puntos_obtenidos')
       .eq('partido_id', id)
     if (error) throw error
     return data || []
-  }, [id])
-
-  const fase = useMemo(
-    () => fases.find((f) => f.id === partido?.fase_id),
-    [fases, partido],
-  )
+  }, [id, revealOthers])
   // El partido se considera iniciado cuando su hora de saque ya pasó.
   const yaComenzo = (() => {
     if (!partido?.fecha) return false
@@ -576,22 +583,61 @@ export default function MatchDetail() {
             usuarios={usuarios}
             picksByUser={picksByUser}
             mePartial={user?.id}
+            reveal={revealOthers}
           />
         ) : (
-          <ChatPanel partidoId={id} altura="60dvh" />
+          <ChatPanel key={id} partidoId={id} altura="60dvh" />
         )}
       </div>
     </div>
   )
 }
 
-function FamilyPicks({ usuarios, picksByUser, mePartial }) {
+function FamilyPicks({ usuarios, picksByUser, mePartial, reveal }) {
   const players = (usuarios || []).filter((u) => !u.es_admin)
   if (players.length === 0) {
     return (
       <p style={{ color: 'var(--ink-3)', textAlign: 'center' }}>
         Sin participantes.
       </p>
+    )
+  }
+  // Mientras la fase siga abierta, los pronósticos ajenos permanecen ocultos.
+  if (!reveal) {
+    return (
+      <Card pad={20}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 10,
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: 'var(--surface-2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--ink-3)',
+            }}
+          >
+            <Icon.Lock />
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>
+            Pronósticos ocultos
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--ink-3)', maxWidth: 260 }}>
+            Los pronósticos de la familia se revelan cuando se cierre la fase.
+            Por ahora solo puedes ver el tuyo.
+          </div>
+        </div>
+      </Card>
     )
   }
   return (

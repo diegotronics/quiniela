@@ -13,10 +13,18 @@ import {
   MobileHeader,
   MobileShell,
   Pill,
+  SearchSelect,
   SectionTitle,
   Skeleton,
 } from '@/components/ui'
-import { code, TEAMS_MUNDIAL_2026 } from '@/lib/constants'
+import {
+  code,
+  formatSorpresa,
+  parseSorpresa,
+  SORPRESA_FASES,
+  TEAMS_MUNDIAL_2026,
+} from '@/lib/constants'
+import { GOLEADOR_OPTIONS } from '@/lib/jugadores'
 import { formatearFechaHora } from '@/lib/fechas'
 
 export default function ApuestasEspeciales() {
@@ -250,11 +258,14 @@ export default function ApuestasEspeciales() {
                 norm(apuesta.goleador) === norm(config.goleador)
               }
             >
-              <TextField
+              <SearchSelect
                 value={draft.goleador}
                 onChange={(v) => setDraft((d) => ({ ...d, goleador: v }))}
-                placeholder="Nombre del jugador"
+                options={GOLEADOR_OPTIONS}
+                placeholder="Elige al goleador"
+                searchPlaceholder="Buscar jugador o selección…"
                 disabled={cerrada}
+                emptyLabel="Ningún jugador coincide"
               />
             </PickCard>
 
@@ -262,7 +273,7 @@ export default function ApuestasEspeciales() {
             <PickCard
               kicker="Categoría 4"
               titulo="Sorpresa del Mundial"
-              hint="Equipo, jugador o evento inesperado"
+              hint="Selección revelación y hasta qué fase llega"
               pts={config?.pts_sorpresa ?? 0}
               resultado={config?.sorpresa}
               acierto={
@@ -272,10 +283,9 @@ export default function ApuestasEspeciales() {
                 norm(apuesta.sorpresa) === norm(config.sorpresa)
               }
             >
-              <TextField
+              <SorpresaSelect
                 value={draft.sorpresa}
                 onChange={(v) => setDraft((d) => ({ ...d, sorpresa: v }))}
-                placeholder="Ej. Selección X llega a semis"
                 disabled={cerrada}
               />
             </PickCard>
@@ -501,28 +511,75 @@ function TeamSelect({ value, onChange, excluir, disabled, placeholder }) {
   )
 }
 
-function TextField({ value, onChange, placeholder, disabled }) {
+// Selector de la "Sorpresa": selección revelación + fase a la que llega.
+// Combina ambos en un único valor canónico ("Selección — Fase") para que el
+// cálculo de puntos del servidor compare contra el resultado oficial.
+function SorpresaSelect({ value, onChange, disabled }) {
+  // Estado local para conservar una selección parcial (p. ej. equipo elegido
+  // pero aún sin fase), que el valor canónico combinado no representaría.
+  const [equipo, setEquipo] = useState(() => parseSorpresa(value).equipo)
+  const [fase, setFase] = useState(() => parseSorpresa(value).fase)
+
+  // Resincroniza si el valor cambia desde afuera (carga de la apuesta guardada).
+  useEffect(() => {
+    const parsed = parseSorpresa(value)
+    if (formatSorpresa(parsed.equipo, parsed.fase) !== formatSorpresa(equipo, fase)) {
+      setEquipo(parsed.equipo)
+      setFase(parsed.fase)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+
+  const setParte = (nextEquipo, nextFase) => {
+    setEquipo(nextEquipo)
+    setFase(nextFase)
+    onChange(formatSorpresa(nextEquipo, nextFase))
+  }
+
+  const selectStyle = {
+    flex: 1,
+    padding: '10px 12px',
+    borderRadius: 10,
+    border: '0.5px solid var(--line)',
+    background: 'var(--surface-2)',
+    fontSize: 14,
+    fontWeight: 500,
+    fontFamily: 'var(--font-sans)',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+  }
+
   return (
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      disabled={disabled}
-      style={{
-        width: '100%',
-        padding: '10px 12px',
-        borderRadius: 10,
-        border: '0.5px solid var(--line)',
-        background: 'var(--surface-2)',
-        fontSize: 14,
-        fontWeight: 500,
-        color: 'var(--ink)',
-        fontFamily: 'var(--font-sans)',
-        boxSizing: 'border-box',
-        outline: 'none',
-      }}
-    />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {equipo && <Flag code={code(equipo)} w={32} h={22} rounded={4} />}
+        <select
+          value={equipo}
+          onChange={(e) => setParte(e.target.value, fase)}
+          disabled={disabled}
+          style={{ ...selectStyle, color: equipo ? 'var(--ink)' : 'var(--ink-3)' }}
+        >
+          <option value="">Elige la selección revelación</option>
+          {TEAMS_MUNDIAL_2026.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </div>
+      <select
+        value={fase}
+        onChange={(e) => setParte(equipo, e.target.value)}
+        disabled={disabled}
+        style={{ ...selectStyle, color: fase ? 'var(--ink)' : 'var(--ink-3)' }}
+      >
+        <option value="">¿Hasta qué fase llega?</option>
+        {SORPRESA_FASES.map((f) => (
+          <option key={f} value={f}>
+            {f}
+          </option>
+        ))}
+      </select>
+    </div>
   )
 }
 

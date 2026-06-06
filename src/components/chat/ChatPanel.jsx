@@ -192,8 +192,8 @@ export function ChatPanel({ partidoId = null, altura = "60dvh" }) {
         {!loading && !error && mensajes.length === 0 && (
           <EmptyState
             illustration="chat"
-            title="Chat sin mensajes"
-            description="Sé el primero en escribir. Comparte tu pronóstico o chalequeo."
+            title="Aún no hay chalequeo"
+            description="Sé el primero en escribir. Comparte tu pronóstico o tu chalequeo."
             compact
           />
         )}
@@ -231,6 +231,7 @@ export function ChatPanel({ partidoId = null, altura = "60dvh" }) {
         enviando={enviando}
         modoEdicion={!!mensajeEditando}
         onCancelar={cancelarEdicion}
+        bloqueado={!user}
         placeholder={user ? "Escribe un mensaje…" : "Inicia sesión para escribir"}
       />
     </div>
