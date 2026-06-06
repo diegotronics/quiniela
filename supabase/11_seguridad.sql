@@ -19,7 +19,13 @@
 -- migrar a Supabase Auth. Esta migración mitiga los vectores más graves.
 -- ============================================================
 
+-- En Supabase, pgcrypto vive en el esquema `extensions` (no en `public`).
+-- Por eso TODA función que use crypt()/gen_salt() debe incluir `extensions`
+-- en su search_path; de lo contrario falla con "function crypt does not exist".
 create extension if not exists pgcrypto;
+
+-- Search_path de la sesión del editor: cubre el UPDATE de hasheo inicial.
+set search_path = public, extensions;
 
 -- ------------------------------------------------------------
 -- 1) Hashear contraseñas existentes que aún estén en texto plano.
@@ -36,6 +42,7 @@ update usuarios
 create or replace function hash_password_usuario()
 returns trigger
 language plpgsql
+set search_path = public, extensions
 as $$
 begin
   if new.password is not null and new.password not like '$2%' then
@@ -59,7 +66,7 @@ create or replace function login_usuario(p_email text, p_password text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   u usuarios;
