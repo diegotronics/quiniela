@@ -62,7 +62,7 @@ export default function InstallPrompt() {
             className="font-display"
             style={{ fontWeight: 600, fontSize: 16, color: "var(--ink)", letterSpacing: -0.3 }}
           >
-            Instala la app
+            Instalar app
           </div>
           <p
             style={{
