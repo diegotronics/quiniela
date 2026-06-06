@@ -265,9 +265,11 @@ export default function Inicio() {
         <Card
           pad={0}
           elevated
+          onClick={() => navigate('/app/tabla')}
           style={{
             overflow: 'hidden',
             position: 'relative',
+            cursor: 'pointer',
             boxShadow:
               me?.id === lider?.id
                 ? 'var(--shadow-gold)'

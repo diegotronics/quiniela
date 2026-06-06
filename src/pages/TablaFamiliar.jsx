@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { celebratePodium, celebrateOnce } from "@/lib/celebrate";
+import { celebratePodium, celebrateOncePersisted } from "@/lib/celebrate";
 import { useAuth } from "@/context/AuthContext";
 import { useUsuariosPublic } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
@@ -109,14 +109,23 @@ export default function TablaFamiliar() {
   const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
   const racha = useMemo(() => userStreak(prediccionesList, partidos), [prediccionesList, partidos]);
 
+  // Última fase cerrada (la de mayor orden con estado "cerrada"). El podio
+  // solo se celebra cuando una fase se cierra, no cada vez que se entra.
+  const ultimaFaseCerrada = useMemo(() => {
+    const cerradas = (fases || []).filter((f) => f.estado === "cerrada");
+    if (cerradas.length === 0) return null;
+    return cerradas.reduce((a, b) => ((b.orden ?? 0) > (a.orden ?? 0) ? b : a));
+  }, [fases]);
+
   useEffect(() => {
-    if (!meTotal || filtro !== "total") return;
-    if (meTotal.rank >= 1 && meTotal.rank <= 3) {
-      celebrateOnce(`podium-${user?.id}`, () => {
-        setTimeout(celebratePodium, 400);
-      });
-    }
-  }, [meTotal, filtro, user]);
+    if (!meTotal || !ultimaFaseCerrada) return;
+    if (meTotal.rank < 1 || meTotal.rank > 3) return;
+    // Una sola celebración por usuario y fase cerrada, persistida entre
+    // visitas y recargas para que no se repita al volver a abrir la tabla.
+    celebrateOncePersisted(`podium-${user?.id}-${ultimaFaseCerrada.id}`, () => {
+      setTimeout(celebratePodium, 400);
+    });
+  }, [meTotal, ultimaFaseCerrada, user]);
 
   return (
     <MobileShell

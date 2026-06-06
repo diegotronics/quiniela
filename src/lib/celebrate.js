@@ -109,3 +109,23 @@ export function celebrateOnce(key, runner) {
   FIRED.add(key);
   runner();
 }
+
+const STORE_KEY = "celebrations";
+
+// Variante persistente: recuerda en localStorage que una celebración con
+// esta `key` ya ocurrió, de modo que no se repita en futuras visitas ni al
+// recargar la página. Útil para hitos puntuales (p. ej. el cierre de una
+// fase), que deben festejarse una sola vez y no cada vez que se entra.
+export function celebrateOncePersisted(key, runner) {
+  if (FIRED.has(key)) return;
+  FIRED.add(key);
+  try {
+    const store = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+    if (store[key]) return;
+    store[key] = Date.now();
+    localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  } catch {
+    // Sin localStorage (modo privado, etc.): al menos no se repite en sesión.
+  }
+  runner();
+}
