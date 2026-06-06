@@ -17,6 +17,7 @@ import AdminMiembros from "@/pages/admin/AdminMiembros.jsx";
 import AdminReglas from "@/pages/admin/AdminReglas.jsx";
 import AdminPartidos from "@/pages/admin/AdminPartidos.jsx";
 import UITestGallery from "@/pages/UITestGallery.jsx";
+import InstallPrompt from "@/components/InstallPrompt.jsx";
 import { useAuth } from "@/context/AuthContext";
 
 function Protected({ children, adminOnly }) {
@@ -29,7 +30,8 @@ function Protected({ children, adminOnly }) {
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/registro" element={<Register />} />
       <Route path="/invitacion/:token" element={<AceptarInvitacion />} />
@@ -69,7 +71,9 @@ export default function App() {
         <Route path="partidos" element={<AdminPartidos />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <InstallPrompt />
+    </>
   );
 }
