@@ -9,6 +9,12 @@ const AuthContext = createContext(null);
 const STORAGE_KEY = "copa_familiar_user";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Ruta de inicio según el rol: el admin entra directo al panel (es una
+// cuenta netamente de administración, no juega), el resto a la app.
+export function homePathFor(user) {
+  return user?.es_admin ? "/admin" : "/app/inicio";
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -31,7 +37,7 @@ export function AuthProvider({ children }) {
       if (!data) return { ok: false, error: "Email o contraseña incorrectos" };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       setUser(data);
-      return { ok: true };
+      return { ok: true, user: data };
     } catch (e) {
       return { ok: false, error: e.message };
     }

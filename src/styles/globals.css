@@ -1,7 +1,8 @@
 /* ──────────────────────────────────────────────────────────────
    La Copa Familiar — Design Tokens · Edición Mundial 2026
-   Colores vibrantes anfitriones (verde MX · rojo USA · azul CAN)
-   sobre base cálida-crema, con gradientes y sombras de color.
+   Paleta festiva multicolor del Mundial (verde cancha · rojo · azul
+   estadio · oro trofeo · magenta) sobre base cálida-crema, con
+   gradientes y sombras de color.
    ────────────────────────────────────────────────────────────── */
 
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
@@ -28,17 +29,17 @@
   --header-bg: #0E1730;
   --header-ink: #F4F1E8;
 
-  /* Acentos Mundial 2026 — croma alto, anfitriones tricolor */
+  /* Acentos Mundial 2026 — croma alto, paleta festiva multicolor */
   --accent: oklch(0.58 0.22 150);             /* verde cancha vibrante */
   --accent-soft: oklch(0.94 0.07 150);
   --accent-ink: oklch(0.38 0.16 150);
-  --coral: oklch(0.62 0.24 28);               /* rojo bandera USA/CAN/MX */
+  --coral: oklch(0.62 0.24 28);               /* rojo vibrante */
   --coral-ink: oklch(0.46 0.20 28);
   --coral-soft: oklch(0.95 0.07 28);
   --gold: oklch(0.78 0.19 85);                /* trofeo dorado */
   --gold-ink: oklch(0.50 0.16 80);
   --gold-soft: oklch(0.95 0.09 85);
-  --azure: oklch(0.55 0.21 250);              /* azul mundial / Canadá */
+  --azure: oklch(0.55 0.21 250);              /* azul estadio */
   --azure-ink: oklch(0.38 0.18 250);
   --azure-soft: oklch(0.94 0.07 250);
   --magenta: oklch(0.65 0.25 0);              /* sorpresa, podio */
@@ -51,7 +52,7 @@
   --gradient-cancha: linear-gradient(135deg, oklch(0.62 0.22 150) 0%, oklch(0.48 0.20 165) 100%);
   --gradient-fiesta: linear-gradient(135deg, oklch(0.62 0.24 28) 0%, oklch(0.65 0.25 0) 50%, oklch(0.55 0.21 250) 100%);
   --gradient-trofeo: linear-gradient(135deg, oklch(0.86 0.18 85) 0%, oklch(0.65 0.19 50) 100%);
-  --gradient-anfitriones: linear-gradient(90deg, oklch(0.58 0.22 150) 0%, oklch(0.92 0 0) 50%, oklch(0.62 0.24 28) 100%);
+  --gradient-mundial: linear-gradient(90deg, oklch(0.62 0.24 28) 0%, oklch(0.65 0.25 0) 33%, oklch(0.55 0.21 250) 66%, oklch(0.78 0.19 85) 100%);
   --gradient-nocturno: linear-gradient(180deg, #0A1428 0%, #142B5C 60%, #1E3A8A 100%);
 
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -144,7 +145,7 @@
   --gradient-cancha: linear-gradient(135deg, oklch(0.46 0.20 150) 0%, oklch(0.30 0.16 165) 100%);
   --gradient-fiesta: linear-gradient(135deg, oklch(0.50 0.22 28) 0%, oklch(0.50 0.22 0) 50%, oklch(0.42 0.20 250) 100%);
   --gradient-trofeo: linear-gradient(135deg, oklch(0.70 0.18 85) 0%, oklch(0.48 0.16 50) 100%);
-  --gradient-anfitriones: linear-gradient(90deg, oklch(0.48 0.20 150) 0%, oklch(0.92 0 0) 50%, oklch(0.50 0.22 28) 100%);
+  --gradient-mundial: linear-gradient(90deg, oklch(0.50 0.22 28) 0%, oklch(0.50 0.22 0) 33%, oklch(0.42 0.20 250) 66%, oklch(0.70 0.18 85) 100%);
   --gradient-nocturno: linear-gradient(180deg, #050A1A 0%, #0E1730 60%, #1A2950 100%);
 
   --shadow-0: 0 0.5px 0 rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.35);
@@ -306,30 +307,30 @@ a { color: inherit; text-decoration: none; }
 .bg-gradient-trofeo   { background: var(--gradient-trofeo); color: #1A1300; }
 .bg-gradient-nocturno { background: var(--gradient-nocturno); color: #fff; }
 
-/* Línea decorativa tricolor — separadores y bordes hero */
-.tricolor-bar {
+/* Línea decorativa multicolor — separadores y bordes hero */
+.mundial-bar {
   height: 4px;
   border-radius: 999px;
-  background: var(--gradient-anfitriones);
+  background: var(--gradient-mundial);
 }
 
-/* Anillo tricolor — para banderas ganadoras o avatar del líder */
-.tricolor-ring {
+/* Anillo multicolor — para banderas ganadoras o avatar del líder */
+.mundial-ring {
   position: relative;
   border-radius: 50%;
   padding: 2px;
   background: conic-gradient(
     from 0deg,
-    oklch(0.58 0.22 150),
     oklch(0.62 0.24 28),
+    oklch(0.65 0.25 0),
     oklch(0.55 0.21 250),
     oklch(0.78 0.19 85),
-    oklch(0.58 0.22 150)
+    oklch(0.62 0.24 28)
   );
 }
 
-/* Glow tricolor — drop-shadow para CTAs y trofeos */
-.tricolor-glow {
+/* Glow multicolor — drop-shadow para CTAs y trofeos */
+.mundial-glow {
   box-shadow:
     0 0 0 2px color-mix(in oklab, var(--accent) 30%, transparent),
     0 6px 18px color-mix(in oklab, var(--coral) 35%, transparent),
@@ -684,17 +685,17 @@ a { color: inherit; text-decoration: none; }
   will-change: transform;
 }
 
-/* ───────── Pulso tricolor — botón "Guardar predicción" ───────── */
-@keyframes lcfTricolorPulse {
+/* ───────── Pulso multicolor — botón "Guardar predicción" ───────── */
+@keyframes lcfMundialPulse {
   0%, 100% {
     box-shadow:
-      0 0 0 0 color-mix(in oklab, var(--accent) 40%, transparent),
-      0 6px 14px color-mix(in oklab, var(--coral) 25%, transparent);
+      0 0 0 0 color-mix(in oklab, var(--coral) 40%, transparent),
+      0 6px 14px color-mix(in oklab, var(--magenta) 25%, transparent);
   }
   33% {
     box-shadow:
-      0 0 0 4px color-mix(in oklab, var(--coral) 25%, transparent),
-      0 6px 14px color-mix(in oklab, var(--accent) 30%, transparent);
+      0 0 0 4px color-mix(in oklab, var(--magenta) 25%, transparent),
+      0 6px 14px color-mix(in oklab, var(--azure) 30%, transparent);
   }
   66% {
     box-shadow:
@@ -702,8 +703,8 @@ a { color: inherit; text-decoration: none; }
       0 6px 14px color-mix(in oklab, var(--coral) 30%, transparent);
   }
 }
-.pulse-tricolor {
-  animation: lcfTricolorPulse 2.6s ease-in-out infinite;
+.pulse-mundial {
+  animation: lcfMundialPulse 2.6s ease-in-out infinite;
 }
 
 /* ───────── Glow de país ganador — bracket / próximo partido ───────── */
@@ -811,21 +812,13 @@ a { color: inherit; text-decoration: none; }
 }
 [data-theme="dark"] .auth-bg-orb { opacity: 0.28; }
 
-/* Cinta tricolor de anfitriones — banner decorativo */
-.auth-tricolor {
+/* Cinta multicolor del Mundial — banner decorativo */
+.auth-mundial {
   height: 4px;
   width: 56px;
   margin: 0 auto 18px;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    oklch(0.58 0.22 150) 0%,
-    oklch(0.58 0.22 150) 33%,
-    oklch(0.92 0.02 90) 33%,
-    oklch(0.92 0.02 90) 66%,
-    oklch(0.62 0.24 28) 66%,
-    oklch(0.62 0.24 28) 100%
-  );
+  background: var(--gradient-mundial);
   box-shadow: 0 1px 2px rgba(14, 23, 48, 0.12);
 }
 

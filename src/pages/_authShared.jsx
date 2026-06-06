@@ -33,7 +33,7 @@ export function AuthLayout({ title, subtitle, children, footer }) {
             <Logo size={68} rounded />
           </div>
 
-          <div className="auth-tricolor" aria-hidden="true" />
+          <div className="auth-mundial" aria-hidden="true" />
 
           <h1
             className="font-display"

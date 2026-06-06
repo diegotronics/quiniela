@@ -96,7 +96,11 @@ export default function Inicio() {
     () => countPredicciones(predicciones),
     [predicciones],
   )
-  const onboardingPendiente = picksCompletas < TOTAL_PARTIDOS_GRUPOS
+  // El admin no juega ni pronostica: no se le muestran los avisos que
+  // invitan a completar predicciones o apuestas especiales.
+  const esAdmin = !!user?.es_admin
+  const onboardingPendiente =
+    !esAdmin && picksCompletas < TOTAL_PARTIDOS_GRUPOS
   const pendientes = partidos.filter((p) => !p.resultado_ingresado).length
 
   const apuestasCierre = apuestasCfg?.cierra_en
@@ -109,7 +113,8 @@ export default function Inicio() {
     apuestaUsuario?.goleador &&
     apuestaUsuario?.sorpresa,
   )
-  const mostrarBannerApuestas = apuestasAbiertas && !apuestasCompletadas
+  const mostrarBannerApuestas =
+    !esAdmin && apuestasAbiertas && !apuestasCompletadas
 
   const myPts = me?.puntos || 0
   const liderPts = lider?.puntos || 0
@@ -270,7 +275,7 @@ export default function Inicio() {
           }}
         >
           <div
-            className="tricolor-bar"
+            className="mundial-bar"
             style={{ borderRadius: 0, height: 4 }}
           />
           <div
@@ -725,12 +730,12 @@ export default function Inicio() {
               <Button
                 block
                 size="lg"
-                className="pulse-tricolor"
+                className="pulse-mundial"
                 style={{
                   marginTop: 14,
-                  background: 'var(--gradient-anfitriones)',
+                  background: 'var(--gradient-mundial)',
                   border: 'none',
-                  color: '#0E1730',
+                  color: '#fff',
                   fontWeight: 700,
                   letterSpacing: 0.3,
                 }}

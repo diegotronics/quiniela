@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, homePathFor } from "@/context/AuthContext";
 import { Button, Card, Icon } from "@/components/ui";
 import {
   AuthLayout,
@@ -17,7 +17,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (user) navigate("/app/inicio", { replace: true });
+    if (user) navigate(homePathFor(user), { replace: true });
   }, [user, navigate]);
 
   const handleLogin = async () => {
@@ -27,7 +27,7 @@ export default function Login() {
     const res = await login(form.email.trim(), form.password);
     setBusy(false);
     if (!res.ok) setError(res.error);
-    else navigate("/app/inicio", { replace: true });
+    else navigate(homePathFor(res.user), { replace: true });
   };
 
   return (
