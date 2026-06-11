@@ -39,8 +39,9 @@ function buscarEvento(events, partido) {
  * al scoreboard público de ESPN (la misma fuente que /api/sync-partidos).
  *
  * Devuelve `{ marcador }` donde marcador es
- * `{ golesLocal, golesVisitante, minuto, finalizado }` o `null` mientras no
- * haya datos (antes del saque, sin red, o si ESPN no reconoce el partido).
+ * `{ golesLocal, golesVisitante, minuto, medioTiempo, finalizado }` o `null`
+ * mientras no haya datos (antes del saque, sin red, o si ESPN no reconoce el
+ * partido).
  */
 export function useMarcadorEnVivo(partido) {
   const [marcador, setMarcador] = useState(null);
@@ -84,14 +85,16 @@ export function useMarcadorEnVivo(partido) {
         if (Number.isNaN(golesLocal) || Number.isNaN(golesVisitante)) return;
 
         const finalizado = estado === "post";
+        const medioTiempo =
+          hit.comp.status?.type?.name === "STATUS_HALFTIME";
         // displayClock viene como "67'" o "45'+2'"; LiveBadge agrega su propio apóstrofo.
         const clock = hit.comp.status?.displayClock;
         const minuto =
-          !finalizado && typeof clock === "string" && clock.trim()
+          !finalizado && !medioTiempo && typeof clock === "string" && clock.trim()
             ? clock.replace(/'/g, "").trim()
             : null;
 
-        setMarcador({ golesLocal, golesVisitante, minuto, finalizado });
+        setMarcador({ golesLocal, golesVisitante, minuto, medioTiempo, finalizado });
         if (finalizado && timer) {
           clearInterval(timer);
           timer = null;

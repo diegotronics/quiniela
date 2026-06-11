@@ -37,6 +37,7 @@ import {
   userStreak,
   proximoPartido,
   partidoEnVivo,
+  partidoTerminado,
 } from '@/lib/stats'
 import { code, GROUP_NAME, GROUP_MOTTO } from '@/lib/constants'
 import { formatearFechaHora } from '@/lib/fechas'
@@ -91,7 +92,15 @@ export default function Inicio() {
     [prediccionesList, partidos],
   )
 
-  const live = useMemo(() => partidoEnVivo(partidos), [partidos])
+  // Reloj que avanza cada minuto para reevaluar el partido destacado sin
+  // recargar: así "Finalizado" cede el lugar apenas comienza el siguiente.
+  const [ahora, setAhora] = useState(() => Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setAhora(Date.now()), 60 * 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const live = useMemo(() => partidoEnVivo(partidos, ahora), [partidos, ahora])
   const next = useMemo(
     () => proximoPartido(partidos, predicciones, fases),
     [partidos, predicciones, fases],
@@ -142,6 +151,11 @@ export default function Inicio() {
   // fuente no responde se cae al marcador guardado en la BD (normalmente null
   // hasta el final, en cuyo caso la tarjeta muestra "vs").
   const { marcador } = useMarcadorEnVivo(live)
+  // Con datos de ESPN su estado manda (cubre prórrogas y penales más allá de
+  // la ventana); sin ellos decide la BD o el vencimiento de la ventana.
+  const liveFinalizado = Boolean(
+    live && (marcador ? marcador.finalizado : partidoTerminado(live, ahora)),
+  )
 
   // Detección de cambio de gol en partido live
   const liveLocal = marcador?.golesLocal ?? live?.goles_local
@@ -537,6 +551,8 @@ export default function Inicio() {
             liveLocal={liveLocal}
             liveVisitante={liveVisitante}
             liveMinute={marcador?.minuto}
+            halftime={marcador?.medioTiempo}
+            finished={liveFinalizado}
             pulseLocal={pulseLocal}
             pulseVisitante={pulseVisitante}
             onClick={() => navigate(`/app/partido/${live.id}`)}

@@ -248,6 +248,8 @@ function MatchCardLive({
   liveLocal,
   liveVisitante,
   liveMinute,
+  halftime = false,
+  finished = false,
   pulseLocal = 0,
   pulseVisitante = 0,
   onClick,
@@ -257,12 +259,14 @@ function MatchCardLive({
       pad={14}
       elevated
       onClick={onClick}
-      className="breathe-live field-lines-light"
+      className={
+        finished ? 'field-lines-light' : 'breathe-live field-lines-light'
+      }
       style={{
         background: 'var(--gradient-nocturno)',
         borderColor: 'transparent',
         color: '#fff',
-        boxShadow: 'var(--shadow-coral)',
+        boxShadow: finished ? 'var(--shadow-2)' : 'var(--shadow-coral)',
       }}
     >
       <div
@@ -273,7 +277,32 @@ function MatchCardLive({
           gap: 10,
         }}
       >
-        <LiveBadge minute={liveMinute} />
+        {finished ? (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '3px 9px',
+              borderRadius: 999,
+              background: 'rgba(255,255,255,0.14)',
+              border: '1px solid rgba(255,255,255,0.22)',
+              color: '#fff',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 0.4,
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Icon.Check style={{ width: 11, height: 11 }} /> Finalizado
+          </span>
+        ) : (
+          <LiveBadge
+            label={halftime ? 'Medio tiempo' : 'En vivo'}
+            minute={halftime ? null : liveMinute}
+          />
+        )}
         {rightLabel && (
           <span
             style={{
@@ -371,7 +400,8 @@ function MatchCardLive({
           <span>Sin pronóstico</span>
         )}
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          {onClick ? 'Ver partido' : 'En juego'} <Icon.Arrow />
+          {onClick ? 'Ver partido' : finished ? 'Finalizado' : 'En juego'}{' '}
+          <Icon.Arrow />
         </span>
       </div>
     </Card>
