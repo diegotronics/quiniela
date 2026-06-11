@@ -20,7 +20,12 @@ import {
   SkeletonRankRow,
   ringFor,
 } from "@/components/ui";
-import { rankingFromUsers, userScoringStats, userStreak } from "@/lib/stats";
+import {
+  prediccionesPendientesByUsuario,
+  rankingFromUsers,
+  userScoringStats,
+  userStreak,
+} from "@/lib/stats";
 import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import { GROUP_NAME } from "@/lib/constants";
 
@@ -95,6 +100,15 @@ export default function TablaFamiliar() {
   );
   const top3 = ranking.slice(0, 3);
   const resto = ranking.slice(3);
+
+  // Predicciones pendientes por jugador (partidos abiertos aún sin pronosticar).
+  // Es global, independiente del filtro de fase seleccionado arriba.
+  const { pendientes, total: totalAbiertos } = useMemo(
+    () => prediccionesPendientesByUsuario(usuarios, puntajes, partidos, fases),
+    [usuarios, puntajes, partidos, fases],
+  );
+  // Solo mostramos el indicador cuando hay partidos abiertos que pronosticar.
+  const faltanDe = (id) => (totalAbiertos > 0 ? pendientes.get(id) ?? 0 : undefined);
 
   const rankingTotal = useMemo(
     () =>
@@ -200,9 +214,9 @@ export default function TablaFamiliar() {
               alignItems: "end",
             }}
           >
-            <PodiumCard place={2} member={top3[1]} me={user?.id} delay={120} />
-            <PodiumCard place={1} member={top3[0]} me={user?.id} center delay={260} />
-            <PodiumCard place={3} member={top3[2]} me={user?.id} delay={0} />
+            <PodiumCard place={2} member={top3[1]} me={user?.id} delay={120} faltan={faltanDe(top3[1]?.id)} />
+            <PodiumCard place={1} member={top3[0]} me={user?.id} center delay={260} faltan={faltanDe(top3[0]?.id)} />
+            <PodiumCard place={3} member={top3[2]} me={user?.id} delay={0} faltan={faltanDe(top3[2]?.id)} />
           </div>
         </div>
       )}
@@ -223,6 +237,7 @@ export default function TablaFamiliar() {
             isMe={m.id === user?.id}
             index={i}
             showPagoStatus
+            faltan={faltanDe(m.id)}
           />
         ))}
         {resto.length === 0 && top3.length === 0 && !loading && (
@@ -272,7 +287,7 @@ const PODIUM_VISUAL = {
 
 const ROMAN = { 1: "I", 2: "II", 3: "III" };
 
-function PodiumCard({ place, member, center, me, delay = 0 }) {
+function PodiumCard({ place, member, center, me, delay = 0, faltan }) {
   const visual = PODIUM_VISUAL[place];
 
   if (!member) {
@@ -395,6 +410,35 @@ function PodiumCard({ place, member, center, me, delay = 0 }) {
           </span>
           <span style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>pts</span>
         </div>
+        {faltan != null &&
+          (faltan > 0 ? (
+            <div
+              style={{
+                marginTop: 3,
+                fontSize: 9.5,
+                fontWeight: 500,
+                color: "var(--ink-3)",
+                letterSpacing: -0.1,
+              }}
+            >
+              {faltan} por pronosticar
+            </div>
+          ) : (
+            <div
+              style={{
+                marginTop: 3,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 3,
+                fontSize: 9.5,
+                fontWeight: 600,
+                color: "var(--accent-ink)",
+                letterSpacing: -0.1,
+              }}
+            >
+              <Icon.Check size={11} /> Al día
+            </div>
+          ))}
       </div>
 
       {/* Pedestal */}

@@ -59,6 +59,42 @@ export function userStreak(preds, partidos) {
   return streak;
 }
 
+// Predicciones pendientes por usuario: partidos en fases activas, sin
+// resultado todavía y sin pronóstico del usuario. Usa el mismo criterio que
+// `proximoPartido`, así que el conteo refleja lo que aún se puede pronosticar.
+//
+// `puntajes` es la lista global de predicciones ({ usuario_id, partido_id, ... }).
+// Devuelve un Map usuario_id → cantidad pendiente y el total de partidos abiertos.
+export function prediccionesPendientesByUsuario(usuarios, puntajes, partidos, fases) {
+  const fasesActivas = new Set(
+    (fases || []).filter((f) => f.estado === "activa").map((f) => f.id),
+  );
+  const abiertos = (partidos || []).filter(
+    (p) => fasesActivas.has(p.fase_id) && !p.resultado_ingresado,
+  );
+  const total = abiertos.length;
+  const abiertosIds = new Set(abiertos.map((p) => p.id));
+
+  // Partidos abiertos ya pronosticados por cada usuario (sin duplicados).
+  const hechasPorUsuario = new Map();
+  for (const p of puntajes || []) {
+    if (!abiertosIds.has(p.partido_id)) continue;
+    let set = hechasPorUsuario.get(p.usuario_id);
+    if (!set) {
+      set = new Set();
+      hechasPorUsuario.set(p.usuario_id, set);
+    }
+    set.add(p.partido_id);
+  }
+
+  const pendientes = new Map();
+  for (const u of usuarios || []) {
+    const hechas = hechasPorUsuario.get(u.id)?.size || 0;
+    pendientes.set(u.id, Math.max(0, total - hechas));
+  }
+  return { pendientes, total };
+}
+
 // Próximo partido sin pronóstico (en una fase activa).
 export function proximoPartido(partidos, predicciones, fases) {
   const fasesActivas = new Set(

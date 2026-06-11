@@ -1,4 +1,5 @@
 import { Avatar } from "./Avatar.jsx";
+import { Icon } from "./Icon.jsx";
 
 /**
  * RankRow — fila reutilizable para tablas de posiciones.
@@ -6,6 +7,10 @@ import { Avatar } from "./Avatar.jsx";
  * Variants:
  *  - "default": fila estándar (rank · avatar · nombre · puntos)
  *  - "compact": versión densa para previews/sidebars
+ *
+ * `faltan` (opcional): predicciones pendientes del jugador. Si es un número,
+ * se muestra un indicador discreto bajo el nombre ("N por pronosticar" o
+ * "Al día" cuando es 0). Pásalo como `undefined` para no mostrar nada.
  */
 export function RankRow({
   member,
@@ -13,6 +18,7 @@ export function RankRow({
   index = 0,
   variant = "default",
   showPagoStatus = false,
+  faltan,
   onClick,
   trailing,
   className,
@@ -83,6 +89,36 @@ export function RankRow({
         {showPagoStatus && member.pagado === false && (
           <div style={{ fontSize: 11, color: "var(--coral)" }}>Pago pendiente</div>
         )}
+        {faltan != null &&
+          (faltan > 0 ? (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                fontSize: 11,
+                color: "var(--ink-3)",
+                marginTop: 1,
+              }}
+            >
+              <Icon.Edit size={12} />
+              {faltan} por pronosticar
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                fontSize: 11,
+                color: "var(--accent-ink)",
+                marginTop: 1,
+              }}
+            >
+              <Icon.Check size={12} />
+              Al día
+            </div>
+          ))}
       </div>
       {trailing ?? (
         <div style={{ textAlign: "right" }}>
