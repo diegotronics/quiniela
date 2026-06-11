@@ -107,24 +107,45 @@ export function proximoPartido(partidos, predicciones, fases) {
 
 // Ventana (ms) durante la cual un partido ya iniciado se considera "en vivo".
 // Cubre los 90 minutos reglamentarios más descanso, descuentos y posibles
-// prórrogas: ~2,5 horas. Pasado ese lapso, aunque no tenga resultado cargado,
-// deja de mostrarse como en vivo.
+// prórrogas: ~2,5 horas.
 const DURACION_EN_VIVO_MS = 150 * 60 * 1000;
 
-// Partido "en vivo" — uno sin resultado cuyo horario de inicio ya pasó y que
-// aún está dentro de la ventana de juego. No basta con que sea hoy: el partido
-// tiene que haber comenzado.
-export function partidoEnVivo(partidos) {
-  const ahora = Date.now();
-  return (partidos || [])
+// Tope para seguir mostrando un partido terminado cuando ya no quedan
+// partidos por jugar (fin del torneo): un día y se despide la tarjeta.
+const VENTANA_FINALIZADO_MS = 24 * 60 * 60 * 1000;
+
+// Partido destacado de la sección "en vivo": el que comenzó más
+// recientemente. Mientras está en juego se muestra en vivo; al terminar se
+// mantiene (como "Finalizado") hasta que comience el próximo partido, que lo
+// reemplaza automáticamente por ser el de inicio más reciente.
+export function partidoEnVivo(partidos, ahora = Date.now()) {
+  const ultimo = (partidos || [])
     .filter((p) => {
-      if (p.resultado_ingresado) return false;
       const inicio = ts(p.fecha);
-      if (!Number.isFinite(inicio)) return false;
-      return inicio <= ahora && ahora - inicio <= DURACION_EN_VIVO_MS;
+      return Number.isFinite(inicio) && inicio <= ahora;
     })
     // El que comenzó más recientemente (mayor timestamp) va primero.
     .sort((a, b) => ts(b.fecha) - ts(a.fecha))[0];
+  if (!ultimo) return undefined;
+
+  if (!partidoTerminado(ultimo, ahora)) return ultimo;
+
+  // Terminado: sigue destacado hasta que arranque el siguiente partido del
+  // calendario, o hasta agotar la ventana si era el último del torneo.
+  const hayProximo = (partidos || []).some((p) => ts(p.fecha) > ahora);
+  if (hayProximo || ahora - ts(ultimo.fecha) <= VENTANA_FINALIZADO_MS) {
+    return ultimo;
+  }
+  return undefined;
+}
+
+// Un partido destacado se considera terminado cuando ya tiene resultado
+// oficial o cuando agotó la ventana de juego en vivo. Si hay marcador en
+// tiempo real disponible (ESPN), ese estado tiene la última palabra.
+export function partidoTerminado(p, ahora = Date.now()) {
+  if (!p) return false;
+  if (p.resultado_ingresado) return true;
+  return ahora - ts(p.fecha) > DURACION_EN_VIVO_MS;
 }
 
 // Carga partidos de varias fases en paralelo.
