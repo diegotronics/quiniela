@@ -1,5 +1,8 @@
 // SVG country flag — recipe-based render.
-// Recipes (kind): vstripe, hstripe, cross, circle, diamond, usa, uru, chi, kor, sui, aus, pan.
+// Recipes (kind): vstripe, hstripe, cross, circle, diamond, usa, uru, chi, kor,
+// sui, aus, pan, mar, cze, bih, cod, rsa.
+// El recipe `cross` admite `offset` (cruz nórdica desplazada al asta) e `inner`
+// (cruz interior de otro color, como en Noruega e Islandia).
 
 const FLAGS = {
   MEX: { kind: "vstripe", cols: ["#006847", "#fff", "#ce1126"] },
@@ -23,8 +26,8 @@ const FLAGS = {
   JPN: { kind: "circle", bg: "#fff", dot: "#BC002D" },
   KOR: { kind: "kor" },
   SEN: { kind: "vstripe", cols: ["#00853F", "#FDEF42", "#E31B23"] },
-  MAR: { kind: "circle", bg: "#C1272D", dot: null, extra: "star" },
-  DEN: { kind: "cross", bg: "#C8102E", cross: "#fff" },
+  MAR: { kind: "mar" },
+  DEN: { kind: "cross", bg: "#C8102E", cross: "#fff", offset: true },
   SUI: { kind: "sui" },
   POL: { kind: "hstripe", cols: ["#fff", "#DC143C"] },
   CMR: { kind: "vstripe", cols: ["#007A5E", "#CE1126", "#FCD116"] },
@@ -44,18 +47,18 @@ const FLAGS = {
   PAN: { kind: "pan" },
   JAM: { kind: "cross", bg: "#009B3A", cross: "#FED100", diag: true },
   VEN: { kind: "hstripe", cols: ["#FCE300", "#00247D", "#CF142B"] },
-  SWE: { kind: "cross", bg: "#006AA7", cross: "#FECC00" },
-  NOR: { kind: "cross", bg: "#BA0C2F", cross: "#fff" },
-  FIN: { kind: "cross", bg: "#fff", cross: "#003580" },
-  ISL: { kind: "cross", bg: "#02529C", cross: "#fff" },
+  SWE: { kind: "cross", bg: "#006AA7", cross: "#FECC00", offset: true },
+  NOR: { kind: "cross", bg: "#BA0C2F", cross: "#fff", inner: "#00205B", offset: true },
+  FIN: { kind: "cross", bg: "#fff", cross: "#002F6C", offset: true },
+  ISL: { kind: "cross", bg: "#02529C", cross: "#fff", inner: "#DC1E35", offset: true },
   SRB: { kind: "hstripe", cols: ["#C6363C", "#0C4076", "#fff"] },
   IRN: { kind: "hstripe", cols: ["#239F40", "#fff", "#DA0000"] },
   QAT: { kind: "vstripe", cols: ["#fff", "#8A1538"], ratio: [1, 2] },
   IRQ: { kind: "hstripe", cols: ["#CE1126", "#fff", "#000"] },
   JOR: { kind: "hstripe", cols: ["#000", "#fff", "#007A3D"] },
-  RSA: { kind: "hstripe", cols: ["#007749", "#fff", "#DE3831"], ratio: [1, 1, 1] },
-  CZE: { kind: "hstripe", cols: ["#fff", "#D7141A"] },
-  BIH: { kind: "hstripe", cols: ["#002F6C", "#FECB00"] },
+  RSA: { kind: "rsa" },
+  CZE: { kind: "cze" },
+  BIH: { kind: "bih" },
   HAI: { kind: "hstripe", cols: ["#00209F", "#D21034"] },
   CUW: { kind: "hstripe", cols: ["#002B7F", "#F9E814", "#002B7F"], ratio: [3, 1, 3] },
   TUN: { kind: "circle", bg: "#E70013", dot: "#fff" },
@@ -63,7 +66,7 @@ const FLAGS = {
   NZL: { kind: "aus" },
   CPV: { kind: "hstripe", cols: ["#003893", "#fff", "#CF2027", "#fff", "#003893"], ratio: [6, 1, 2, 1, 2] },
   ALG: { kind: "vstripe", cols: ["#006233", "#fff"] },
-  COD: { kind: "hstripe", cols: ["#007FFF", "#F7D618", "#CE1021"] },
+  COD: { kind: "cod" },
   UZB: { kind: "hstripe", cols: ["#0099B5", "#fff", "#1EB53A"] },
 };
 
@@ -122,11 +125,21 @@ export function Flag({ code, w = 22, h = 16, rounded = 3 }) {
         </>
       );
     } else {
+      // Las cruces nórdicas (offset) se desplazan hacia el asta; el resto van centradas.
+      const cx = f.offset ? W * 0.36 : W * 0.5;
+      const vw = W * 0.16;
+      const hh = H * 0.18;
       body = (
         <>
           <rect width={W} height={H} fill={f.bg} />
-          <rect x={W * 0.4} y={0} width={W * 0.2} height={H} fill={f.cross} />
-          <rect x={0} y={H * 0.4} width={W} height={H * 0.2} fill={f.cross} />
+          <rect x={cx - vw / 2} y={0} width={vw} height={H} fill={f.cross} />
+          <rect x={0} y={H / 2 - hh / 2} width={W} height={hh} fill={f.cross} />
+          {f.inner && (
+            <>
+              <rect x={cx - vw / 4} y={0} width={vw / 2} height={H} fill={f.inner} />
+              <rect x={0} y={H / 2 - hh / 4} width={W} height={hh / 2} fill={f.inner} />
+            </>
+          )}
         </>
       );
     }
@@ -215,6 +228,72 @@ export function Flag({ code, w = 22, h = 16, rounded = 3 }) {
         <line x1={0} y1={0} x2={W * 0.42} y2={H * 0.55} stroke="#fff" strokeWidth="1.2" />
         <line x1={W * 0.42} y1={0} x2={0} y2={H * 0.55} stroke="#fff" strokeWidth="1.2" />
         <circle cx={W * 0.75} cy={H * 0.55} r={H * 0.08} fill="#fff" />
+      </>
+    );
+  } else if (f.kind === "mar") {
+    // Marruecos: campo rojo con un pentáculo verde (estrella de cinco puntas en trazo).
+    body = (
+      <>
+        <rect width={W} height={H} fill="#C1272D" />
+        <path
+          d={star5(W / 2, H / 2, H * 0.34, H * 0.165)}
+          fill="none"
+          stroke="#006233"
+          strokeWidth={H * 0.05}
+          strokeLinejoin="round"
+        />
+      </>
+    );
+  } else if (f.kind === "cze") {
+    // Chequia: triángulo azul al asta sobre franjas blanca (sup.) y roja (inf.).
+    body = (
+      <>
+        <rect width={W} height={H / 2} fill="#fff" />
+        <rect y={H / 2} width={W} height={H / 2} fill="#D7141A" />
+        <polygon points={`0,0 ${W * 0.5},${H / 2} 0,${H}`} fill="#11457E" />
+      </>
+    );
+  } else if (f.kind === "bih") {
+    // Bosnia y Herzegovina: campo azul, triángulo amarillo y estrellas blancas
+    // en diagonal a lo largo de la hipotenusa.
+    const stars = Array.from({ length: 7 }, (_, i) => {
+      const t = (i + 0.5) / 7;
+      const x = W * 0.5 + t * (W * 0.5) + W * 0.03;
+      const y = t * H;
+      return <path key={i} d={star5(x, y, H * 0.085, H * 0.038)} fill="#fff" />;
+    });
+    body = (
+      <>
+        <rect width={W} height={H} fill="#002395" />
+        <polygon points={`${W * 0.5},0 ${W},0 ${W},${H}`} fill="#FECB00" />
+        {stars}
+      </>
+    );
+  } else if (f.kind === "cod") {
+    // RD Congo: campo azul celeste, franja roja diagonal con borde amarillo y
+    // estrella amarilla en el cantón superior.
+    body = (
+      <>
+        <rect width={W} height={H} fill="#007FFF" />
+        <line x1={0} y1={H} x2={W} y2={0} stroke="#F7D618" strokeWidth={H * 0.44} />
+        <line x1={0} y1={H} x2={W} y2={0} stroke="#CE1021" strokeWidth={H * 0.26} />
+        <path d={star5(W * 0.17, H * 0.22, H * 0.13, H * 0.06)} fill="#F7D618" />
+      </>
+    );
+  } else if (f.kind === "rsa") {
+    // Sudáfrica: rojo (sup.) y azul (inf.), palio verde en "Y" con borde blanco
+    // y triángulo negro con filo dorado al asta.
+    const green = "#007749";
+    body = (
+      <>
+        <rect width={W} height={H / 2} fill="#E03C31" />
+        <rect y={H / 2} width={W} height={H / 2} fill="#001489" />
+        <line x1={0} y1={0} x2={W} y2={H / 2} stroke="#fff" strokeWidth={H * 0.42} />
+        <line x1={0} y1={H} x2={W} y2={H / 2} stroke="#fff" strokeWidth={H * 0.42} />
+        <line x1={0} y1={0} x2={W} y2={H / 2} stroke={green} strokeWidth={H * 0.24} />
+        <line x1={0} y1={H} x2={W} y2={H / 2} stroke={green} strokeWidth={H * 0.24} />
+        <polygon points={`0,0 ${W * 0.42},${H / 2} 0,${H}`} fill="#FFB915" />
+        <polygon points={`0,0 ${W * 0.32},${H / 2} 0,${H}`} fill="#000" />
       </>
     );
   }
