@@ -163,11 +163,11 @@ function WizardPartido({
     setDraft((d) => ({ ...d, [campo]: valor }));
   };
 
-  // Basta con ajustar un lado: el que no toques cuenta como 0 (el marcador ya muestra 0).
-  const puedeConfirmar = draft.local != null || draft.visitante != null;
-
+  // El marcador arranca en 0–0, que ya es un pronóstico válido. Ajusta los
+  // lados que quieras; el que no toques cuenta como 0. Siempre puedes confirmar,
+  // incluso un 0–0.
   const handleConfirmar = async () => {
-    if (!puedeConfirmar || saving) return;
+    if (saving) return;
     setSaving(true);
     try {
       await onConfirmar(draft.local ?? 0, draft.visitante ?? 0);
@@ -478,7 +478,7 @@ function WizardPartido({
           size="lg"
           block
           onClick={handleConfirmar}
-          disabled={!puedeConfirmar || saving}
+          disabled={saving}
         >
           {saving ? "Guardando…" : prediccionPrevia ? "Actualizar y seguir" : "Confirmar y seguir"}
           {!saving && <Icon.Chevron />}

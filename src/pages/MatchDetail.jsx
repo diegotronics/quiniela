@@ -94,11 +94,10 @@ export default function MatchDetail() {
   const [saving, setSaving] = useState(false)
   const [savedTick, setSavedTick] = useState(0)
   const [saveError, setSaveError] = useState('')
-  // El pronóstico queda listo en cuanto ajustas al menos un lado; el lado que
-  // no toques cuenta como 0 (el marcador ya muestra 0).
-  const sinTocar = draft.local == null && draft.visitante == null
+  // El marcador arranca en 0–0, que ya es un pronóstico válido. El lado que no
+  // toques cuenta como 0, así que siempre puedes guardar tu pronóstico, incluso
+  // un 0–0.
   const guardar = async () => {
-    if (sinTocar) return
     setSaving(true)
     setSaveError('')
     try {
@@ -486,7 +485,7 @@ export default function MatchDetail() {
               </div>
               <button
                 onClick={guardar}
-                disabled={saving || sinTocar}
+                disabled={saving}
                 className="btn-interactive"
                 style={{
                   width: '100%',
@@ -500,7 +499,7 @@ export default function MatchDetail() {
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: saving ? 'wait' : 'pointer',
-                  opacity: saving || sinTocar ? 0.6 : 1,
+                  opacity: saving ? 0.6 : 1,
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
