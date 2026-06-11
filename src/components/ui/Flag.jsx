@@ -1,5 +1,5 @@
 // SVG country flag — recipe-based render.
-// Recipes (kind): vstripe, hstripe, cross, circle, diamond, usa, uru, chi, kor, sui, aus.
+// Recipes (kind): vstripe, hstripe, cross, circle, diamond, usa, uru, chi, kor, sui, aus, pan.
 
 const FLAGS = {
   MEX: { kind: "vstripe", cols: ["#006847", "#fff", "#ce1126"] },
@@ -41,7 +41,7 @@ const FLAGS = {
   CIV: { kind: "vstripe", cols: ["#FF8200", "#fff", "#009A44"] },
   GHA: { kind: "hstripe", cols: ["#CE1126", "#FCD116", "#006B3F"] },
   CRC: { kind: "hstripe", cols: ["#002B7F", "#fff", "#CE1126", "#fff", "#002B7F"], ratio: [1, 1, 2, 1, 1] },
-  PAN: { kind: "vstripe", cols: ["#fff", "#DA121A"] },
+  PAN: { kind: "pan" },
   JAM: { kind: "cross", bg: "#009B3A", cross: "#FED100", diag: true },
   VEN: { kind: "hstripe", cols: ["#FCE300", "#00247D", "#CF142B"] },
   SWE: { kind: "cross", bg: "#006AA7", cross: "#FECC00" },
@@ -189,6 +189,22 @@ export function Flag({ code, w = 22, h = 16, rounded = 3 }) {
         <rect width={W} height={H} fill="#D52B1E" />
         <rect x={W * 0.42} y={H * 0.2} width={W * 0.16} height={H * 0.6} fill="#fff" />
         <rect x={W * 0.25} y={H * 0.4} width={W * 0.5} height={H * 0.2} fill="#fff" />
+      </>
+    );
+  } else if (f.kind === "pan") {
+    // Bandera cuartelada: blanco con estrella azul (sup. izq.), rojo (sup. der.),
+    // azul (inf. izq.) y blanco con estrella roja (inf. der.).
+    const blue = "#072357";
+    const red = "#DA121A";
+    const so = H * 0.17;
+    const si = H * 0.07;
+    body = (
+      <>
+        <rect width={W} height={H} fill="#fff" />
+        <rect x={W / 2} y={0} width={W / 2} height={H / 2} fill={red} />
+        <rect x={0} y={H / 2} width={W / 2} height={H / 2} fill={blue} />
+        <path d={star5(W * 0.25, H * 0.25, so, si)} fill={blue} />
+        <path d={star5(W * 0.75, H * 0.75, so, si)} fill={red} />
       </>
     );
   } else if (f.kind === "aus") {
