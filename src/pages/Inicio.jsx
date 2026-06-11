@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useFases } from '@/hooks/useFases'
 import { useAllPartidos } from '@/hooks/useAllPartidos'
 import { usePrediccionesUsuario } from '@/hooks/usePredicciones'
+import { useMarcadorEnVivo } from '@/hooks/useMarcadorEnVivo'
 import { useUsuariosPublic } from '@/hooks/useUsuarios'
 import { useAsync } from '@/hooks/useAsync'
 import { listPuntajesGlobales } from '@/api/predicciones'
@@ -54,9 +55,13 @@ export default function Inicio() {
     listPuntajesApuestasEspeciales,
     [],
   )
-  const { predicciones } = usePrediccionesUsuario(user?.id)
-  const { config: apuestasCfg } = useApuestasEspecialesConfig()
-  const { apuesta: apuestaUsuario } = useApuestaEspecialUsuario(user?.id)
+  const { predicciones, loading: prediccionesLoading } = usePrediccionesUsuario(
+    user?.id,
+  )
+  const { config: apuestasCfg, loading: apuestasCfgLoading } =
+    useApuestasEspecialesConfig()
+  const { apuesta: apuestaUsuario, loading: apuestaLoading } =
+    useApuestaEspecialUsuario(user?.id)
 
   const ranking = useMemo(
     () =>
@@ -99,8 +104,10 @@ export default function Inicio() {
   // El admin no juega ni pronostica: no se le muestran los avisos que
   // invitan a completar predicciones o apuestas especiales.
   const esAdmin = !!user?.es_admin
+  // Mientras las predicciones siguen cargando no se sabe cuántas hay; sin
+  // este guard el banner aparece un instante aunque ya estén completas.
   const onboardingPendiente =
-    !esAdmin && picksCompletas < TOTAL_PARTIDOS_GRUPOS
+    !esAdmin && !prediccionesLoading && picksCompletas < TOTAL_PARTIDOS_GRUPOS
   const pendientes = partidos.filter((p) => !p.resultado_ingresado).length
 
   const apuestasCierre = apuestasCfg?.cierra_en
@@ -113,8 +120,14 @@ export default function Inicio() {
     apuestaUsuario?.goleador &&
     apuestaUsuario?.sorpresa,
   )
+  // Igual que con el onboarding: esperar a que carguen la config y la apuesta
+  // del usuario evita que el banner parpadee cuando ya está todo completado.
   const mostrarBannerApuestas =
-    !esAdmin && apuestasAbiertas && !apuestasCompletadas
+    !esAdmin &&
+    !apuestasCfgLoading &&
+    !apuestaLoading &&
+    apuestasAbiertas &&
+    !apuestasCompletadas
 
   const myPts = me?.puntos || 0
   const liderPts = lider?.puntos || 0
@@ -125,9 +138,14 @@ export default function Inicio() {
   const myPtsDisplay = useCountUp(myPts, { duration: 800 })
   const myRankDisplay = useCountUp(me?.rank || 0, { duration: 600 })
 
+  // Marcador real consultado a ESPN mientras el partido está en juego; si la
+  // fuente no responde se cae al marcador guardado en la BD (normalmente null
+  // hasta el final, en cuyo caso la tarjeta muestra "vs").
+  const { marcador } = useMarcadorEnVivo(live)
+
   // Detección de cambio de gol en partido live
-  const liveLocal = live?.goles_local
-  const liveVisitante = live?.goles_visitante
+  const liveLocal = marcador?.golesLocal ?? live?.goles_local
+  const liveVisitante = marcador?.golesVisitante ?? live?.goles_visitante
   const prevLiveLocal = usePrevious(liveLocal)
   const prevLiveVisitante = usePrevious(liveVisitante)
   const [pulseLocal, setPulseLocal] = useState(0)
@@ -518,8 +536,10 @@ export default function Inicio() {
             }
             liveLocal={liveLocal}
             liveVisitante={liveVisitante}
+            liveMinute={marcador?.minuto}
             pulseLocal={pulseLocal}
             pulseVisitante={pulseVisitante}
+            onClick={() => navigate(`/app/partido/${live.id}`)}
           />
         )}
 

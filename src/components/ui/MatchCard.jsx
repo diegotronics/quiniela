@@ -247,13 +247,16 @@ function MatchCardLive({
   rightLabel,
   liveLocal,
   liveVisitante,
+  liveMinute,
   pulseLocal = 0,
   pulseVisitante = 0,
+  onClick,
 }) {
   return (
     <Card
       pad={14}
       elevated
+      onClick={onClick}
       className="breathe-live field-lines-light"
       style={{
         background: 'var(--gradient-nocturno)',
@@ -270,7 +273,7 @@ function MatchCardLive({
           gap: 10,
         }}
       >
-        <LiveBadge />
+        <LiveBadge minute={liveMinute} />
         {rightLabel && (
           <span
             style={{
@@ -344,17 +347,17 @@ function MatchCardLive({
           truncate
         />
       </div>
-      {pred?.goles_local != null && (
-        <div
-          style={{
-            marginTop: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontSize: 12,
-            color: 'rgba(255,255,255,0.72)',
-          }}
-        >
+      <div
+        style={{
+          marginTop: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: 12,
+          color: 'rgba(255,255,255,0.72)',
+        }}
+      >
+        {pred?.goles_local != null ? (
           <span>
             Tu pronóstico:{' '}
             <span
@@ -364,13 +367,13 @@ function MatchCardLive({
               {pred.goles_local}–{pred.goles_visitante}
             </span>
           </span>
-          <span
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >
-            En juego <Icon.Arrow />
-          </span>
-        </div>
-      )}
+        ) : (
+          <span>Sin pronóstico</span>
+        )}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          {onClick ? 'Ver partido' : 'En juego'} <Icon.Arrow />
+        </span>
+      </div>
     </Card>
   )
 }
