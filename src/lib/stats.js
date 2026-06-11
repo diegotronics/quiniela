@@ -1,5 +1,4 @@
 // Derivación de stats de usuario a partir de predicciones y partidos.
-import { fechaYmdCaracas } from "./fechas";
 
 // Marca de tiempo (ms) de una fecha ISO; las inválidas van al final.
 function ts(fecha) {
@@ -106,14 +105,26 @@ export function proximoPartido(partidos, predicciones, fases) {
     .sort((a, b) => ts(a.fecha) - ts(b.fecha))[0];
 }
 
-// Partido "en vivo" — el más reciente sin resultado de hoy/ayer.
+// Ventana (ms) durante la cual un partido ya iniciado se considera "en vivo".
+// Cubre los 90 minutos reglamentarios más descanso, descuentos y posibles
+// prórrogas: ~2,5 horas. Pasado ese lapso, aunque no tenga resultado cargado,
+// deja de mostrarse como en vivo.
+const DURACION_EN_VIVO_MS = 150 * 60 * 1000;
+
+// Partido "en vivo" — uno sin resultado cuyo horario de inicio ya pasó y que
+// aún está dentro de la ventana de juego. No basta con que sea hoy: el partido
+// tiene que haber comenzado.
 export function partidoEnVivo(partidos) {
-  // "Hoy" según el horario de Venezuela (la fecha del partido ya está en
-  // hora local de Venezuela, así que su porción YYYY-MM-DD es comparable).
-  const ymd = fechaYmdCaracas(new Date());
+  const ahora = Date.now();
   return (partidos || [])
-    .filter((p) => !p.resultado_ingresado && (p.fecha || "").slice(0, 10) === ymd)
-    .sort((a, b) => ts(a.fecha) - ts(b.fecha))[0];
+    .filter((p) => {
+      if (p.resultado_ingresado) return false;
+      const inicio = ts(p.fecha);
+      if (!Number.isFinite(inicio)) return false;
+      return inicio <= ahora && ahora - inicio <= DURACION_EN_VIVO_MS;
+    })
+    // El que comenzó más recientemente (mayor timestamp) va primero.
+    .sort((a, b) => ts(b.fecha) - ts(a.fecha))[0];
 }
 
 // Carga partidos de varias fases en paralelo.
