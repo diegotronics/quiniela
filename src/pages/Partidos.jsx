@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useFases } from "@/hooks/useFases";
@@ -24,10 +24,20 @@ import { formatearDiaLargo } from "@/lib/fechas";
 
 const GRUPOS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
+const VISTAS = [
+  { id: "lista", label: "Lista" },
+  { id: "grupos", label: "Por grupos" },
+];
+
+// Ventana tras el inicio durante la cual un partido sin resultado sigue
+// siendo "el siguiente" (cubre los ~150 min de un partido en juego).
+const VENTANA_EN_JUEGO_MS = 150 * 60 * 1000;
+
 export default function Partidos() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { fases } = useFases();
+  const [vista, setVista] = useState("lista");
   const [activePhase, setActivePhase] = useState(null);
   const [activeGrupo, setActiveGrupo] = useState("A");
 
@@ -43,7 +53,7 @@ export default function Partidos() {
   const { usuarios } = useUsuariosPublic();
   const { data: puntajes } = useAsync(listPuntajesGlobales, []);
   const { data: puntajesEspeciales } = useAsync(listPuntajesApuestasEspeciales, []);
-  const { partidos: todosPartidos } = useAllPartidos(fases);
+  const { partidos: todosPartidos, loading: loadingTodos } = useAllPartidos(fases);
 
   const ranking = useMemo(
     () =>
@@ -59,11 +69,13 @@ export default function Partidos() {
 
   const fase = useMemo(() => fases.find((f) => f.id === activePhase), [fases, activePhase]);
   const isGrupos = activePhase === "grupos";
+  const isLista = vista === "lista";
 
   const partidosVista = useMemo(() => {
+    if (isLista) return todosPartidos;
     if (isGrupos) return partidos.filter((p) => p.grupo === activeGrupo);
     return partidos;
-  }, [partidos, isGrupos, activeGrupo]);
+  }, [isLista, todosPartidos, partidos, isGrupos, activeGrupo]);
 
   const guardados = partidosVista.filter((p) => {
     const pr = predicciones[p.id];
@@ -82,64 +94,152 @@ export default function Partidos() {
     return Array.from(map.entries());
   }, [partidosVista]);
 
+  // Siguiente partido de la lista cronológica: el primero sin resultado que
+  // está por jugarse o en juego. Si el torneo terminó, no hay ancla.
+  const siguienteId = useMemo(() => {
+    if (!isLista) return null;
+    const ahora = Date.now();
+    const ordenados = [...todosPartidos].sort((a, b) =>
+      (a.fecha || "").localeCompare(b.fecha || ""),
+    );
+    const siguiente = ordenados.find((p) => {
+      if (p.resultado_ingresado) return false;
+      const inicio = new Date(p.fecha).getTime();
+      return !Number.isNaN(inicio) && inicio + VENTANA_EN_JUEGO_MS > ahora;
+    });
+    return siguiente?.id ?? null;
+  }, [isLista, todosPartidos]);
+
+  const siguienteRef = useRef(null);
+
+  // Al entrar a la vista de lista, desplaza automáticamente hasta el
+  // siguiente partido una vez que la lista está renderizada.
+  useEffect(() => {
+    if (!isLista || loadingTodos || !siguienteId) return;
+    const t = setTimeout(() => {
+      siguienteRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [isLista, loadingTodos, siguienteId]);
+
+  const faseNombre = useMemo(() => {
+    const map = new Map(fases.map((f) => [f.id, f.nombre]));
+    return (id) => map.get(id) || "";
+  }, [fases]);
+
+  const cargando = isLista ? loadingTodos : loading;
+
   return (
     <MobileShell
       activeTab="partidos"
       header={
         <MobileHeader
           title="Partidos"
-          subtitle={fase ? `${fase.nombre} · ${guardados}/${partidosVista.length} pronosticados` : ""}
+          subtitle={
+            isLista
+              ? partidosVista.length
+                ? `Calendario completo · ${guardados}/${partidosVista.length} pronosticados`
+                : "Calendario completo"
+              : fase
+                ? `${fase.nombre} · ${guardados}/${partidosVista.length} pronosticados`
+                : ""
+          }
           leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
           onLeadingClick={() => navigate("/app/perfil")}
         />
       }
     >
-      {/* Selector de fases */}
+      {/* Tabs de vista: lista cronológica / por grupos */}
       <div style={{ padding: "0 20px 12px" }}>
         <div
-          className="scroll-hide"
+          role="tablist"
+          aria-label="Vista de partidos"
           style={{
             display: "flex",
-            gap: 8,
-            overflowX: "auto",
-            paddingBottom: 2,
+            gap: 3,
+            padding: 3,
+            borderRadius: 12,
+            background: "var(--surface)",
+            border: "0.5px solid var(--line)",
           }}
         >
-          {fases.map((f) => {
-            const isLocked = f.estado === "bloqueada";
-            const on = activePhase === f.id;
+          {VISTAS.map((v) => {
+            const on = vista === v.id;
             return (
               <button
-                key={f.id}
-                disabled={isLocked}
-                onClick={() => setActivePhase(f.id)}
+                key={v.id}
+                role="tab"
+                aria-selected={on}
+                onClick={() => setVista(v.id)}
                 className="chip-interactive"
                 style={{
-                  padding: "8px 14px",
-                  borderRadius: 999,
-                  background: on ? "var(--ink)" : "var(--surface)",
-                  color: on ? "var(--bg)" : isLocked ? "var(--ink-4)" : "var(--ink-2)",
-                  border: on ? "none" : "0.5px solid var(--line)",
+                  flex: 1,
+                  padding: "8px 0",
+                  borderRadius: 9,
+                  background: on ? "var(--ink)" : "transparent",
+                  color: on ? "var(--bg)" : "var(--ink-2)",
+                  border: "none",
                   fontSize: 13,
-                  fontWeight: 500,
-                  whiteSpace: "nowrap",
+                  fontWeight: 600,
                   letterSpacing: -0.1,
-                  cursor: isLocked ? "not-allowed" : "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
+                  cursor: "pointer",
                 }}
               >
-                {f.nombre}
-                {isLocked && <Icon.Lock />}
+                {v.label}
               </button>
             );
           })}
         </div>
       </div>
 
+      {/* Selector de fases (solo vista por grupos) */}
+      {!isLista && (
+        <div style={{ padding: "0 20px 12px" }}>
+          <div
+            className="scroll-hide"
+            style={{
+              display: "flex",
+              gap: 8,
+              overflowX: "auto",
+              paddingBottom: 2,
+            }}
+          >
+            {fases.map((f) => {
+              const isLocked = f.estado === "bloqueada";
+              const on = activePhase === f.id;
+              return (
+                <button
+                  key={f.id}
+                  disabled={isLocked}
+                  onClick={() => setActivePhase(f.id)}
+                  className="chip-interactive"
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 999,
+                    background: on ? "var(--ink)" : "var(--surface)",
+                    color: on ? "var(--bg)" : isLocked ? "var(--ink-4)" : "var(--ink-2)",
+                    border: on ? "none" : "0.5px solid var(--line)",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                    letterSpacing: -0.1,
+                    cursor: isLocked ? "not-allowed" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  {f.nombre}
+                  {isLocked && <Icon.Lock />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Selector de grupo (solo en fase grupos) */}
-      {isGrupos && (
+      {!isLista && isGrupos && (
         <div style={{ padding: "0 20px 12px" }}>
           <div
             className="scroll-hide"
@@ -177,16 +277,16 @@ export default function Partidos() {
 
       {/* Lista por día */}
       <div style={{ padding: "0 20px 12px", display: "flex", flexDirection: "column", gap: 18 }}>
-        {loading ? (
+        {cargando ? (
           <SkeletonMatchList count={4} />
         ) : byDay.length === 0 ? (
           <EmptyState
             illustration="whistle"
-            title="Sin partidos en esta fase"
+            title={isLista ? "Sin partidos programados" : "Sin partidos en esta fase"}
             description={
-              isGrupos
+              !isLista && isGrupos
                 ? `Aún no se cargaron partidos del grupo ${activeGrupo}.`
-                : "Cuando se publique el fixture aparecerá aquí."
+                : "Cuando se publique el calendario aparecerá aquí."
             }
           />
         ) : (
@@ -207,13 +307,20 @@ export default function Partidos() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {list.map((m) => (
-                  <MatchCard
+                  <div
                     key={m.id}
-                    variant="list"
-                    match={m}
-                    pred={predicciones[m.id]}
-                    onClick={() => navigate(`/app/partido/${m.id}`)}
-                  />
+                    ref={isLista && m.id === siguienteId ? siguienteRef : undefined}
+                  >
+                    <MatchCard
+                      variant="list"
+                      match={m}
+                      pred={predicciones[m.id]}
+                      groupLabel={
+                        isLista && !m.grupo ? faseNombre(m.fase_id) : undefined
+                      }
+                      onClick={() => navigate(`/app/partido/${m.id}`)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
