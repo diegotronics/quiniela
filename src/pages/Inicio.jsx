@@ -6,7 +6,10 @@ import { useFases } from '@/hooks/useFases'
 import { useAllPartidos } from '@/hooks/useAllPartidos'
 import { usePrediccionesUsuario } from '@/hooks/usePredicciones'
 import { useMarcadorEnVivo } from '@/hooks/useMarcadorEnVivo'
-import { useAutoSyncResultados } from '@/hooks/useAutoSyncResultado'
+import {
+  useAutoSyncFinalEnVivo,
+  useOnResultadosSincronizados,
+} from '@/hooks/useAutoSyncResultado'
 import { useUsuariosPublic } from '@/hooks/useUsuarios'
 import { useAsync } from '@/hooks/useAsync'
 import { listPuntajesGlobales } from '@/api/predicciones'
@@ -161,18 +164,14 @@ export default function Inicio() {
     live && (marcador ? marcador.finalizado : partidoTerminado(live, ahora)),
   )
 
-  // Rutina de sincronización automática: al abrir la app (resultados que
-  // quedaron pendientes) y al pitazo final del partido en vivo.
+  // Al pitazo final del partido en vivo se guarda el resultado de una vez;
+  // cada sincronización (la dispare quien la dispare) refresca estos datos.
+  useAutoSyncFinalEnVivo(live, marcador)
   const onResultadoSincronizado = useCallback(() => {
     refreshPartidos().catch(() => {})
     refreshPuntajes().catch(() => {})
   }, [refreshPartidos, refreshPuntajes])
-  useAutoSyncResultados({
-    partidos,
-    live,
-    marcador,
-    onSincronizado: onResultadoSincronizado,
-  })
+  useOnResultadosSincronizados(onResultadoSincronizado)
 
   // Detección de cambio de gol en partido live
   const liveLocal = marcador?.golesLocal ?? live?.goles_local

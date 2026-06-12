@@ -41,6 +41,17 @@ export async function clearResultadoPartido(id) {
   if (error) throw error;
 }
 
+// Solo id y fecha de los partidos sin resultado: es el chequeo barato que
+// hace la rutina de sincronización al abrir la app.
+export async function listPartidosSinResultado() {
+  const { data, error } = await supabase
+    .from("partidos")
+    .select("id, fecha, resultado_ingresado")
+    .eq("resultado_ingresado", false);
+  if (error) throw error;
+  return data || [];
+}
+
 export async function countPartidos() {
   const { count, error } = await supabase
     .from("partidos")
