@@ -11,8 +11,8 @@ function fmtFecha(ms) {
 
 // Busca en los eventos de ESPN el que corresponde al partido de nuestra BD,
 // cruzando por nombre de equipos (en cualquier orientación, por si la fuente
-// invierte local/visitante).
-function buscarEvento(events, partido) {
+// invierte local/visitante). Exportada para poder probarla.
+export function buscarEvento(events, partido) {
   for (const ev of events || []) {
     const comp = ev.competitions?.[0];
     if (!comp) continue;

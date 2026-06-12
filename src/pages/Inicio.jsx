@@ -6,7 +6,7 @@ import { useFases } from '@/hooks/useFases'
 import { useAllPartidos } from '@/hooks/useAllPartidos'
 import { usePrediccionesUsuario } from '@/hooks/usePredicciones'
 import { useMarcadorEnVivo } from '@/hooks/useMarcadorEnVivo'
-import { useAutoSyncResultado } from '@/hooks/useAutoSyncResultado'
+import { useAutoSyncResultados } from '@/hooks/useAutoSyncResultado'
 import { useUsuariosPublic } from '@/hooks/useUsuarios'
 import { useAsync } from '@/hooks/useAsync'
 import { listPuntajesGlobales } from '@/api/predicciones'
@@ -161,13 +161,18 @@ export default function Inicio() {
     live && (marcador ? marcador.finalizado : partidoTerminado(live, ahora)),
   )
 
-  // Apenas ESPN da el partido por terminado, se pide al servidor que guarde
-  // el resultado oficial (y reparta los puntos) sin esperar al cron nocturno.
+  // Rutina de sincronización automática: al abrir la app (resultados que
+  // quedaron pendientes) y al pitazo final del partido en vivo.
   const onResultadoSincronizado = useCallback(() => {
     refreshPartidos().catch(() => {})
     refreshPuntajes().catch(() => {})
   }, [refreshPartidos, refreshPuntajes])
-  useAutoSyncResultado(live, marcador, onResultadoSincronizado)
+  useAutoSyncResultados({
+    partidos,
+    live,
+    marcador,
+    onSincronizado: onResultadoSincronizado,
+  })
 
   // Detección de cambio de gol en partido live
   const liveLocal = marcador?.golesLocal ?? live?.goles_local

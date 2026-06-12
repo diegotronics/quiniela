@@ -15,7 +15,8 @@
         "test:ui:app": "playwright test specs/app.spec.js",
         "test:ui:admin": "playwright test specs/admin.spec.js",
         "test:ui:components": "playwright test specs/components.spec.js",
-        "test:ui:report": "playwright show-report tests/ui/report"
+        "test:ui:report": "playwright show-report tests/ui/report",
+        "test": "vitest run"
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.45.0",
@@ -27,9 +28,13 @@
     },
     "devDependencies": {
         "@playwright/test": "^1.60.0",
+        "@testing-library/dom": "^10.4.1",
+        "@testing-library/react": "^16.3.2",
         "@vitejs/plugin-react": "^4.3.1",
+        "jsdom": "^29.1.1",
         "png-to-ico": "^3.0.1",
         "sharp": "^0.34.5",
-        "vite": "^5.4.0"
+        "vite": "^5.4.0",
+        "vitest": "^4.1.8"
     }
 }
