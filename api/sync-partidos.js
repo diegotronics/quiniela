@@ -21,7 +21,13 @@
 //   SUPABASE_SERVICE_ROLE_KEY — service role key (NUNCA en el frontend)
 //   CRON_SECRET               — string aleatorio largo (32+ caracteres)
 //
-// Auth: header `Authorization: Bearer ${CRON_SECRET}`.
+// Auth: dos modos.
+//   - Cron de Vercel: header `Authorization: Bearer ${CRON_SECRET}`.
+//   - App (POST sin secreto): cuando el marcador en vivo detecta que un
+//     partido terminó, el cliente dispara la sincronización. El servidor
+//     baja el resultado de ESPN por su cuenta (el cliente nunca aporta el
+//     marcador), con un cooldown atómico en la tabla sync_partidos_estado
+//     para que no se pueda abusar del endpoint.
 //
 // La primera ejecución hace match por nombre de equipos y guarda
 // `api_fixture_id` (el id de ESPN) en cada partido para acelerar
@@ -32,6 +38,10 @@ import { createClient } from '@supabase/supabase-js'
 import { ESPN_SCOREBOARD_URL, mapTeam } from '../src/lib/equiposEspn.js'
 
 const ESPN_URL = `${ESPN_SCOREBOARD_URL}?dates=20260601-20260720`
+
+// Cooldown del modo público. El polling en vivo del cliente es cada 60s;
+// si toda la familia dispara a la vez, solo la primera llamada sincroniza.
+const COOLDOWN_MS = 60 * 1000
 
 // ESPN devuelve varios status. Tratamos como "terminado" todo lo que
 // empiece con STATUS_FINAL (FINAL, FINAL_AET, FINAL_PEN, etc).
@@ -47,7 +57,9 @@ function isAuthorized(req) {
 }
 
 export default async function handler(req, res) {
-    if (!isAuthorized(req)) {
+    const esCron = isAuthorized(req)
+    // Sin secreto solo se acepta POST (el disparo desde la app).
+    if (!esCron && req.method !== 'POST') {
         return res.status(401).json({ error: 'unauthorized' })
     }
 
@@ -61,6 +73,25 @@ export default async function handler(req, res) {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
         auth: { persistSession: false },
     })
+
+    // Modo público: reclamar el candado de forma atómica. El UPDATE
+    // condicionado solo devuelve la fila si el cooldown ya venció; si otro
+    // cliente la reclamó hace menos de COOLDOWN_MS, respondemos 429.
+    if (!esCron) {
+        const ahora = Date.now()
+        const { data: gate, error: errGate } = await supabase
+            .from('sync_partidos_estado')
+            .update({ ultima_corrida: new Date(ahora).toISOString() })
+            .eq('id', 'global')
+            .lt('ultima_corrida', new Date(ahora - COOLDOWN_MS).toISOString())
+            .select('id')
+        if (errGate) {
+            return res.status(500).json({ error: `supabase: ${errGate.message}` })
+        }
+        if (!gate || gate.length === 0) {
+            return res.status(429).json({ error: 'cooldown', retryMs: COOLDOWN_MS })
+        }
+    }
 
     // 1) Bajar partidos actuales
     const { data: partidos, error: errPartidos } = await supabase

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useCountUp, usePrevious } from '@/hooks/useCountUp'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
@@ -6,6 +6,7 @@ import { useFases } from '@/hooks/useFases'
 import { useAllPartidos } from '@/hooks/useAllPartidos'
 import { usePrediccionesUsuario } from '@/hooks/usePredicciones'
 import { useMarcadorEnVivo } from '@/hooks/useMarcadorEnVivo'
+import { useAutoSyncResultado } from '@/hooks/useAutoSyncResultado'
 import { useUsuariosPublic } from '@/hooks/useUsuarios'
 import { useAsync } from '@/hooks/useAsync'
 import { listPuntajesGlobales } from '@/api/predicciones'
@@ -49,9 +50,12 @@ export default function Inicio() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { fases } = useFases()
-  const { partidos } = useAllPartidos(fases)
+  const { partidos, refresh: refreshPartidos } = useAllPartidos(fases)
   const { usuarios } = useUsuariosPublic()
-  const { data: puntajesRaw } = useAsync(listPuntajesGlobales, [])
+  const { data: puntajesRaw, refresh: refreshPuntajes } = useAsync(
+    listPuntajesGlobales,
+    [],
+  )
   const { data: puntajesEspeciales } = useAsync(
     listPuntajesApuestasEspeciales,
     [],
@@ -156,6 +160,14 @@ export default function Inicio() {
   const liveFinalizado = Boolean(
     live && (marcador ? marcador.finalizado : partidoTerminado(live, ahora)),
   )
+
+  // Apenas ESPN da el partido por terminado, se pide al servidor que guarde
+  // el resultado oficial (y reparta los puntos) sin esperar al cron nocturno.
+  const onResultadoSincronizado = useCallback(() => {
+    refreshPartidos().catch(() => {})
+    refreshPuntajes().catch(() => {})
+  }, [refreshPartidos, refreshPuntajes])
+  useAutoSyncResultado(live, marcador, onResultadoSincronizado)
 
   // Detección de cambio de gol en partido live
   const liveLocal = marcador?.golesLocal ?? live?.goles_local
