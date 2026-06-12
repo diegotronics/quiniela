@@ -148,6 +148,15 @@ export function partidoTerminado(p, ahora = Date.now()) {
   return ahora - ts(p.fecha) > DURACION_EN_VIVO_MS;
 }
 
+// Partidos que ya se jugaron (agotaron la ventana en vivo) pero cuyo
+// resultado todavía no está en la BD: los candidatos a sincronizar cuando
+// alguien abre la app.
+export function resultadosPendientes(partidos, ahora = Date.now()) {
+  return (partidos || []).filter(
+    (p) => !p.resultado_ingresado && partidoTerminado(p, ahora),
+  );
+}
+
 // Carga partidos de varias fases en paralelo.
 export async function listPartidosByFases(faseIds, listPartidosByFase) {
   const all = await Promise.all(faseIds.map((id) => listPartidosByFase(id)));

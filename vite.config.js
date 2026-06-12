@@ -28,5 +28,10 @@ export default defineConfig(({ mode }) => {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
       },
     },
+    // Vitest: solo tests unitarios; los de tests/ui son de Playwright.
+    test: {
+      include: ["tests/unit/**/*.test.js"],
+      environment: "node",
+    },
   };
 });

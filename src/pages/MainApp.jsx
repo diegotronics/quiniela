@@ -2,12 +2,17 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import { useOnboardingGate } from "@/hooks/useOnboardingGate";
+import { useSyncResultadosPendientes } from "@/hooks/useAutoSyncResultado";
 
 export default function MainApp() {
   const { user } = useAuth();
   const location = useLocation();
   const { predicciones, loading } = usePrediccionesUsuario(user?.id);
   const { shouldRedirect } = useOnboardingGate(user?.id, predicciones, loading);
+
+  // Rutina de fondo: al abrir la app (en cualquier ruta) y al volver al
+  // primer plano, sincroniza los resultados que hayan quedado pendientes.
+  useSyncResultadosPendientes();
 
   // El admin es una cuenta netamente de administración: no juega ni pronostica,
   // así que nunca se le envía al onboarding de predicciones.
