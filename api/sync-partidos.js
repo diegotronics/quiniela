@@ -43,10 +43,16 @@ const ESPN_URL = `${ESPN_SCOREBOARD_URL}?dates=20260601-20260720`
 // si toda la familia dispara a la vez, solo la primera llamada sincroniza.
 const COOLDOWN_MS = 60 * 1000
 
-// ESPN devuelve varios status. Tratamos como "terminado" todo lo que
-// empiece con STATUS_FINAL (FINAL, FINAL_AET, FINAL_PEN, etc).
-function isFinished(statusName) {
-    return typeof statusName === 'string' && statusName.startsWith('STATUS_FINAL')
+// ESPN marca los partidos de fútbol terminados como STATUS_FULL_TIME (o
+// STATUS_FINAL* en otros deportes/prórrogas) y expone el booleano
+// `completed`. Aceptamos cualquiera de las señales: así el criterio queda
+// alineado con el del cliente (state === 'post'), que es quien dispara la
+// sincronización al pitazo final.
+function isFinished(statusType) {
+    if (!statusType) return false
+    if (statusType.completed === true) return true
+    const name = typeof statusType.name === 'string' ? statusType.name : ''
+    return name.startsWith('STATUS_FINAL') || name.startsWith('STATUS_FULL_TIME')
 }
 
 function isAuthorized(req) {
@@ -120,7 +126,8 @@ export default async function handler(req, res) {
         const apiId = Number(ev.id)
         const comp = ev.competitions?.[0]
         if (!comp) continue
-        const statusName = comp.status?.type?.name
+        const statusType = comp.status?.type
+        const statusName = statusType?.name
         const competitors = comp.competitors || []
         const homeC = competitors.find((c) => c.homeAway === 'home')
         const awayC = competitors.find((c) => c.homeAway === 'away')
@@ -131,7 +138,7 @@ export default async function handler(req, res) {
         const golesL = homeC.score == null ? null : Number(homeC.score)
         const golesV = awayC.score == null ? null : Number(awayC.score)
 
-        if (!isFinished(statusName)) {
+        if (!isFinished(statusType)) {
             ignorados.push({ apiId, statusName, motivo: 'no terminado' })
             continue
         }

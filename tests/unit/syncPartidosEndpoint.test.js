@@ -38,12 +38,12 @@ import handler from "../../api/sync-partidos.js";
 
 const SECRET = "secreto-de-prueba";
 
-function eventoEspn({ id, home, away, homeScore, awayScore, statusName }) {
+function eventoEspn({ id, home, away, homeScore, awayScore, statusName, completed }) {
   return {
     id,
     competitions: [
       {
-        status: { type: { name: statusName } },
+        status: { type: { name: statusName, completed } },
         competitors: [
           { homeAway: "home", team: { displayName: home }, score: homeScore },
           { homeAway: "away", team: { displayName: away }, score: awayScore },
@@ -155,6 +155,7 @@ describe("/api/sync-partidos", () => {
             homeScore: "1",
             awayScore: "0",
             statusName: "STATUS_IN_PROGRESS",
+            completed: false,
           }),
         ],
       }),
@@ -162,6 +163,96 @@ describe("/api/sync-partidos", () => {
     const res = makeRes();
     await handler(makeReq({ method: "POST" }), res);
     expect(res.statusCode).toBe(200);
+    expect(res.body.actualizados).toBe(0);
+    expect(state.updates).toEqual([]);
+  });
+
+  test("STATUS_FULL_TIME (el final normal en fútbol) sí se guarda", async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        events: [
+          eventoEspn({
+            id: "777",
+            home: "Canada",
+            away: "Bosnia-Herzegovina",
+            homeScore: "1",
+            awayScore: "1",
+            statusName: "STATUS_FULL_TIME",
+            completed: true,
+          }),
+        ],
+      }),
+    });
+    state.partidos = [
+      {
+        id: "B1",
+        equipo_local: "Canadá",
+        equipo_visitante: "Bosnia y Herzegovina",
+        goles_local: null,
+        goles_visitante: null,
+        resultado_ingresado: false,
+        api_fixture_id: null,
+      },
+    ];
+    const res = makeRes();
+    await handler(makeReq({ method: "POST" }), res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.actualizados).toBe(1);
+    expect(state.updates).toEqual([
+      {
+        id: "B1",
+        patch: {
+          goles_local: 1,
+          goles_visitante: 1,
+          resultado_ingresado: true,
+          api_fixture_id: 777,
+        },
+      },
+    ]);
+  });
+
+  test("completed=true basta aunque el nombre del status sea otro", async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        events: [
+          eventoEspn({
+            id: "777",
+            home: "Mexico",
+            away: "South Africa",
+            homeScore: "2",
+            awayScore: "1",
+            statusName: "STATUS_ALGO_NUEVO",
+            completed: true,
+          }),
+        ],
+      }),
+    });
+    const res = makeRes();
+    await handler(makeReq({ method: "POST" }), res);
+    expect(res.body.actualizados).toBe(1);
+  });
+
+  test("un partido cancelado (post pero no completado) no se guarda", async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        events: [
+          eventoEspn({
+            id: "777",
+            home: "Mexico",
+            away: "South Africa",
+            homeScore: "0",
+            awayScore: "0",
+            statusName: "STATUS_CANCELED",
+            completed: false,
+          }),
+        ],
+      }),
+    });
+    const res = makeRes();
+    await handler(makeReq({ method: "POST" }), res);
     expect(res.body.actualizados).toBe(0);
     expect(state.updates).toEqual([]);
   });
