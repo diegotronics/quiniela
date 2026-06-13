@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useFases } from '@/hooks/useFases'
@@ -22,6 +22,8 @@ import {
 import { code } from '@/lib/constants'
 import { formatearFechaHora } from '@/lib/fechas'
 import { ChatPanel } from '@/components/chat/ChatPanel'
+import { ShareableMatchCard } from '@/components/ShareableMatchCard'
+import { nodeToPngBlob, shareOrDownloadImage } from '@/lib/shareImage'
 import { celebrateExact, celebrateWin, celebrateOnce } from '@/lib/celebrate'
 
 export default function MatchDetail() {
@@ -140,6 +142,11 @@ export default function MatchDetail() {
 
   const [tab, setTab] = useState('familia')
 
+  // Captura para compartir en redes sociales.
+  const shareRef = useRef(null)
+  const [sharing, setSharing] = useState(false)
+  const [shareMsg, setShareMsg] = useState('')
+
   if (loadingPartido) {
     return (
       <div
@@ -185,6 +192,50 @@ export default function MatchDetail() {
   const picksByUser = new Map(
     (picksFamilia || []).map((p) => [p.usuario_id, p]),
   )
+
+  // Datos planos para la tarjeta compartible: cada participante con su marcador.
+  const sharePlayers = (usuarios || [])
+    .filter((u) => !u.es_admin)
+    .map((u) => {
+      const pick = picksByUser.get(u.id)
+      return {
+        nombre: u.nombre,
+        isMe: u.id === user?.id,
+        goles_local: pick?.goles_local ?? null,
+        goles_visitante: pick?.goles_visitante ?? null,
+        puntos_obtenidos: pick?.puntos_obtenidos ?? null,
+      }
+    })
+
+  const compartir = async () => {
+    if (sharing) return
+    setSharing(true)
+    setShareMsg('')
+    try {
+      const blob = await nodeToPngBlob(shareRef.current, {
+        scale: 2.5,
+        background: '#0f0d0a',
+      })
+      const slug = `${partido.equipo_local}-${partido.equipo_visitante}`
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+      const resultado = await shareOrDownloadImage(blob, {
+        fileName: `copa-familiar-${slug}.png`,
+        title: 'La Copa Familiar',
+        text: `${partido.equipo_local} vs ${partido.equipo_visitante} — pronósticos de la familia`,
+      })
+      if (resultado === 'downloaded') setShareMsg('Imagen descargada')
+    } catch (e) {
+      if (e?.name !== 'AbortError') {
+        setShareMsg('No se pudo generar la imagen. Intenta de nuevo.')
+      }
+    } finally {
+      setSharing(false)
+    }
+  }
 
   return (
     <div
@@ -578,16 +629,98 @@ export default function MatchDetail() {
 
       <div style={{ padding: '14px 20px 24px' }}>
         {tab === 'familia' ? (
-          <FamilyPicks
-            usuarios={usuarios}
-            picksByUser={picksByUser}
-            mePartial={user?.id}
-            reveal={revealOthers}
-          />
+          <>
+            <FamilyPicks
+              usuarios={usuarios}
+              picksByUser={picksByUser}
+              mePartial={user?.id}
+              reveal={revealOthers}
+            />
+            {revealOthers && (
+              <div style={{ marginTop: 14 }}>
+                <button
+                  onClick={compartir}
+                  disabled={sharing}
+                  className="btn-interactive"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'var(--surface)',
+                    color: 'var(--ink)',
+                    border: '1px solid var(--line)',
+                    borderRadius: 'var(--r-md)',
+                    fontWeight: 600,
+                    fontSize: 14,
+                    cursor: sharing ? 'wait' : 'pointer',
+                    opacity: sharing ? 0.6 : 1,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    boxShadow: 'var(--shadow-1)',
+                  }}
+                >
+                  {sharing ? (
+                    <>
+                      <Spinner /> Generando imagen…
+                    </>
+                  ) : (
+                    <>
+                      <Icon.Share /> Compartir pronósticos
+                    </>
+                  )}
+                </button>
+                {shareMsg && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 12,
+                      color: 'var(--ink-3)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {shareMsg}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         ) : (
           <ChatPanel key={id} partidoId={id} altura="60dvh" />
         )}
       </div>
+
+      {/* Tarjeta oculta que se rasteriza al compartir. Se mantiene fuera de
+          pantalla (sin display:none, para conservar dimensiones medibles). */}
+      {revealOthers && (
+        <div
+          aria-hidden
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: -100000,
+            pointerEvents: 'none',
+            opacity: 0,
+            zIndex: -1,
+          }}
+        >
+          <div ref={shareRef}>
+            <ShareableMatchCard
+              faseNombre={fase?.nombre}
+              grupo={partido.grupo}
+              equipoLocal={partido.equipo_local}
+              equipoVisitante={partido.equipo_visitante}
+              codeLocal={code(partido.equipo_local)}
+              codeVisitante={code(partido.equipo_visitante)}
+              isFinal={isFinal}
+              golesLocal={partido.goles_local}
+              golesVisitante={partido.goles_visitante}
+              fechaTexto={formatearFechaHora(partido.fecha)}
+              players={sharePlayers}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
