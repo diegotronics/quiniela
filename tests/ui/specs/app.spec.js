@@ -16,7 +16,6 @@ import { expectClean, snapshot } from "../helpers/ui-checks.js";
 
 const RUTAS = [
   { path: "/app/inicio", title: /inicio|hoy|próximos|live|en vivo/i, name: "inicio" },
-  { path: "/app/bracket", title: /bracket|llaves|eliminator|grupo/i, name: "bracket" },
   { path: "/app/partidos", title: /partidos|jornada|fase/i, name: "partidos" },
   { path: "/app/tabla", title: /tabla|posición|posiciones|líder/i, name: "tabla" },
   { path: "/app/perfil", title: /perfil|cuenta|mis datos|cerrar sesión/i, name: "perfil" },
@@ -70,6 +69,15 @@ test.describe("App autenticada — recorrido por rutas", () => {
       }
     });
   }
+
+  test("La ruta antigua /app/bracket redirige a Partidos", async ({ page }) => {
+    await page.goto("/app/bracket");
+    await page.waitForLoadState("networkidle").catch(() => {});
+    await page.waitForTimeout(300);
+    // El bracket dejó de ser pantalla propia: ahora es una vista dentro de
+    // Partidos, así que la ruta antigua debe redirigir allí.
+    await expect(page).toHaveURL(/\/app\/partidos/);
+  });
 
   test("Cambio de tema oscuro persiste en la app", async ({ page }, info) => {
     await page.goto("/app/perfil");

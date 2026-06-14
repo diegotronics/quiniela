@@ -6,12 +6,14 @@ import { usePartidosByFase } from "@/hooks/usePartidos";
 import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import {
   Avatar,
+  BracketView,
   EmptyState,
   MatchCard,
   MobileHeader,
   MobileShell,
   SkeletonMatchList,
   ringFor,
+  useKnockoutRounds,
 } from "@/components/ui";
 import { useUsuariosPublic } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
@@ -68,6 +70,23 @@ export default function Partidos() {
   const fase = useMemo(() => fases.find((f) => f.id === activePhase), [fases, activePhase]);
   const isGrupos = activePhase === "grupos";
   const isLista = vista === "lista";
+  const isBracket = vista === "bracket";
+
+  // El cuadro de eliminatorias solo se ofrece cuando hay fases de mata-mata
+  // configuradas; durante la fase de grupos esta vista permanece oculta.
+  const rounds = useKnockoutRounds(fases, todosPartidos);
+  const hayBracket = rounds.length > 0;
+  const vistas = useMemo(
+    () => (hayBracket ? [...VISTAS, { id: "bracket", label: "Bracket" }] : VISTAS),
+    [hayBracket],
+  );
+
+  // Si la vista de bracket deja de estar disponible, vuelve a la lista. Se
+  // espera a que termine la carga para no expulsar al usuario mientras los
+  // partidos aún se están recargando.
+  useEffect(() => {
+    if (vista === "bracket" && !hayBracket && !loadingTodos) setVista("lista");
+  }, [vista, hayBracket, loadingTodos]);
 
   const partidosVista = useMemo(() => {
     if (isLista) return todosPartidos;
@@ -131,67 +150,81 @@ export default function Partidos() {
     <MobileShell
       activeTab="partidos"
       header={
-        <MobileHeader
-          title="Partidos"
-          subtitle={
-            isLista
-              ? partidosVista.length
-                ? `Calendario completo · ${guardados}/${partidosVista.length} pronosticados`
-                : "Calendario completo"
-              : fase
-                ? `${fase.nombre} · ${guardados}/${partidosVista.length} pronosticados`
-                : ""
-          }
-          leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
-          onLeadingClick={() => navigate("/app/perfil")}
-        />
-      }
-    >
-      {/* Tabs de vista: lista cronológica / por grupos */}
-      <div style={{ padding: "0 20px 12px" }}>
+        // El encabezado y el selector de vista permanecen fijos al hacer
+        // scroll: ambos viven dentro de un mismo contenedor sticky.
         <div
-          role="tablist"
-          aria-label="Vista de partidos"
           style={{
-            display: "flex",
-            gap: 3,
-            padding: 3,
-            borderRadius: 12,
-            background: "var(--surface)",
-            border: "0.5px solid var(--line)",
+            position: "sticky",
+            top: 0,
+            zIndex: 20,
+            background: "var(--bg)",
           }}
         >
-          {VISTAS.map((v) => {
-            const on = vista === v.id;
-            return (
-              <button
-                key={v.id}
-                role="tab"
-                aria-selected={on}
-                onClick={() => setVista(v.id)}
-                className="chip-interactive"
-                style={{
-                  flex: 1,
-                  padding: "8px 0",
-                  borderRadius: 9,
-                  background: on ? "var(--ink)" : "transparent",
-                  color: on ? "var(--bg)" : "var(--ink-2)",
-                  border: "none",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  letterSpacing: -0.1,
-                  cursor: "pointer",
-                }}
-              >
-                {v.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+          <MobileHeader
+            sticky={false}
+            title="Partidos"
+            subtitle={
+              isBracket
+                ? "Cuadro de eliminatorias"
+                : isLista
+                  ? partidosVista.length
+                    ? `Calendario completo · ${guardados}/${partidosVista.length} pronosticados`
+                    : "Calendario completo"
+                  : fase
+                    ? `${fase.nombre} · ${guardados}/${partidosVista.length} pronosticados`
+                    : ""
+            }
+            leading={<Avatar name={user?.nombre} size={36} ring={ringFor({ rank: me?.rank, streak: racha })} />}
+            onLeadingClick={() => navigate("/app/perfil")}
+          />
 
+          {/* Tabs de vista: lista cronológica / por grupos / bracket */}
+          <div style={{ padding: "0 20px 12px" }}>
+            <div
+              role="tablist"
+              aria-label="Vista de partidos"
+              style={{
+                display: "flex",
+                gap: 3,
+                padding: 3,
+                borderRadius: 12,
+                background: "var(--surface)",
+                border: "0.5px solid var(--line)",
+              }}
+            >
+              {vistas.map((v) => {
+                const on = vista === v.id;
+                return (
+                  <button
+                    key={v.id}
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => setVista(v.id)}
+                    className="chip-interactive"
+                    style={{
+                      flex: 1,
+                      padding: "8px 0",
+                      borderRadius: 9,
+                      background: on ? "var(--ink)" : "transparent",
+                      color: on ? "var(--bg)" : "var(--ink-2)",
+                      border: "none",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      letterSpacing: -0.1,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {v.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      }
+    >
       {/* Selector de fases (solo vista por grupos) */}
-      {!isLista && (
+      {!isLista && !isBracket && (
         <div style={{ padding: "0 20px 12px" }}>
           <div
             className="scroll-hide"
@@ -234,7 +267,7 @@ export default function Partidos() {
       )}
 
       {/* Selector de grupo (solo en fase grupos) */}
-      {!isLista && isGrupos && (
+      {!isLista && !isBracket && isGrupos && (
         <div style={{ padding: "0 20px 12px" }}>
           <div
             className="scroll-hide"
@@ -270,7 +303,11 @@ export default function Partidos() {
         </div>
       )}
 
+      {/* Cuadro de eliminatorias */}
+      {isBracket && <BracketView rounds={rounds} predicciones={predicciones} />}
+
       {/* Lista por día */}
+      {!isBracket && (
       <div style={{ padding: "0 20px 12px", display: "flex", flexDirection: "column", gap: 18 }}>
         {cargando ? (
           <SkeletonMatchList count={4} />
@@ -322,6 +359,7 @@ export default function Partidos() {
           ))
         )}
       </div>
+      )}
     </MobileShell>
   );
 }

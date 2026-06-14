@@ -21,6 +21,7 @@ import {
 import {
   Avatar,
   Card,
+  ChampionCard,
   Countdown,
   Flag,
   HeaderIconButton,
@@ -34,6 +35,7 @@ import {
   StreakFlame,
   Button,
   ringFor,
+  useKnockoutRounds,
 } from '@/components/ui'
 import {
   rankingFromUsers,
@@ -106,6 +108,10 @@ export default function Inicio() {
     const t = setInterval(() => setAhora(Date.now()), 60 * 1000)
     return () => clearInterval(t)
   }, [])
+
+  // Rondas eliminatorias para la tarjeta del campeón (se autooculta hasta que
+  // exista el partido final).
+  const rounds = useKnockoutRounds(fases, partidos)
 
   const live = useMemo(() => partidoEnVivo(partidos, ahora), [partidos, ahora])
   const next = useMemo(
@@ -799,6 +805,9 @@ export default function Inicio() {
             </Card>
           </>
         )}
+
+        {/* Camino al campeón */}
+        <ChampionCard rounds={rounds} predicciones={predicciones} />
 
         {/* Stats row */}
         {stats.jugados > 0 && (

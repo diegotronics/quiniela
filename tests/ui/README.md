@@ -32,7 +32,7 @@ Playwright levanta `npm run dev` en `http://127.0.0.1:5179` automáticamente.
 | Spec | Rutas | Qué valida |
 |---|---|---|
 | `auth.spec.js` | `/`, `/registro`, `/invitacion/:token` | Login funcional, error de credenciales, protección de rutas, layout |
-| `app.spec.js` | `/app/inicio`, `/app/bracket`, `/app/partidos`, `/app/tabla`, `/app/perfil`, `/app/chat`, `/app/apuestas`, `/app/onboarding` | Render con auth, sin redirecciones inesperadas, screenshot por ruta |
+| `app.spec.js` | `/app/inicio`, `/app/partidos`, `/app/tabla`, `/app/perfil`, `/app/chat`, `/app/apuestas`, `/app/onboarding` | Render con auth, sin redirecciones inesperadas, screenshot por ruta |
 | `admin.spec.js` | `/admin/miembros`, `/admin/reglas`, `/admin/partidos` | Render con admin, protección a no-admins |
 | `components.spec.js` | `/dev/ui-test` | Galería completa + screenshot aislado por bloque |
 

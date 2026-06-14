@@ -9,6 +9,7 @@ export { Button } from "./Button.jsx";
 export { Logo } from "./Logo.jsx";
 export { ScoreStepper } from "./ScoreStepper.jsx";
 export { ChampionReveal, TrophyIcon, Sparkles } from "./ChampionReveal.jsx";
+export { BracketView, ChampionCard, useKnockoutRounds } from "./BracketView.jsx";
 export { Countdown } from "./Countdown.jsx";
 export { StreakFlame } from "./StreakFlame.jsx";
 export {
