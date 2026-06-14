@@ -46,12 +46,6 @@ export const Icon = {
       <path d="M5 10.5V20a1 1 0 0 0 1 1h3.5v-5.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V21H18a1 1 0 0 0 1-1v-9.5" />
     </>
   )),
-  Bracket: svgFactory(20, (
-    <>
-      <path d="M3 5h4a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h4" />
-      <path d="M3 19h4a2 2 0 0 0 2-2" />
-    </>
-  )),
   Cal: svgFactory(20, (
     <>
       <rect x="3" y="5" width="18" height="16" rx="3" />

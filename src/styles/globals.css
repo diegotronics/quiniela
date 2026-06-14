@@ -204,11 +204,6 @@ body {
   --section-accent-soft: var(--accent-soft);
   --section-accent-ink: var(--accent-ink);
 }
-[data-section="bracket"] {
-  --section-accent: var(--azure);
-  --section-accent-soft: var(--azure-soft);
-  --section-accent-ink: var(--azure-ink);
-}
 [data-section="partidos"] {
   --section-accent: var(--coral);
   --section-accent-soft: var(--coral-soft);
