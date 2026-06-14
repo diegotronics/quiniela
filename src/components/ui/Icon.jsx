@@ -195,6 +195,15 @@ export const Icon = {
       <path d="M5 15.5V5.5A2 2 0 0 1 7 3.5h10" />
     </>
   )),
+  Share: svgFactory(16, (
+    <>
+      <circle cx="6" cy="12" r="2.4" />
+      <circle cx="17" cy="6" r="2.4" />
+      <circle cx="17" cy="18" r="2.4" />
+      <path d="M8.1 10.9l6.8-3.8" />
+      <path d="M8.1 13.1l6.8 3.8" />
+    </>
+  )),
   Edit: svgFactory(14, (
     <>
       <path d="M4 20h4l11-11-4-4L4 16v4z" />
