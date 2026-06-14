@@ -104,8 +104,8 @@ export default function TablaFamiliar() {
   // Predicciones pendientes por jugador (partidos abiertos aún sin pronosticar).
   // Es global, independiente del filtro de fase seleccionado arriba.
   const { pendientes, total: totalAbiertos } = useMemo(
-    () => prediccionesPendientesByUsuario(usuarios, puntajes, partidos, fases),
-    [usuarios, puntajes, partidos, fases],
+    () => prediccionesPendientesByUsuario(usuarios, puntajes, partidos),
+    [usuarios, puntajes, partidos],
   );
   // Solo mostramos el indicador cuando hay partidos abiertos que pronosticar.
   const faltanDe = (id) => (totalAbiertos > 0 ? pendientes.get(id) ?? 0 : undefined);
@@ -123,23 +123,23 @@ export default function TablaFamiliar() {
   const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
   const racha = useMemo(() => userStreak(prediccionesList, partidos), [prediccionesList, partidos]);
 
-  // Última fase cerrada (la de mayor orden con estado "cerrada"). El podio
-  // solo se celebra cuando una fase se cierra, no cada vez que se entra.
-  const ultimaFaseCerrada = useMemo(() => {
-    const cerradas = (fases || []).filter((f) => f.estado === "cerrada");
-    if (cerradas.length === 0) return null;
-    return cerradas.reduce((a, b) => ((b.orden ?? 0) > (a.orden ?? 0) ? b : a));
-  }, [fases]);
+  // El torneo se considera terminado cuando todos los partidos cargados ya
+  // tienen resultado. El podio solo se celebra al cerrarse el torneo, no cada
+  // vez que se entra.
+  const torneoFinalizado = useMemo(() => {
+    const lista = partidos || [];
+    return lista.length > 0 && lista.every((p) => p.resultado_ingresado);
+  }, [partidos]);
 
   useEffect(() => {
-    if (!meTotal || !ultimaFaseCerrada) return;
+    if (!meTotal || !torneoFinalizado) return;
     if (meTotal.rank < 1 || meTotal.rank > 3) return;
-    // Una sola celebración por usuario y fase cerrada, persistida entre
-    // visitas y recargas para que no se repita al volver a abrir la tabla.
-    celebrateOncePersisted(`podium-${user?.id}-${ultimaFaseCerrada.id}`, () => {
+    // Una sola celebración por usuario, persistida entre visitas y recargas
+    // para que no se repita al volver a abrir la tabla.
+    celebrateOncePersisted(`podium-${user?.id}-final`, () => {
       setTimeout(celebratePodium, 400);
     });
-  }, [meTotal, ultimaFaseCerrada, user]);
+  }, [meTotal, torneoFinalizado, user]);
 
   return (
     <MobileShell

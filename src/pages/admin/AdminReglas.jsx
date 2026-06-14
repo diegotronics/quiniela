@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { updateFaseEstado, updateFasePuntos } from "@/api/fases";
+import { updateFasePuntos } from "@/api/fases";
 import { useFases } from "@/hooks/useFases";
 import {
   useApuestasEspecialesConfig,
@@ -16,25 +16,8 @@ import {
 } from "@/lib/constants";
 import { GOLEADOR_OPTIONS } from "@/lib/jugadores";
 
-const ESTADOS = [
-  { value: "activa", label: "Activa", tone: "accent" },
-  { value: "cerrada", label: "Cerrada", tone: "default" },
-  { value: "bloqueada", label: "Bloqueada", tone: "coral" },
-];
-
 export default function AdminReglas() {
   const { fases, refresh } = useFases();
-  const [busy, setBusy] = useState(null);
-
-  const setEstado = async (id, estado) => {
-    setBusy(id);
-    try {
-      await updateFaseEstado(id, estado);
-      await refresh();
-    } finally {
-      setBusy(null);
-    }
-  };
 
   const guardarPuntos = async (id, pts_exacto, pts_ganador) => {
     await updateFasePuntos(id, pts_exacto, pts_ganador);
@@ -51,61 +34,6 @@ export default function AdminReglas() {
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0 }}>
-        {/* Estado de fases */}
-        <Card pad={0}>
-          <div style={{ padding: "16px 18px", borderBottom: "0.5px solid var(--line-2)" }}>
-            <div style={{ fontWeight: 600, fontSize: 15, color: "var(--ink)" }}>Estado de las fases</div>
-            <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
-              Activa la fase para que la familia pueda enviar pronósticos. Bloquéala para ocultarla.
-            </div>
-          </div>
-          <div>
-            {fases.map((f, i) => (
-              <div
-                key={f.id}
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 12,
-                  padding: "14px 18px",
-                  borderBottom: i < fases.length - 1 ? "0.5px solid var(--line-2)" : "none",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>{f.nombre}</div>
-                  <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
-                    {FASES_INFO[f.id] || ""}
-                  </div>
-                </div>
-                <select
-                  value={f.estado}
-                  disabled={busy === f.id}
-                  onChange={(e) => setEstado(f.id, e.target.value)}
-                  style={{
-                    flex: "0 1 180px",
-                    minWidth: 140,
-                    padding: "8px 12px",
-                    borderRadius: 10,
-                    border: "0.5px solid var(--line)",
-                    background: "var(--surface)",
-                    fontSize: 13,
-                    color: "var(--ink)",
-                    cursor: "pointer",
-                    fontFamily: "var(--font-sans)",
-                  }}
-                >
-                  {ESTADOS.map((e) => (
-                    <option key={e.value} value={e.value}>
-                      {e.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
-        </Card>
-
         {/* Puntos por fase (editable) */}
         <Card pad={0}>
           <div style={{ padding: "16px 18px", borderBottom: "0.5px solid var(--line-2)" }}>

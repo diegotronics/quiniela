@@ -110,11 +110,22 @@ export default function Onboarding() {
         const previa = predicciones[partido.id];
         const eraNueva =
           !previa || previa.goles_local == null || previa.goles_visitante == null;
-        await setMarcador(partido.id, local, visitante);
-        if (eraNueva) {
-          const nuevoTotal = yaListos + 1;
-          const hito = MILESTONES[nuevoTotal];
-          if (hito) setMilestoneShown(nuevoTotal);
+        try {
+          await setMarcador(partido.id, local, visitante);
+          if (eraNueva) {
+            const nuevoTotal = yaListos + 1;
+            const hito = MILESTONES[nuevoTotal];
+            if (hito) setMilestoneShown(nuevoTotal);
+          }
+        } catch (e) {
+          // Si el partido ya cerró (una hora antes del saque o con resultado),
+          // no hay nada que guardar: lo saltamos sin trabar el asistente.
+          const msg = String(e?.message || e);
+          const cerrado =
+            msg.includes("PRONOSTICO_CERRADO") ||
+            msg.includes("PARTIDO_INICIADO") ||
+            msg.includes("PARTIDO_CERRADO");
+          if (!cerrado) throw e;
         }
         setIndex((i) => i + 1);
       }}

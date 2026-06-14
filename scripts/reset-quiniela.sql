@@ -53,16 +53,16 @@ restart identity cascade;
 -- PARTE 2 — Recarga de seeds
 -- ------------------------------------------------------------
 
--- Fases del Mundial. Solo "grupos" queda activa; el resto se abre
--- desde Admin a medida que avanza el torneo.
-insert into fases (id, nombre, icono, estado, orden, pts_exacto, pts_ganador) values
-  ('grupos',        'Fase de Grupos',   '⚽',  'activa',    1, 3,  1),
-  ('dieciseisavos', '1/16 de Final',    '⚔️',  'bloqueada', 2, 4,  2),
-  ('octavos',       'Octavos de Final', '🔥',  'bloqueada', 3, 5,  2),
-  ('cuartos',       'Cuartos de Final', '💫',  'bloqueada', 4, 6,  3),
-  ('semifinal',     'Semifinal',        '🌟',  'bloqueada', 5, 8,  4),
-  ('tercerpuesto',  'Tercer Puesto',    '🥉',  'bloqueada', 6, 6,  3),
-  ('final',         'Gran Final',       '🏆',  'bloqueada', 7, 15, 7);
+-- Fases del Mundial. El cierre es por partido (una hora antes de cada
+-- saque), así que las fases ya no tienen estado de apertura.
+insert into fases (id, nombre, icono, orden, pts_exacto, pts_ganador) values
+  ('grupos',        'Fase de Grupos',   '⚽',  1, 3,  1),
+  ('dieciseisavos', '1/16 de Final',    '⚔️',  2, 4,  2),
+  ('octavos',       'Octavos de Final', '🔥',  3, 5,  2),
+  ('cuartos',       'Cuartos de Final', '💫',  4, 6,  3),
+  ('semifinal',     'Semifinal',        '🌟',  5, 8,  4),
+  ('tercerpuesto',  'Tercer Puesto',    '🥉',  6, 6,  3),
+  ('final',         'Gran Final',       '🏆',  7, 15, 7);
 
 -- Usuario admin inicial. Esquema actual: el identificador es el
 -- correo (la columna legacy "usuario" ya no existe). La contraseña

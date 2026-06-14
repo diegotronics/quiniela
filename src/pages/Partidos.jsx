@@ -7,7 +7,6 @@ import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import {
   Avatar,
   EmptyState,
-  Icon,
   MatchCard,
   MobileHeader,
   MobileShell,
@@ -43,8 +42,7 @@ export default function Partidos() {
 
   useEffect(() => {
     if (!activePhase && fases.length) {
-      const act = fases.find((f) => f.estado === "activa") || fases[0];
-      setActivePhase(act.id);
+      setActivePhase(fases[0].id);
     }
   }, [fases, activePhase]);
 
@@ -205,32 +203,29 @@ export default function Partidos() {
             }}
           >
             {fases.map((f) => {
-              const isLocked = f.estado === "bloqueada";
               const on = activePhase === f.id;
               return (
                 <button
                   key={f.id}
-                  disabled={isLocked}
                   onClick={() => setActivePhase(f.id)}
                   className="chip-interactive"
                   style={{
                     padding: "8px 14px",
                     borderRadius: 999,
                     background: on ? "var(--ink)" : "var(--surface)",
-                    color: on ? "var(--bg)" : isLocked ? "var(--ink-4)" : "var(--ink-2)",
+                    color: on ? "var(--bg)" : "var(--ink-2)",
                     border: on ? "none" : "0.5px solid var(--line)",
                     fontSize: 13,
                     fontWeight: 500,
                     whiteSpace: "nowrap",
                     letterSpacing: -0.1,
-                    cursor: isLocked ? "not-allowed" : "pointer",
+                    cursor: "pointer",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
                   }}
                 >
                   {f.nombre}
-                  {isLocked && <Icon.Lock />}
                 </button>
               );
             })}
