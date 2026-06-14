@@ -70,6 +70,15 @@ test.describe("App autenticada — recorrido por rutas", () => {
     });
   }
 
+  test("La ruta antigua /app/bracket redirige a Partidos", async ({ page }) => {
+    await page.goto("/app/bracket");
+    await page.waitForLoadState("networkidle").catch(() => {});
+    await page.waitForTimeout(300);
+    // El bracket dejó de ser pantalla propia: ahora es una vista dentro de
+    // Partidos, así que la ruta antigua debe redirigir allí.
+    await expect(page).toHaveURL(/\/app\/partidos/);
+  });
+
   test("Cambio de tema oscuro persiste en la app", async ({ page }, info) => {
     await page.goto("/app/perfil");
     await page.waitForLoadState("networkidle").catch(() => {});

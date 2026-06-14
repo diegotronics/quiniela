@@ -83,10 +83,12 @@ export default function Partidos() {
     [hayBracket],
   );
 
-  // Si la vista de bracket deja de estar disponible, vuelve a la lista.
+  // Si la vista de bracket deja de estar disponible, vuelve a la lista. Se
+  // espera a que termine la carga para no expulsar al usuario mientras los
+  // partidos aún se están recargando.
   useEffect(() => {
-    if (vista === "bracket" && !hayBracket) setVista("lista");
-  }, [vista, hayBracket]);
+    if (vista === "bracket" && !hayBracket && !loadingTodos) setVista("lista");
+  }, [vista, hayBracket, loadingTodos]);
 
   const partidosVista = useMemo(() => {
     if (isLista) return todosPartidos;
