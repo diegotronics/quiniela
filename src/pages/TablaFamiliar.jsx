@@ -123,13 +123,17 @@ export default function TablaFamiliar() {
   const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
   const racha = useMemo(() => userStreak(prediccionesList, partidos), [prediccionesList, partidos]);
 
-  // El torneo se considera terminado cuando todos los partidos cargados ya
-  // tienen resultado. El podio solo se celebra al cerrarse el torneo, no cada
-  // vez que se entra.
+  // El torneo se considera terminado cuando cada fase tiene al menos un partido
+  // cargado y todos con resultado. Exigir partidos en todas las fases evita
+  // celebrar el podio al cerrar la fase de grupos mientras las eliminatorias
+  // aún no se han sembrado. El podio solo se celebra al cerrarse el torneo.
   const torneoFinalizado = useMemo(() => {
-    const lista = partidos || [];
-    return lista.length > 0 && lista.every((p) => p.resultado_ingresado);
-  }, [partidos]);
+    if (!fases?.length || !partidos?.length) return false;
+    return fases.every((f) => {
+      const ps = partidos.filter((p) => p.fase_id === f.id);
+      return ps.length > 0 && ps.every((p) => p.resultado_ingresado);
+    });
+  }, [fases, partidos]);
 
   useEffect(() => {
     if (!meTotal || !torneoFinalizado) return;

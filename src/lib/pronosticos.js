@@ -30,12 +30,18 @@ export function pronosticoCerrado(partido, ahora = Date.now()) {
   return cierre != null && ahora >= cierre;
 }
 
-// Los pronósticos de la familia se revelan exactamente cuando el partido se
-// cierra. Es el mismo instante; este nombre solo aclara la intención al leerlo.
-export const prediccionesReveladas = pronosticoCerrado;
-
 // Un partido sigue abierto para pronosticar: sin resultado y aún falta más de
 // una hora para el saque.
 export function partidoAbierto(partido, ahora = Date.now()) {
   return !pronosticoCerrado(partido, ahora);
+}
+
+// Códigos con los que la base de datos rechaza un pronóstico ya cerrado.
+const CODIGOS_CIERRE = ["PRONOSTICO_CERRADO", "PARTIDO_INICIADO", "PARTIDO_CERRADO"];
+
+// True si el error proviene del cierre del pronóstico (partido cerrado por
+// tiempo o con resultado cargado), no de un fallo de red u otro problema.
+export function esErrorCierre(error) {
+  const msg = String(error?.message || error);
+  return CODIGOS_CIERRE.some((c) => msg.includes(c));
 }

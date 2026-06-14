@@ -13,6 +13,7 @@ import {
   ScoreStepper,
 } from "@/components/ui";
 import { code } from "@/lib/constants";
+import { esErrorCierre } from "@/lib/pronosticos";
 import {
   FECHA_CIERRE_TEXTO,
   MILESTONES,
@@ -120,12 +121,7 @@ export default function Onboarding() {
         } catch (e) {
           // Si el partido ya cerró (una hora antes del saque o con resultado),
           // no hay nada que guardar: lo saltamos sin trabar el asistente.
-          const msg = String(e?.message || e);
-          const cerrado =
-            msg.includes("PRONOSTICO_CERRADO") ||
-            msg.includes("PARTIDO_INICIADO") ||
-            msg.includes("PARTIDO_CERRADO");
-          if (!cerrado) throw e;
+          if (!esErrorCierre(e)) throw e;
         }
         setIndex((i) => i + 1);
       }}

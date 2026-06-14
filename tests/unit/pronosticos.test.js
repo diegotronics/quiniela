@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   MARGEN_CIERRE_MS,
+  esErrorCierre,
   instanteCierre,
   partidoAbierto,
   pronosticoCerrado,
@@ -55,6 +56,20 @@ describe("pronosticoCerrado", () => {
   test("fecha inválida → no se cierra por tiempo", () => {
     const p = { id: "raro", fecha: "no-es-fecha", resultado_ingresado: false };
     expect(pronosticoCerrado(p, AHORA)).toBe(false);
+  });
+});
+
+describe("esErrorCierre", () => {
+  test("reconoce los códigos de cierre del servidor", () => {
+    expect(esErrorCierre(new Error("PRONOSTICO_CERRADO: ..."))).toBe(true);
+    expect(esErrorCierre(new Error("PARTIDO_CERRADO: ..."))).toBe(true);
+    expect(esErrorCierre(new Error("PARTIDO_INICIADO: ..."))).toBe(true);
+    expect(esErrorCierre("PRONOSTICO_CERRADO")).toBe(true);
+  });
+
+  test("no marca otros errores (red, etc.)", () => {
+    expect(esErrorCierre(new Error("network timeout"))).toBe(false);
+    expect(esErrorCierre(null)).toBe(false);
   });
 });
 
