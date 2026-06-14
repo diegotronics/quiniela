@@ -16,7 +16,6 @@ import { expectClean, snapshot } from "../helpers/ui-checks.js";
 
 const RUTAS = [
   { path: "/app/inicio", title: /inicio|hoy|próximos|live|en vivo/i, name: "inicio" },
-  { path: "/app/bracket", title: /bracket|llaves|eliminator|grupo/i, name: "bracket" },
   { path: "/app/partidos", title: /partidos|jornada|fase/i, name: "partidos" },
   { path: "/app/tabla", title: /tabla|posición|posiciones|líder/i, name: "tabla" },
   { path: "/app/perfil", title: /perfil|cuenta|mis datos|cerrar sesión/i, name: "perfil" },

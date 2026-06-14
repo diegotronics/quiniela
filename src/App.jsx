@@ -4,7 +4,6 @@ import Register from "@/pages/Register.jsx";
 import AceptarInvitacion from "@/pages/AceptarInvitacion.jsx";
 import MainApp from "@/pages/MainApp.jsx";
 import Inicio from "@/pages/Inicio.jsx";
-import Bracket from "@/pages/Bracket.jsx";
 import Partidos from "@/pages/Partidos.jsx";
 import TablaFamiliar from "@/pages/TablaFamiliar.jsx";
 import Perfil from "@/pages/Perfil.jsx";
@@ -47,7 +46,7 @@ export default function App() {
       >
         <Route index element={<Navigate to="/app/inicio" replace />} />
         <Route path="inicio" element={<Inicio />} />
-        <Route path="bracket" element={<Bracket />} />
+        <Route path="bracket" element={<Navigate to="/app/partidos" replace />} />
         <Route path="partidos" element={<Partidos />} />
         <Route path="tabla" element={<TablaFamiliar />} />
         <Route path="perfil" element={<Perfil />} />
