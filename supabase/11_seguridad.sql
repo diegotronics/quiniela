@@ -161,6 +161,8 @@ $$;
 --    predicción si el partido ya empezó o ya tiene resultado.
 --    Solo se evalúa al tocar el marcador pronosticado, de modo que el
 --    recálculo de puntos (que no cambia goles) nunca queda bloqueado.
+--    NOTA: la migración 14_cierre_por_partido.sql reemplaza esta función
+--    para cerrar el pronóstico una hora antes del saque (no al inicio).
 -- ------------------------------------------------------------
 create or replace function bloquear_prediccion_tardia()
 returns trigger

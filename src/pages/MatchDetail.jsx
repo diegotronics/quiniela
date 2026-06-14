@@ -21,6 +21,7 @@ import {
 } from '@/components/ui'
 import { code } from '@/lib/constants'
 import { formatearFechaHora } from '@/lib/fechas'
+import { pronosticoCerrado } from '@/lib/pronosticos'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import { ShareableMatchCard } from '@/components/ShareableMatchCard'
 import { nodeToPngBlob, shareOrDownloadImage } from '@/lib/shareImage'
@@ -55,14 +56,26 @@ export default function MatchDetail() {
     () => fases.find((f) => f.id === partido?.fase_id),
     [fases, partido],
   )
-  // Los pronósticos del resto de la familia solo se revelan cuando la fase
-  // ya está cerrada. Mientras la fase siga abierta cada quien ve únicamente
-  // el suyo, para que nadie copie marcadores antes de tiempo.
-  const revealOthers = fase?.estado === 'cerrada'
+
+  // Reloj que avanza cada minuto para que el cierre del pronóstico se refleje
+  // en vivo si la pantalla queda abierta justo cuando cruza la hora límite.
+  const [ahora, setAhora] = useState(() => Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setAhora(Date.now()), 60 * 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  // El pronóstico de un partido se cierra una hora antes del saque. En ese
+  // mismo instante deja de poder editarse y los pronósticos de la familia se
+  // hacen visibles para todos. Antes de eso cada quien ve solo el suyo, para
+  // que nadie copie marcadores.
+  const cerrado = pronosticoCerrado(partido, ahora)
+  const locked = cerrado
+  const revealOthers = cerrado
 
   // Predicciones de TODA la familia para este partido. Solo se piden al
-  // servidor cuando la fase está cerrada; mientras siga abierta el cliente
-  // ni siquiera descarga los marcadores ajenos.
+  // servidor cuando el partido ya cerró; antes el cliente ni siquiera descarga
+  // los marcadores ajenos.
   const { data: picksFamilia } = useAsync(async () => {
     if (!revealOthers) return []
     const { data, error } = await supabase
@@ -72,17 +85,6 @@ export default function MatchDetail() {
     if (error) throw error
     return data || []
   }, [id, revealOthers])
-  // El partido se considera iniciado cuando su hora de saque ya pasó.
-  const yaComenzo = (() => {
-    if (!partido?.fecha) return false
-    const inicio = new Date(partido.fecha).getTime()
-    return Number.isFinite(inicio) && inicio <= Date.now()
-  })()
-  const locked =
-    !fase ||
-    fase.estado !== 'activa' ||
-    partido?.resultado_ingresado ||
-    yaComenzo
 
   const myPred = predicciones[id]
   const [draft, setDraft] = useState({ local: null, visitante: null })
@@ -108,8 +110,8 @@ export default function MatchDetail() {
       setSavedTick((k) => k + 1)
     } catch (e) {
       const msg = String(e?.message || e)
-      if (msg.includes('PARTIDO_INICIADO')) {
-        setSaveError('El partido ya comenzó: el pronóstico quedó cerrado.')
+      if (msg.includes('PRONOSTICO_CERRADO') || msg.includes('PARTIDO_INICIADO')) {
+        setSaveError('El pronóstico ya cerró: se bloquea una hora antes del partido.')
       } else if (msg.includes('PARTIDO_CERRADO')) {
         setSaveError('El partido ya tiene resultado: no se puede editar.')
       } else {
@@ -734,7 +736,7 @@ function FamilyPicks({ usuarios, picksByUser, mePartial, reveal }) {
       </p>
     )
   }
-  // Mientras la fase siga abierta, los pronósticos ajenos permanecen ocultos.
+  // Hasta una hora antes del partido, los pronósticos ajenos permanecen ocultos.
   if (!reveal) {
     return (
       <Card pad={20}>
@@ -765,8 +767,8 @@ function FamilyPicks({ usuarios, picksByUser, mePartial, reveal }) {
             Pronósticos ocultos
           </div>
           <div style={{ fontSize: 13, color: 'var(--ink-3)', maxWidth: 260 }}>
-            Los pronósticos de la familia se revelan cuando se cierre la fase.
-            Por ahora solo puedes ver el tuyo.
+            Los pronósticos de la familia se revelan una hora antes del
+            partido. Por ahora solo puedes ver el tuyo.
           </div>
         </div>
       </Card>

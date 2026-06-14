@@ -1,5 +1,7 @@
 // Derivación de stats de usuario a partir de predicciones y partidos.
 
+import { partidoAbierto } from "./pronosticos";
+
 // Marca de tiempo (ms) de una fecha ISO; las inválidas van al final.
 function ts(fecha) {
   const t = fecha ? new Date(fecha).getTime() : NaN;
@@ -58,19 +60,15 @@ export function userStreak(preds, partidos) {
   return streak;
 }
 
-// Predicciones pendientes por usuario: partidos en fases activas, sin
-// resultado todavía y sin pronóstico del usuario. Usa el mismo criterio que
-// `proximoPartido`, así que el conteo refleja lo que aún se puede pronosticar.
+// Predicciones pendientes por usuario: partidos aún abiertos para pronosticar
+// (sin resultado y a más de una hora del saque) sin pronóstico del usuario.
+// Usa el mismo criterio que `proximoPartido`, así que el conteo refleja lo que
+// aún se puede pronosticar.
 //
 // `puntajes` es la lista global de predicciones ({ usuario_id, partido_id, ... }).
 // Devuelve un Map usuario_id → cantidad pendiente y el total de partidos abiertos.
-export function prediccionesPendientesByUsuario(usuarios, puntajes, partidos, fases) {
-  const fasesActivas = new Set(
-    (fases || []).filter((f) => f.estado === "activa").map((f) => f.id),
-  );
-  const abiertos = (partidos || []).filter(
-    (p) => fasesActivas.has(p.fase_id) && !p.resultado_ingresado,
-  );
+export function prediccionesPendientesByUsuario(usuarios, puntajes, partidos, ahora = Date.now()) {
+  const abiertos = (partidos || []).filter((p) => partidoAbierto(p, ahora));
   const total = abiertos.length;
   const abiertosIds = new Set(abiertos.map((p) => p.id));
 
@@ -94,13 +92,11 @@ export function prediccionesPendientesByUsuario(usuarios, puntajes, partidos, fa
   return { pendientes, total };
 }
 
-// Próximo partido sin pronóstico (en una fase activa).
-export function proximoPartido(partidos, predicciones, fases) {
-  const fasesActivas = new Set(
-    (fases || []).filter((f) => f.estado === "activa").map((f) => f.id),
-  );
+// Próximo partido sin pronóstico que aún sigue abierto (a más de una hora del
+// saque y sin resultado).
+export function proximoPartido(partidos, predicciones, ahora = Date.now()) {
   return (partidos || [])
-    .filter((p) => fasesActivas.has(p.fase_id) && !p.resultado_ingresado)
+    .filter((p) => partidoAbierto(p, ahora))
     .filter((p) => !predicciones[p.id] || predicciones[p.id].goles_local == null)
     .sort((a, b) => ts(a.fecha) - ts(b.fecha))[0];
 }

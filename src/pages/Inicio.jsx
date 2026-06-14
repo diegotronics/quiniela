@@ -115,8 +115,8 @@ export default function Inicio() {
 
   const live = useMemo(() => partidoEnVivo(partidos, ahora), [partidos, ahora])
   const next = useMemo(
-    () => proximoPartido(partidos, predicciones, fases),
-    [partidos, predicciones, fases],
+    () => proximoPartido(partidos, predicciones, ahora),
+    [partidos, predicciones, ahora],
   )
 
   const picksCompletas = useMemo(

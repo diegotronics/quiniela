@@ -13,6 +13,7 @@ import {
   ScoreStepper,
 } from "@/components/ui";
 import { code } from "@/lib/constants";
+import { esErrorCierre } from "@/lib/pronosticos";
 import {
   FECHA_CIERRE_TEXTO,
   MILESTONES,
@@ -110,11 +111,17 @@ export default function Onboarding() {
         const previa = predicciones[partido.id];
         const eraNueva =
           !previa || previa.goles_local == null || previa.goles_visitante == null;
-        await setMarcador(partido.id, local, visitante);
-        if (eraNueva) {
-          const nuevoTotal = yaListos + 1;
-          const hito = MILESTONES[nuevoTotal];
-          if (hito) setMilestoneShown(nuevoTotal);
+        try {
+          await setMarcador(partido.id, local, visitante);
+          if (eraNueva) {
+            const nuevoTotal = yaListos + 1;
+            const hito = MILESTONES[nuevoTotal];
+            if (hito) setMilestoneShown(nuevoTotal);
+          }
+        } catch (e) {
+          // Si el partido ya cerró (una hora antes del saque o con resultado),
+          // no hay nada que guardar: lo saltamos sin trabar el asistente.
+          if (!esErrorCierre(e)) throw e;
         }
         setIndex((i) => i + 1);
       }}

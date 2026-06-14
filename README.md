@@ -131,8 +131,11 @@ insert into usuarios (nombre, usuario, password, avatar, color) values
 - **Mis Apuestas** — selector de fase + grupo, marcador con botones +/−. Las predicciones se guardan automáticamente en Supabase al ingresar ambos goles.
 - **Fases** — info de cada fase con sus puntos
 
+### Cierre de pronósticos (por partido)
+El pronóstico de cada partido se cierra **una hora antes del saque**. A partir de ese instante: 1) ya no puedes editar tu pronóstico, y 2) los pronósticos del resto de la familia se hacen visibles. No hay estados de fase ni procesos programados: el cierre se deriva de la hora de cada partido y se valida tanto en la app como en la base de datos (trigger `bloquear_prediccion_tardia`).
+
 ### Para el admin (`/admin`)
-- **Fases** — abrir/cerrar/bloquear cada fase. Solo la fase **activa** acepta nuevas apuestas.
+- **Reglas** — puntos por fase (exacto/ganador) y configuración de apuestas especiales.
 - **Resultados** — ingresar resultado real de un partido. Al guardar, se recalculan los puntos de **todas** las predicciones de ese partido automáticamente.
 - **Usuarios** — agregar, editar, eliminar jugadores y marcar quién pagó.
 

@@ -21,7 +21,6 @@ create table if not exists fases (
   id text primary key,
   nombre text not null,
   icono text,
-  estado text default 'bloqueada',  -- 'activa' | 'cerrada' | 'bloqueada'
   orden integer,
   pts_exacto integer default 0,
   pts_ganador integer default 0
