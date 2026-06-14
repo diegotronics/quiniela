@@ -154,7 +154,6 @@ export function MobileHeader({
 
 const DEFAULT_TABS = [
   { id: "inicio",   label: "Inicio",    icon: Icon.Home,    path: "/app/inicio" },
-  { id: "bracket",  label: "Bracket",   icon: Icon.Bracket, path: "/app/bracket" },
   { id: "partidos", label: "Partidos",  icon: Icon.Cal,     path: "/app/partidos" },
   { id: "tabla",    label: "Tabla",     icon: Icon.Trophy,  path: "/app/tabla" },
   { id: "perfil",   label: "Perfil",    icon: Icon.User,    path: "/app/perfil" },
