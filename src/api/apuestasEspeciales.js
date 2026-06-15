@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 
 const CFG_COLS =
   "id, pts_campeon, pts_subcampeon, pts_goleador, pts_sorpresa, " +
-  "campeon, subcampeon, goleador, sorpresa, cierra_en, updated_at";
+  "campeon, subcampeon, goleador, sorpresa, cierra_en, abierta_manual, updated_at";
 
 const COLS =
   "id, usuario_id, campeon, subcampeon, goleador, sorpresa, " +
