@@ -61,9 +61,11 @@ export default function ApuestasEspeciales() {
   const cierraEn = config?.cierra_en ? new Date(config.cierra_en) : null
   const ahora = Date.now()
   const cerrada = apuestasEspecialesCerradas(config, ahora)
-  // Con la fecha vencida pero reabiertas manualmente por el admin no aplica
-  // mostrar una fecha de cierre que ya pasó.
-  const mostrarCierre = cierraEn && config?.abierta_manual !== true
+  // El override manual del admin tiene prioridad sobre la fecha: cuando está
+  // activo no aplica mostrar una fecha de cierre (sería engañosa, p. ej. una
+  // fecha futura mientras está cerrada, o una pasada mientras está reabierta).
+  const cerradaManual = config?.abierta_manual === false
+  const mostrarCierre = cierraEn && config?.abierta_manual == null
   const torneoFinalizado = Boolean(
     config?.campeon ||
     config?.subcampeon ||
@@ -176,14 +178,18 @@ export default function ApuestasEspeciales() {
               )}
             </Pill>
           </div>
-          {mostrarCierre && (
+          {mostrarCierre ? (
             <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>
               {cerrada ? 'Cierre: ' : 'Cierra: '}
               <span className="mono" style={{ color: 'var(--ink)' }}>
                 {formatearFechaHora(cierraEn)}
               </span>
             </div>
-          )}
+          ) : cerradaManual ? (
+            <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>
+              Cerradas por el administrador.
+            </div>
+          ) : null}
         </Card>
 
         {loading ? (

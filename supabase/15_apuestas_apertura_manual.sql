@@ -18,6 +18,10 @@ alter table apuestas_especiales_config
 
 -- ------------------------------------------------------------
 -- El cierre del servidor respeta el override manual.
+--
+-- Esta regla debe mantenerse en paridad con el helper del cliente
+-- `apuestasEspecialesCerradas()` (src/lib/apuestasEspeciales.js). Aquí
+-- vive el bloqueo real; el helper solo refleja el estado en la UI.
 -- ------------------------------------------------------------
 create or replace function bloquear_apuesta_tardia()
 returns trigger
