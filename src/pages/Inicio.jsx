@@ -47,6 +47,7 @@ import {
 } from '@/lib/stats'
 import { code, GROUP_NAME, GROUP_MOTTO } from '@/lib/constants'
 import { formatearFechaHora } from '@/lib/fechas'
+import { apuestasEspecialesCerradas } from '@/lib/apuestasEspeciales'
 import { ChatPreview } from '@/components/chat/ChatPreview'
 import { BannerPredicciones } from '@/components/BannerPredicciones'
 import { TOTAL_PARTIDOS_GRUPOS, countPredicciones } from '@/lib/onboarding'
@@ -132,10 +133,7 @@ export default function Inicio() {
     !esAdmin && !prediccionesLoading && picksCompletas < TOTAL_PARTIDOS_GRUPOS
   const pendientes = partidos.filter((p) => !p.resultado_ingresado).length
 
-  const apuestasCierre = apuestasCfg?.cierra_en
-    ? new Date(apuestasCfg.cierra_en).getTime()
-    : null
-  const apuestasAbiertas = apuestasCierre ? apuestasCierre > Date.now() : true
+  const apuestasAbiertas = !apuestasEspecialesCerradas(apuestasCfg)
   const apuestasCompletadas = Boolean(
     apuestaUsuario?.campeon &&
     apuestaUsuario?.subcampeon &&

@@ -26,6 +26,7 @@ import {
 } from '@/lib/constants'
 import { GOLEADOR_OPTIONS } from '@/lib/jugadores'
 import { formatearFechaHora } from '@/lib/fechas'
+import { apuestasEspecialesCerradas } from '@/lib/apuestasEspeciales'
 
 export default function ApuestasEspeciales() {
   const navigate = useNavigate()
@@ -59,7 +60,10 @@ export default function ApuestasEspeciales() {
 
   const cierraEn = config?.cierra_en ? new Date(config.cierra_en) : null
   const ahora = Date.now()
-  const cerrada = cierraEn ? cierraEn.getTime() <= ahora : false
+  const cerrada = apuestasEspecialesCerradas(config, ahora)
+  // Con la fecha vencida pero reabiertas manualmente por el admin no aplica
+  // mostrar una fecha de cierre que ya pasó.
+  const mostrarCierre = cierraEn && config?.abierta_manual !== true
   const torneoFinalizado = Boolean(
     config?.campeon ||
     config?.subcampeon ||
@@ -172,7 +176,7 @@ export default function ApuestasEspeciales() {
               )}
             </Pill>
           </div>
-          {cierraEn && (
+          {mostrarCierre && (
             <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ink-3)' }}>
               {cerrada ? 'Cierre: ' : 'Cierra: '}
               <span className="mono" style={{ color: 'var(--ink)' }}>

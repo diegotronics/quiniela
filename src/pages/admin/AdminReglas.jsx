@@ -15,6 +15,7 @@ import {
   TEAMS_MUNDIAL_2026,
 } from "@/lib/constants";
 import { GOLEADOR_OPTIONS } from "@/lib/jugadores";
+import { apuestasEspecialesCerradas } from "@/lib/apuestasEspeciales";
 
 export default function AdminReglas() {
   const { fases, refresh } = useFases();
@@ -141,6 +142,7 @@ function ApuestasEspecialesAdminCard() {
         </div>
       ) : (
         <>
+          <AperturaRow config={config} onSave={refresh} />
           <CierreRow config={config} onSave={refresh} />
           <CategoriaRow
             label="Campeón"
@@ -182,6 +184,96 @@ function ApuestasEspecialesAdminCard() {
         </>
       )}
     </Card>
+  );
+}
+
+// Control manual de la edición de apuestas. Tiene prioridad sobre la fecha
+// de cierre: permite reabrir las apuestas (p. ej. para quienes no las hicieron)
+// y volver a cerrarlas sin tocar la fecha.
+function AperturaRow({ config, onSave }) {
+  // Valor del override mapeado a las opciones del selector.
+  const toOpcion = (v) => (v === true ? "abierta" : v === false ? "cerrada" : "auto");
+  const [opcion, setOpcion] = useState(() => toOpcion(config.abierta_manual));
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setOpcion(toOpcion(config.abierta_manual));
+  }, [config.abierta_manual]);
+
+  const original = toOpcion(config.abierta_manual);
+  const dirty = opcion !== original;
+  const cerrada = apuestasEspecialesCerradas(config);
+
+  const guardar = async () => {
+    if (!dirty || busy) return;
+    setBusy(true);
+    try {
+      const abierta_manual =
+        opcion === "abierta" ? true : opcion === "cerrada" ? false : null;
+      await updateApuestasEspecialesConfig({ abierta_manual });
+      await onSave();
+    } catch (e) {
+      alert("Error: " + e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 12,
+        padding: "14px 18px",
+        borderBottom: "0.5px solid var(--line-2)",
+        alignItems: "center",
+      }}
+    >
+      <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>
+            Estado de edición
+          </span>
+          <Pill tone={cerrada ? "coral" : "accent"}>
+            {cerrada ? "Cerradas" : "Abiertas"}
+          </Pill>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.4 }}>
+          Habilita o cierra la edición manualmente. El modo manual ignora la
+          fecha de cierre; usa "Automático" para volver a respetarla.
+        </div>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 8,
+          justifyContent: "flex-end",
+          flex: "0 1 auto",
+        }}
+      >
+        <select
+          value={opcion}
+          onChange={(e) => setOpcion(e.target.value)}
+          disabled={busy}
+          style={teamSelectStyle}
+        >
+          <option value="auto">Automático (por fecha)</option>
+          <option value="abierta">Abiertas (manual)</option>
+          <option value="cerrada">Cerradas (manual)</option>
+        </select>
+        <Button
+          size="sm"
+          variant={dirty ? "primary" : "ghost"}
+          disabled={!dirty || busy}
+          onClick={guardar}
+        >
+          <Icon.Check /> {busy ? "…" : "Guardar"}
+        </Button>
+      </div>
+    </div>
   );
 }
 
