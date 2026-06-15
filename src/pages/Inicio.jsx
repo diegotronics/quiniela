@@ -134,6 +134,9 @@ export default function Inicio() {
   const pendientes = partidos.filter((p) => !p.resultado_ingresado).length
 
   const apuestasAbiertas = !apuestasEspecialesCerradas(apuestasCfg)
+  // Reapertura manual del admin: el banner usa un mensaje distinto, porque el
+  // texto habitual ya se mostró antes del cierre original.
+  const apuestasReabiertas = apuestasCfg?.abierta_manual === true
   const apuestasCompletadas = Boolean(
     apuestaUsuario?.campeon &&
     apuestaUsuario?.subcampeon &&
@@ -283,9 +286,11 @@ export default function Inicio() {
                     color: '#1A1300',
                   }}
                 >
-                  {apuestaUsuario
-                    ? 'Completa tus pronósticos premundiales'
-                    : 'Pronostica Campeón, Goleador y más'}
+                  {apuestasReabiertas
+                    ? '¡Reabrimos las apuestas especiales!'
+                    : apuestaUsuario
+                      ? 'Completa tus pronósticos premundiales'
+                      : 'Pronostica Campeón, Goleador y más'}
                 </div>
                 <div
                   style={{
