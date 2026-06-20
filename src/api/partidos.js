@@ -32,6 +32,17 @@ export async function setResultadoPartido(id, goles_local, goles_visitante) {
   if (error) throw error;
 }
 
+// Actualiza solo la fecha/hora de un partido. El texto debe venir en formato
+// ISO con offset (p. ej. "2026-06-20T20:00:00-04:00"). No toca el resultado,
+// por lo que el trigger de recálculo de puntos no se dispara.
+export async function setFechaPartido(id, fecha) {
+  const { error } = await supabase
+    .from("partidos")
+    .update({ fecha })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function clearResultadoPartido(id) {
   // El trigger en BD recalcula puntos_obtenidos de todas las predicciones.
   const { error } = await supabase

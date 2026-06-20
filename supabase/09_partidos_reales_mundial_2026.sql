@@ -68,7 +68,7 @@ insert into partidos (id, fase_id, grupo, equipo_local, equipo_visitante, fecha)
 ('E1','grupos','E','Alemania','Curazao',                 '2026-06-14T13:00:00-04:00'),
 ('E2','grupos','E','Costa de Marfil','Ecuador',          '2026-06-14T19:00:00-04:00'),
 ('E3','grupos','E','Alemania','Costa de Marfil',         '2026-06-20T16:00:00-04:00'),
-('E4','grupos','E','Ecuador','Curazao',                  '2026-06-20T23:00:00-04:00'),
+('E4','grupos','E','Ecuador','Curazao',                  '2026-06-20T20:00:00-04:00'),
 ('E5','grupos','E','Ecuador','Alemania',                 '2026-06-25T16:00:00-04:00'),
 ('E6','grupos','E','Curazao','Costa de Marfil',          '2026-06-25T16:00:00-04:00'),
 
