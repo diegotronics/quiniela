@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import { clearResultadoPartido, setResultadoPartido } from '@/api/partidos'
-import { formatearFechaHora } from '@/lib/fechas'
+import {
+  clearResultadoPartido,
+  setFechaPartido,
+  setResultadoPartido,
+} from '@/api/partidos'
+import {
+  aInputDatetimeCaracas,
+  desdeInputDatetimeCaracas,
+  formatearFechaHora,
+} from '@/lib/fechas'
 import { useFases } from '@/hooks/useFases'
 import { usePartidosByFase } from '@/hooks/usePartidos'
 import { useAllPartidos } from '@/hooks/useAllPartidos'
@@ -41,7 +49,9 @@ export default function AdminPartidos() {
 
   const [selected, setSelected] = useState(null)
   const [draft, setDraft] = useState({ local: 0, visitante: 0 })
+  const [fechaDraft, setFechaDraft] = useState('')
   const [busy, setBusy] = useState(false)
+  const [busyFecha, setBusyFecha] = useState(false)
 
   const counts = useMemo(() => {
     const all = allMatches || []
@@ -77,6 +87,26 @@ export default function AdminPartidos() {
       local: p.goles_local ?? 0,
       visitante: p.goles_visitante ?? 0,
     })
+    setFechaDraft(aInputDatetimeCaracas(p.fecha))
+  }
+
+  const guardarFecha = async () => {
+    if (!selected) return
+    const iso = desdeInputDatetimeCaracas(fechaDraft)
+    if (!iso) {
+      alert('Indica una fecha y hora válidas.')
+      return
+    }
+    setBusyFecha(true)
+    try {
+      await setFechaPartido(selected.id, iso)
+      await refresh()
+      setSelected((s) => (s ? { ...s, fecha: iso } : s))
+    } catch (e) {
+      alert('Error: ' + e.message)
+    } finally {
+      setBusyFecha(false)
+    }
   }
 
   const guardar = async () => {
@@ -362,6 +392,71 @@ export default function AdminPartidos() {
             <Pill tone="outline">
               {selected.equipo_local} vs {selected.equipo_visitante}
             </Pill>
+          </div>
+
+          {/* Editar fecha y hora */}
+          <div
+            style={{
+              marginTop: 18,
+              padding: 18,
+              borderRadius: 'var(--r-lg)',
+              background: 'var(--surface-2)',
+              border: '0.5px solid var(--line)',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 12,
+                color: 'var(--ink-3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                marginBottom: 10,
+                fontWeight: 600,
+              }}
+            >
+              <Icon.Clock /> Fecha y hora (horario de Venezuela)
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                flexWrap: 'wrap',
+              }}
+            >
+              <input
+                type="datetime-local"
+                value={fechaDraft}
+                onChange={(e) => setFechaDraft(e.target.value)}
+                style={{
+                  flex: '1 1 220px',
+                  minWidth: 0,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  border: '0.5px solid var(--line)',
+                  background: 'var(--surface)',
+                  color: 'var(--ink)',
+                  fontSize: 14,
+                  fontFamily: 'var(--font-sans)',
+                }}
+              />
+              <Button
+                variant="ghost"
+                onClick={guardarFecha}
+                disabled={
+                  busyFecha ||
+                  desdeInputDatetimeCaracas(fechaDraft) === selected.fecha
+                }
+              >
+                {busyFecha ? 'Guardando…' : 'Cambiar horario'}
+              </Button>
+            </div>
+            <div
+              style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8 }}
+            >
+              Las predicciones de este partido se cierran al llegar esta hora.
+            </div>
           </div>
 
           <div
