@@ -123,7 +123,6 @@ export function familyScoreboard(usuarios, predicciones, partidos) {
       .map((u) => ({
         id: u.id,
         nombre: u.nombre,
-        color: u.color,
         valor: conteo.get(u.id) || 0,
       }))
       .sort((a, b) => b.valor - a.valor);

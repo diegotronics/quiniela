@@ -6,7 +6,7 @@ import { useUsuariosPublic } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
 import { useFases } from "@/hooks/useFases";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
-import { listPuntajesGlobales, listPrediccionesGlobales } from "@/api/predicciones";
+import { listPrediccionesGlobales } from "@/api/predicciones";
 import { listPuntajesApuestasEspeciales } from "@/api/apuestasEspeciales";
 import {
   Avatar,
@@ -50,9 +50,11 @@ export default function TablaFamiliar() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { usuarios } = useUsuariosPublic();
-  const { data: puntajes, loading } = useAsync(listPuntajesGlobales, []);
   const { data: puntajesEspeciales } = useAsync(listPuntajesApuestasEspeciales, []);
-  const { data: prediccionesGlobales } = useAsync(listPrediccionesGlobales, []);
+  // Una sola consulta a `predicciones` alimenta tanto el ranking como las
+  // estadísticas: trae los goles además del `puntos_obtenidos`, así que es un
+  // superconjunto de lo que necesita el ranking.
+  const { data: prediccionesGlobales, loading } = useAsync(listPrediccionesGlobales, []);
   const { fases } = useFases();
   const { partidos } = useAllPartidos(fases);
   const [filtro, setFiltro] = useState("total");
@@ -64,7 +66,7 @@ export default function TablaFamiliar() {
   }, [partidos]);
 
   const puntajesFiltrados = useMemo(() => {
-    const todos = puntajes || [];
+    const todos = prediccionesGlobales || [];
     // El "Total" incluye las apuestas especiales (Campeón, Goleador, etc.),
     // igual que el ranking de Inicio. Los filtros por fase solo aplican a
     // predicciones de partidos, así que ahí no se suman.
@@ -93,7 +95,7 @@ export default function TablaFamiliar() {
       });
     }
     return todos;
-  }, [puntajes, puntajesEspeciales, filtro, partidosById]);
+  }, [prediccionesGlobales, puntajesEspeciales, filtro, partidosById]);
 
   const ranking = useMemo(
     () => rankingFromUsers(usuarios, puntajesFiltrados),
@@ -105,8 +107,8 @@ export default function TablaFamiliar() {
   // Predicciones pendientes por jugador (partidos abiertos aún sin pronosticar).
   // Es global, independiente del filtro de fase seleccionado arriba.
   const { pendientes, total: totalAbiertos } = useMemo(
-    () => prediccionesPendientesByUsuario(usuarios, puntajes, partidos),
-    [usuarios, puntajes, partidos],
+    () => prediccionesPendientesByUsuario(usuarios, prediccionesGlobales, partidos),
+    [usuarios, prediccionesGlobales, partidos],
   );
   // Solo mostramos el indicador cuando hay partidos abiertos que pronosticar.
   const faltanDe = (id) => (totalAbiertos > 0 ? pendientes.get(id) ?? 0 : undefined);
@@ -114,10 +116,10 @@ export default function TablaFamiliar() {
   const rankingTotal = useMemo(
     () =>
       rankingFromUsers(usuarios, [
-        ...(puntajes || []),
+        ...(prediccionesGlobales || []),
         ...(puntajesEspeciales || []),
       ]),
-    [usuarios, puntajes, puntajesEspeciales],
+    [usuarios, prediccionesGlobales, puntajesEspeciales],
   );
   const meTotal = useMemo(() => rankingTotal.find((u) => u.id === user?.id), [rankingTotal, user]);
   const { predicciones } = usePrediccionesUsuario(user?.id);
@@ -317,10 +319,10 @@ const STAT_CARDS = [
 ];
 
 const STAT_TONES = {
-  azure: { soft: "var(--azure-soft)", solid: "var(--azure)", ink: "var(--azure-ink)" },
-  accent: { soft: "var(--accent-soft)", solid: "var(--accent)", ink: "var(--accent-ink)" },
-  gold: { soft: "var(--gold-soft)", solid: "var(--gold)", ink: "var(--gold-ink)" },
-  coral: { soft: "var(--coral-soft)", solid: "var(--coral)", ink: "var(--coral-ink)" },
+  azure: { soft: "var(--azure-soft)", ink: "var(--azure-ink)" },
+  accent: { soft: "var(--accent-soft)", ink: "var(--accent-ink)" },
+  gold: { soft: "var(--gold-soft)", ink: "var(--gold-ink)" },
+  coral: { soft: "var(--coral-soft)", ink: "var(--coral-ink)" },
 };
 
 const MEDALLAS = ["1", "2", "3"];
