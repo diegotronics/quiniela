@@ -6,7 +6,7 @@ import { useUsuariosPublic } from "@/hooks/useUsuarios";
 import { useAsync } from "@/hooks/useAsync";
 import { useFases } from "@/hooks/useFases";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
-import { listPuntajesGlobales } from "@/api/predicciones";
+import { listPuntajesGlobales, listPrediccionesGlobales } from "@/api/predicciones";
 import { listPuntajesApuestasEspeciales } from "@/api/apuestasEspeciales";
 import {
   Avatar,
@@ -21,9 +21,9 @@ import {
   ringFor,
 } from "@/components/ui";
 import {
+  familyScoreboard,
   prediccionesPendientesByUsuario,
   rankingFromUsers,
-  userScoringStats,
   userStreak,
 } from "@/lib/stats";
 import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
@@ -52,6 +52,7 @@ export default function TablaFamiliar() {
   const { usuarios } = useUsuariosPublic();
   const { data: puntajes, loading } = useAsync(listPuntajesGlobales, []);
   const { data: puntajesEspeciales } = useAsync(listPuntajesApuestasEspeciales, []);
+  const { data: prediccionesGlobales } = useAsync(listPrediccionesGlobales, []);
   const { fases } = useFases();
   const { partidos } = useAllPartidos(fases);
   const [filtro, setFiltro] = useState("total");
@@ -122,6 +123,17 @@ export default function TablaFamiliar() {
   const { predicciones } = usePrediccionesUsuario(user?.id);
   const prediccionesList = useMemo(() => Object.values(predicciones), [predicciones]);
   const racha = useMemo(() => userStreak(prediccionesList, partidos), [prediccionesList, partidos]);
+
+  // Estadísticas de la familia (independientes del filtro de período): se
+  // calculan sobre todo el torneo a partir de las predicciones con goles.
+  const scoreboard = useMemo(
+    () => familyScoreboard(usuarios, prediccionesGlobales || [], partidos),
+    [usuarios, prediccionesGlobales, partidos],
+  );
+  const hayResultados = useMemo(
+    () => (partidos || []).some((p) => p.resultado_ingresado),
+    [partidos],
+  );
 
   // El torneo se considera terminado cuando cada fase tiene al menos un partido
   // cargado y todos con resultado. Exigir partidos en todas las fases evita
@@ -252,7 +264,217 @@ export default function TablaFamiliar() {
           />
         )}
       </div>
+
+      {/* Estadísticas de la familia */}
+      {hayResultados && (
+        <div style={{ padding: "22px 20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+          <SectionTitle>Estadísticas</SectionTitle>
+          {STAT_CARDS.map((card) => (
+            <StatLeaderCard
+              key={card.key}
+              card={card}
+              ranking={scoreboard[card.key]}
+              me={user?.id}
+            />
+          ))}
+        </div>
+      )}
     </MobileShell>
+  );
+}
+
+// Cada tarjeta de estadística: clave del scoreboard, título, ícono, tono de
+// color y la etiqueta de la unidad (singular/plural).
+const STAT_CARDS = [
+  {
+    key: "exactos",
+    title: "Marcadores exactos",
+    Icon: Icon.Stadium,
+    tone: "azure",
+    unit: (n) => (n === 1 ? "exacto" : "exactos"),
+  },
+  {
+    key: "acertados",
+    title: "Resultados acertados",
+    Icon: Icon.Check,
+    tone: "accent",
+    unit: (n) => (n === 1 ? "acierto" : "aciertos"),
+  },
+  {
+    key: "primero",
+    title: "Jornadas en primer lugar",
+    Icon: Icon.Crown,
+    tone: "gold",
+    unit: (n) => (n === 1 ? "jornada" : "jornadas"),
+  },
+  {
+    key: "ultimo",
+    title: "Jornadas en último lugar",
+    Icon: Icon.ChevronD,
+    tone: "coral",
+    unit: (n) => (n === 1 ? "jornada" : "jornadas"),
+  },
+];
+
+const STAT_TONES = {
+  azure: { soft: "var(--azure-soft)", solid: "var(--azure)", ink: "var(--azure-ink)" },
+  accent: { soft: "var(--accent-soft)", solid: "var(--accent)", ink: "var(--accent-ink)" },
+  gold: { soft: "var(--gold-soft)", solid: "var(--gold)", ink: "var(--gold-ink)" },
+  coral: { soft: "var(--coral-soft)", solid: "var(--coral)", ink: "var(--coral-ink)" },
+};
+
+const MEDALLAS = ["1", "2", "3"];
+
+function StatLeaderCard({ card, ranking, me }) {
+  const tone = STAT_TONES[card.tone] || STAT_TONES.azure;
+  const { Icon: CardIcon, unit } = card;
+
+  // Solo jugadores con al menos un acierto en esta métrica, hasta tres.
+  const top = (ranking || []).filter((r) => r.valor > 0).slice(0, 3);
+  const lider = top[0];
+
+  return (
+    <div
+      style={{
+        background: "var(--surface)",
+        border: "0.5px solid var(--line)",
+        borderRadius: "var(--r-lg)",
+        boxShadow: "var(--shadow-1)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Encabezado de la tarjeta */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 14px",
+          borderBottom: top.length ? "0.5px solid var(--line)" : "none",
+        }}
+      >
+        <div
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 9,
+            background: tone.soft,
+            color: tone.ink,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <CardIcon size={17} />
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", letterSpacing: -0.1 }}>
+            {card.title}
+          </div>
+        </div>
+        {lider && (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 3, flexShrink: 0 }}>
+            <span
+              className="font-score"
+              style={{
+                fontSize: 20,
+                fontWeight: 400,
+                color: tone.ink,
+                lineHeight: 1,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {lider.valor}
+            </span>
+            <span style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 600, letterSpacing: 0.3 }}>
+              {unit(lider.valor)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Cuerpo: top 3 de la métrica */}
+      {top.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {top.map((r, i) => {
+            const isMe = r.id === me;
+            return (
+              <div
+                key={r.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "8px 14px",
+                  background: isMe ? "var(--accent-soft)" : "transparent",
+                  borderTop: i === 0 ? "none" : "0.5px solid var(--line-2)",
+                }}
+              >
+                <span
+                  style={{
+                    width: 18,
+                    textAlign: "center",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: i === 0 ? tone.ink : "var(--ink-3)",
+                    fontVariantNumeric: "tabular-nums",
+                    flexShrink: 0,
+                  }}
+                >
+                  {MEDALLAS[i]}
+                </span>
+                <Avatar name={r.nombre} size={28} ring={i === 0 ? card.tone : null} />
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: 13,
+                    fontWeight: isMe ? 700 : 500,
+                    color: "var(--ink)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {(r.nombre || "").split(" ")[0]}
+                  {isMe && (
+                    <span
+                      style={{
+                        marginLeft: 6,
+                        fontSize: 9,
+                        color: "var(--accent-ink)",
+                        fontWeight: 700,
+                        letterSpacing: 0.4,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Tú
+                    </span>
+                  )}
+                </div>
+                <span
+                  className="font-score"
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 400,
+                    color: i === 0 ? tone.ink : "var(--ink-2)",
+                    fontVariantNumeric: "tabular-nums",
+                    flexShrink: 0,
+                  }}
+                >
+                  {r.valor}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div style={{ padding: "12px 14px", fontSize: 12, color: "var(--ink-3)" }}>
+          Aún sin datos.
+        </div>
+      )}
+    </div>
   );
 }
 
