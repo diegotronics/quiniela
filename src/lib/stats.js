@@ -41,6 +41,101 @@ export function userScoringStats(preds, partidos) {
   return { exactos, ganador, jugados };
 }
 
+// Estadísticas de la familia para la tabla de posiciones. A partir de todas las
+// predicciones (con goles) y de los partidos ya jugados, devuelve cuatro
+// rankings:
+//   - exactos:   marcadores exactos acertados por jugador.
+//   - acertados: resultados (1/X/2) acertados por jugador.
+//   - primero:   jornadas en las que el jugador quedó en primer lugar.
+//   - ultimo:    jornadas en las que el jugador quedó en último lugar.
+//
+// Una "jornada" es un día de partidos (todos los que se juegan en la misma
+// fecha de Caracas). Para cada jornada se suman los puntos de ese día por
+// jugador; el o los de mayor puntaje suman "primero" y el o los de menor suman
+// "ultimo". Solo cuentan las jornadas con al menos dos participantes y con
+// diferencia de puntos (si todos empatan no hay líder ni colero). Reutiliza el
+// `puntos_obtenidos` que ya calculó el trigger de la BD.
+export function familyScoreboard(usuarios, predicciones, partidos) {
+  const jugadores = (usuarios || []).filter((u) => !u.es_admin);
+  const idsValidos = new Set(jugadores.map((u) => u.id));
+  const byPartido = new Map((partidos || []).map((p) => [p.id, p]));
+
+  const exactos = new Map();
+  const acertados = new Map();
+
+  // Día de Caracas (ya viene en el offset de la fecha ISO) de cada partido jugado.
+  const diaDePartido = new Map();
+  for (const m of partidos || []) {
+    if (m.resultado_ingresado && m.fecha) {
+      diaDePartido.set(m.id, String(m.fecha).slice(0, 10));
+    }
+  }
+
+  // jornada (día) → Map(usuario_id → puntos de ese día)
+  const puntosPorJornada = new Map();
+
+  for (const pr of predicciones || []) {
+    if (!idsValidos.has(pr.usuario_id)) continue;
+    if (pr.goles_local == null || pr.goles_visitante == null) continue;
+    const m = byPartido.get(pr.partido_id);
+    if (!m || !m.resultado_ingresado) continue;
+
+    const exacto =
+      pr.goles_local === m.goles_local && pr.goles_visitante === m.goles_visitante;
+    const acierto =
+      Math.sign(pr.goles_local - pr.goles_visitante) ===
+      Math.sign(m.goles_local - m.goles_visitante);
+    if (exacto) exactos.set(pr.usuario_id, (exactos.get(pr.usuario_id) || 0) + 1);
+    if (acierto) acertados.set(pr.usuario_id, (acertados.get(pr.usuario_id) || 0) + 1);
+
+    const dia = diaDePartido.get(pr.partido_id);
+    if (!dia) continue;
+    let porUsuario = puntosPorJornada.get(dia);
+    if (!porUsuario) {
+      porUsuario = new Map();
+      puntosPorJornada.set(dia, porUsuario);
+    }
+    porUsuario.set(
+      pr.usuario_id,
+      (porUsuario.get(pr.usuario_id) || 0) + (pr.puntos_obtenidos || 0),
+    );
+  }
+
+  const primero = new Map();
+  const ultimo = new Map();
+  let totalJornadas = 0;
+
+  for (const porUsuario of puntosPorJornada.values()) {
+    const valores = [...porUsuario.values()];
+    if (valores.length < 2) continue;
+    const max = Math.max(...valores);
+    const min = Math.min(...valores);
+    if (max === min) continue; // todos empatan: no hay líder ni colero
+    totalJornadas += 1;
+    for (const [uid, pts] of porUsuario) {
+      if (pts === max) primero.set(uid, (primero.get(uid) || 0) + 1);
+      if (pts === min) ultimo.set(uid, (ultimo.get(uid) || 0) + 1);
+    }
+  }
+
+  const ranking = (conteo) =>
+    jugadores
+      .map((u) => ({
+        id: u.id,
+        nombre: u.nombre,
+        valor: conteo.get(u.id) || 0,
+      }))
+      .sort((a, b) => b.valor - a.valor);
+
+  return {
+    exactos: ranking(exactos),
+    acertados: ranking(acertados),
+    primero: ranking(primero),
+    ultimo: ranking(ultimo),
+    totalJornadas,
+  };
+}
+
 // Calcula la racha actual de aciertos (consecutivos correctos en partidos jugados).
 export function userStreak(preds, partidos) {
   const byPartido = new Map((partidos || []).map((p) => [p.id, p]));

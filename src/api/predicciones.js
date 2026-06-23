@@ -20,6 +20,18 @@ export async function listPuntajesGlobales() {
   return data || [];
 }
 
+// Igual que listPuntajesGlobales pero con los goles pronosticados, necesarios
+// para derivar estadísticas de la familia (marcadores exactos, resultados
+// acertados, jornadas en primer/último lugar) sin recalcular en el servidor:
+// se reutiliza el `puntos_obtenidos` que ya guardó el trigger de la BD.
+export async function listPrediccionesGlobales() {
+  const { data, error } = await supabase
+    .from("predicciones")
+    .select("usuario_id, partido_id, goles_local, goles_visitante, puntos_obtenidos");
+  if (error) throw error;
+  return data || [];
+}
+
 export async function upsertPrediccion({ usuario_id, partido_id, goles_local, goles_visitante }) {
   const { data, error } = await supabase
     .from("predicciones")
