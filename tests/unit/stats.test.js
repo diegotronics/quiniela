@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   familyScoreboard,
   partidoEnVivo,
+  partidosEnVivo,
   partidoTerminado,
   resultadosPendientes,
 } from "@/lib/stats";
@@ -60,6 +61,35 @@ describe("partidoEnVivo", () => {
   test("con varios comenzados destaca el de inicio más reciente", () => {
     const partidos = [partido("viejo", -2), partido("nuevo", -0.5)];
     expect(partidoEnVivo(partidos, AHORA)?.id).toBe("nuevo");
+  });
+});
+
+describe("partidosEnVivo", () => {
+  test("dos partidos en juego a la vez → ambos destacados (más reciente primero)", () => {
+    const partidos = [partido("a", -1), partido("b", -0.25)];
+    expect(partidosEnVivo(partidos, AHORA).map((p) => p.id)).toEqual(["b", "a"]);
+  });
+
+  test("uno en juego y otro ya terminado → solo el que sigue en juego", () => {
+    const partidos = [
+      partido("viejo", -3, { resultado_ingresado: true }),
+      partido("vivo", -1),
+    ];
+    expect(partidosEnVivo(partidos, AHORA).map((p) => p.id)).toEqual(["vivo"]);
+  });
+
+  test("ninguno en juego → conserva el último terminado como finalizado", () => {
+    const partidos = [
+      partido("a", -3, { resultado_ingresado: true }),
+      partido("b", +2),
+    ];
+    expect(partidosEnVivo(partidos, AHORA).map((p) => p.id)).toEqual(["a"]);
+  });
+
+  test("sin partidos comenzados → arreglo vacío", () => {
+    expect(partidosEnVivo([partido("x", +5)], AHORA)).toEqual([]);
+    expect(partidosEnVivo([], AHORA)).toEqual([]);
+    expect(partidosEnVivo(null, AHORA)).toEqual([]);
   });
 });
 

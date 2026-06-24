@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buscarEvento } from "@/hooks/useMarcadorEnVivo";
+import { buscarEvento, extraerGoleadores } from "@/hooks/useMarcadorEnVivo";
 
 // Evento con la forma del scoreboard de ESPN, reducido a lo que se usa.
 function evento({ home, away, homeScore, awayScore, state = "in" }) {
@@ -53,5 +53,61 @@ describe("buscarEvento", () => {
   test("ignora eventos malformados sin competidores", () => {
     const events = [{ competitions: [{}] }, {}];
     expect(buscarEvento(events, partido)).toBeNull();
+  });
+});
+
+describe("extraerGoleadores", () => {
+  const local = { id: "10", team: { id: "10" } };
+  const visitante = { id: "20", team: { id: "20" } };
+
+  function gol({ teamId, nombre, clock = "23'", type = "Goal", ownGoal, penaltyKick }) {
+    return {
+      scoringPlay: true,
+      type: { text: type },
+      clock: { displayValue: clock },
+      team: { id: teamId },
+      athletesInvolved: [{ shortName: nombre }],
+      ownGoal,
+      penaltyKick,
+    };
+  }
+
+  test("reparte los goles por equipo y limpia el minuto", () => {
+    const comp = {
+      details: [
+        gol({ teamId: "10", nombre: "L. Messi", clock: "23'" }),
+        gol({ teamId: "20", nombre: "K. Mbappé", clock: "45'+2'" }),
+        gol({ teamId: "10", nombre: "Á. Di María", clock: "78'" }),
+      ],
+    };
+    const r = extraerGoleadores(comp, local, visitante);
+    expect(r.local.map((g) => g.nombre)).toEqual(["L. Messi", "Á. Di María"]);
+    expect(r.visitante.map((g) => g.nombre)).toEqual(["K. Mbappé"]);
+    expect(r.local[0].minuto).toBe("23");
+    expect(r.visitante[0].minuto).toBe("45+2");
+  });
+
+  test("marca penales y autogoles", () => {
+    const comp = {
+      details: [
+        gol({ teamId: "10", nombre: "Penalista", type: "Penalty - Scored", penaltyKick: true }),
+        gol({ teamId: "20", nombre: "Despistado", type: "Own Goal", ownGoal: true }),
+      ],
+    };
+    const r = extraerGoleadores(comp, local, visitante);
+    expect(r.local[0].penal).toBe(true);
+    expect(r.visitante[0].autogol).toBe(true);
+  });
+
+  test("ignora jugadas que no son goles y sin detalles devuelve listas vacías", () => {
+    const comp = {
+      details: [
+        { scoringPlay: false, athletesInvolved: [{ shortName: "Nadie" }] },
+        { scoringPlay: true, team: { id: "10" }, athletesInvolved: [] },
+      ],
+    };
+    const r = extraerGoleadores(comp, local, visitante);
+    expect(r).toEqual({ local: [], visitante: [] });
+    expect(extraerGoleadores({}, local, visitante)).toEqual({ local: [], visitante: [] });
   });
 });
