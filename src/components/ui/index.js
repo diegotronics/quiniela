@@ -30,3 +30,4 @@ export { RankRow } from "./RankRow.jsx";
 export { LiveBadge } from "./LiveBadge.jsx";
 export { StatTile } from "./StatTile.jsx";
 export { SearchSelect } from "./SearchSelect.jsx";
+export { Goleadores } from "./Goleadores.jsx";

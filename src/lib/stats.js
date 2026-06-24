@@ -205,29 +205,39 @@ const DURACION_EN_VIVO_MS = 150 * 60 * 1000;
 // partidos por jugar (fin del torneo): un día y se despide la tarjeta.
 const VENTANA_FINALIZADO_MS = 24 * 60 * 60 * 1000;
 
-// Partido destacado de la sección "en vivo": el que comenzó más
-// recientemente. Mientras está en juego se muestra en vivo; al terminar se
-// mantiene (como "Finalizado") hasta que comience el próximo partido, que lo
-// reemplaza automáticamente por ser el de inicio más reciente.
-export function partidoEnVivo(partidos, ahora = Date.now()) {
-  const ultimo = (partidos || [])
+// Partidos destacados de la sección "en vivo". Puede haber varios a la vez
+// cuando dos o más comienzan en horarios solapados. Mientras están en juego se
+// muestran todos en vivo (ordenados del más reciente al más antiguo). Cuando
+// ninguno está en juego, el último que terminó se mantiene como "Finalizado"
+// hasta que comience el próximo partido del calendario, que lo reemplaza.
+export function partidosEnVivo(partidos, ahora = Date.now()) {
+  const empezados = (partidos || [])
     .filter((p) => {
       const inicio = ts(p.fecha);
       return Number.isFinite(inicio) && inicio <= ahora;
     })
     // El que comenzó más recientemente (mayor timestamp) va primero.
-    .sort((a, b) => ts(b.fecha) - ts(a.fecha))[0];
-  if (!ultimo) return undefined;
+    .sort((a, b) => ts(b.fecha) - ts(a.fecha));
 
-  if (!partidoTerminado(ultimo, ahora)) return ultimo;
+  // Todos los que siguen en juego: la sección muestra una tarjeta por cada uno.
+  const enJuego = empezados.filter((p) => !partidoTerminado(p, ahora));
+  if (enJuego.length) return enJuego;
 
-  // Terminado: sigue destacado hasta que arranque el siguiente partido del
-  // calendario, o hasta agotar la ventana si era el último del torneo.
+  // Ninguno en juego: el último en terminar sigue destacado hasta que arranque
+  // el siguiente partido, o hasta agotar la ventana si era el último del torneo.
+  const ultimo = empezados[0];
+  if (!ultimo) return [];
   const hayProximo = (partidos || []).some((p) => ts(p.fecha) > ahora);
   if (hayProximo || ahora - ts(ultimo.fecha) <= VENTANA_FINALIZADO_MS) {
-    return ultimo;
+    return [ultimo];
   }
-  return undefined;
+  return [];
+}
+
+// Variante de un solo partido destacado, conservada para usos que solo
+// necesitan el más reciente. Devuelve `undefined` si no hay ninguno.
+export function partidoEnVivo(partidos, ahora = Date.now()) {
+  return partidosEnVivo(partidos, ahora)[0];
 }
 
 // Un partido destacado se considera terminado cuando ya tiene resultado

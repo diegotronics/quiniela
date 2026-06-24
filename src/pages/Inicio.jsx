@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useCountUp, usePrevious } from '@/hooks/useCountUp'
+import { useCountUp } from '@/hooks/useCountUp'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useFases } from '@/hooks/useFases'
 import { useAllPartidos } from '@/hooks/useAllPartidos'
 import { usePrediccionesUsuario } from '@/hooks/usePredicciones'
-import { useMarcadorEnVivo } from '@/hooks/useMarcadorEnVivo'
-import {
-  useAutoSyncFinalEnVivo,
-  useOnResultadosSincronizados,
-} from '@/hooks/useAutoSyncResultado'
+import { useOnResultadosSincronizados } from '@/hooks/useAutoSyncResultado'
 import { useUsuariosPublic } from '@/hooks/useUsuarios'
 import { useAsync } from '@/hooks/useAsync'
 import { listPuntajesGlobales } from '@/api/predicciones'
@@ -26,7 +22,6 @@ import {
   Flag,
   HeaderIconButton,
   Icon,
-  MatchCard,
   MobileHeader,
   MobileShell,
   Pill,
@@ -42,13 +37,13 @@ import {
   userScoringStats,
   userStreak,
   proximoPartido,
-  partidoEnVivo,
-  partidoTerminado,
+  partidosEnVivo,
 } from '@/lib/stats'
 import { code, GROUP_NAME, GROUP_MOTTO } from '@/lib/constants'
 import { formatearFechaHora } from '@/lib/fechas'
 import { apuestasEspecialesCerradas } from '@/lib/apuestasEspeciales'
 import { ChatPreview } from '@/components/chat/ChatPreview'
+import { LiveMatchCard } from '@/components/LiveMatchCard'
 import { BannerPredicciones } from '@/components/BannerPredicciones'
 import { TOTAL_PARTIDOS_GRUPOS, countPredicciones } from '@/lib/onboarding'
 
@@ -114,7 +109,10 @@ export default function Inicio() {
   // exista el partido final).
   const rounds = useKnockoutRounds(fases, partidos)
 
-  const live = useMemo(() => partidoEnVivo(partidos, ahora), [partidos, ahora])
+  const liveMatches = useMemo(
+    () => partidosEnVivo(partidos, ahora),
+    [partidos, ahora],
+  )
   const next = useMemo(
     () => proximoPartido(partidos, predicciones, ahora),
     [partidos, predicciones, ahora],
@@ -158,50 +156,14 @@ export default function Inicio() {
   const myPtsDisplay = useCountUp(myPts, { duration: 800 })
   const myRankDisplay = useCountUp(me?.rank || 0, { duration: 600 })
 
-  // Marcador real consultado a ESPN mientras el partido está en juego; si la
-  // fuente no responde se cae al marcador guardado en la BD (normalmente null
-  // hasta el final, en cuyo caso la tarjeta muestra "vs").
-  const { marcador } = useMarcadorEnVivo(live)
-  // Con datos de ESPN su estado manda (cubre prórrogas y penales más allá de
-  // la ventana); sin ellos decide la BD o el vencimiento de la ventana.
-  const liveFinalizado = Boolean(
-    live && (marcador ? marcador.finalizado : partidoTerminado(live, ahora)),
-  )
-
-  // Al pitazo final del partido en vivo se guarda el resultado de una vez;
-  // cada sincronización (la dispare quien la dispare) refresca estos datos.
-  useAutoSyncFinalEnVivo(live, marcador)
+  // Cada tarjeta en vivo (puede haber varias) consulta su propio marcador a
+  // ESPN y, al pitazo final, dispara la sincronización del resultado. Aquí solo
+  // se escucha el anuncio global para refrescar partidos y puntajes en pantalla.
   const onResultadoSincronizado = useCallback(() => {
     refreshPartidos().catch(() => {})
     refreshPuntajes().catch(() => {})
   }, [refreshPartidos, refreshPuntajes])
   useOnResultadosSincronizados(onResultadoSincronizado)
-
-  // Detección de cambio de gol en partido live
-  const liveLocal = marcador?.golesLocal ?? live?.goles_local
-  const liveVisitante = marcador?.golesVisitante ?? live?.goles_visitante
-  const prevLiveLocal = usePrevious(liveLocal)
-  const prevLiveVisitante = usePrevious(liveVisitante)
-  const [pulseLocal, setPulseLocal] = useState(0)
-  const [pulseVisitante, setPulseVisitante] = useState(0)
-  useEffect(() => {
-    if (
-      prevLiveLocal != null &&
-      liveLocal != null &&
-      liveLocal !== prevLiveLocal
-    ) {
-      setPulseLocal((k) => k + 1)
-    }
-  }, [liveLocal, prevLiveLocal])
-  useEffect(() => {
-    if (
-      prevLiveVisitante != null &&
-      liveVisitante != null &&
-      liveVisitante !== prevLiveVisitante
-    ) {
-      setPulseVisitante((k) => k + 1)
-    }
-  }, [liveVisitante, prevLiveVisitante])
 
   return (
     <MobileShell
@@ -557,27 +519,19 @@ export default function Inicio() {
           </div>
         </Card>
 
-        {/* Partido en vivo */}
-        {live && (
-          <MatchCard
-            variant="live"
-            match={live}
-            pred={predicciones[live.id]}
+        {/* Partidos en vivo (puede haber varios a la vez) */}
+        {liveMatches.map((m) => (
+          <LiveMatchCard
+            key={m.id}
+            match={m}
+            pred={predicciones[m.id]}
             rightLabel={
-              live.grupo
-                ? `Grupo ${live.grupo}`
-                : faseLabel(fases, live.fase_id)
+              m.grupo ? `Grupo ${m.grupo}` : faseLabel(fases, m.fase_id)
             }
-            liveLocal={liveLocal}
-            liveVisitante={liveVisitante}
-            liveMinute={marcador?.minuto}
-            halftime={marcador?.medioTiempo}
-            finished={liveFinalizado}
-            pulseLocal={pulseLocal}
-            pulseVisitante={pulseVisitante}
-            onClick={() => navigate(`/app/partido/${live.id}`)}
+            ahora={ahora}
+            onClick={() => navigate(`/app/partido/${m.id}`)}
           />
-        )}
+        ))}
 
         {/* Próximo pronóstico */}
         {next && (

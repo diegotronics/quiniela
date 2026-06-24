@@ -3,6 +3,7 @@ import { Pill } from './Pill.jsx'
 import { Icon } from './Icon.jsx'
 import { TeamRow } from './TeamRow.jsx'
 import { LiveBadge } from './LiveBadge.jsx'
+import { Goleadores } from './Goleadores.jsx'
 import { formatearHoraCorta } from '@/lib/fechas'
 
 function winnerSideOf(m) {
@@ -252,6 +253,7 @@ function MatchCardLive({
   finished = false,
   pulseLocal = 0,
   pulseVisitante = 0,
+  goleadores,
   onClick,
 }) {
   return (
@@ -376,6 +378,12 @@ function MatchCardLive({
           truncate
         />
       </div>
+      {goleadores && (
+        <Goleadores
+          local={goleadores.local}
+          visitante={goleadores.visitante}
+        />
+      )}
       <div
         style={{
           marginTop: 12,

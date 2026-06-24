@@ -13,12 +13,19 @@ import {
   Card,
   EmptyState,
   Flag,
+  Goleadores,
   Icon,
+  LiveBadge,
   Pill,
   ScoreStepper,
   SkeletonMatchHeader,
   SkeletonText,
 } from '@/components/ui'
+import { useMarcadorEnVivo } from '@/hooks/useMarcadorEnVivo'
+import {
+  useAutoSyncFinalEnVivo,
+  useOnResultadosSincronizados,
+} from '@/hooks/useAutoSyncResultado'
 import { code } from '@/lib/constants'
 import { formatearFechaHora } from '@/lib/fechas'
 import { pronosticoCerrado } from '@/lib/pronosticos'
@@ -56,6 +63,15 @@ export default function MatchDetail() {
     () => fases.find((f) => f.id === partido?.fase_id),
     [fases, partido],
   )
+
+  // Marcador en tiempo real (ESPN) mientras el partido está en juego, con sus
+  // goleadores. Al pitazo final dispara la sincronización del resultado, igual
+  // que la tarjeta del Inicio.
+  const { marcador } = useMarcadorEnVivo(partido)
+  useAutoSyncFinalEnVivo(partido, marcador)
+  // Al sincronizarse el resultado oficial, recarga el partido para mostrar el
+  // marcador final y los puntos obtenidos sin necesidad de recargar la página.
+  useOnResultadosSincronizados(refreshPartido)
 
   // Reloj que avanza cada minuto para que el cierre del pronóstico se refleje
   // en vivo si la pantalla queda abierta justo cuando cruza la hora límite.
@@ -191,6 +207,11 @@ export default function MatchDetail() {
   }
 
   const isFinal = partido.resultado_ingresado
+  // Marcador en vivo de ESPN, mientras la BD aún no tiene el resultado oficial.
+  // Cubre el caso en que ESPN ya dio el partido por terminado pero todavía no se
+  // sincronizó: se muestra como "Finalizado" con el marcador en tiempo real.
+  const enVivo =
+    !isFinal && marcador && marcador.golesLocal != null ? marcador : null
   const picksByUser = new Map(
     (picksFamilia || []).map((p) => [p.usuario_id, p]),
   )
@@ -414,6 +435,51 @@ export default function MatchDetail() {
                       </span>
                     </span>
                   </>
+                ) : enVivo ? (
+                  <>
+                    {enVivo.finalizado ? (
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          padding: '4px 10px',
+                          borderRadius: 999,
+                          background: 'rgba(255,255,255,0.1)',
+                          color: 'var(--header-ink)',
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: 0.4,
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Finalizado
+                      </div>
+                    ) : (
+                      <LiveBadge
+                        variant="solid"
+                        label={enVivo.medioTiempo ? 'Medio tiempo' : 'En vivo'}
+                        minute={enVivo.medioTiempo ? null : enVivo.minuto}
+                      />
+                    )}
+                    <span
+                      className="mono"
+                      style={{
+                        fontSize: 44,
+                        fontWeight: 700,
+                        letterSpacing: -2,
+                        color: 'var(--header-ink)',
+                        lineHeight: 1,
+                        display: 'inline-flex',
+                        alignItems: 'baseline',
+                        gap: 6,
+                      }}
+                    >
+                      <span>{enVivo.golesLocal}</span>
+                      <span style={{ opacity: 0.45 }}>–</span>
+                      <span>{enVivo.golesVisitante}</span>
+                    </span>
+                  </>
                 ) : (
                   <>
                     <div
@@ -441,6 +507,16 @@ export default function MatchDetail() {
             </div>
           )
         })()}
+
+        {enVivo?.goleadores && (
+          <div style={{ padding: '0 24px' }}>
+            <Goleadores
+              local={enVivo.goleadores.local}
+              visitante={enVivo.goleadores.visitante}
+              muted="oklch(0.78 0.02 60)"
+            />
+          </div>
+        )}
       </div>
 
       {/* Mi pronóstico / Editor */}

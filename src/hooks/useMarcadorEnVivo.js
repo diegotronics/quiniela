@@ -34,14 +34,64 @@ export function buscarEvento(events, partido) {
   return null;
 }
 
+// Nombre más compacto disponible para un goleador (apellido si ESPN lo trae).
+function nombreGoleador(at) {
+  return at?.shortName || at?.displayName || at?.fullName || null;
+}
+
+/**
+ * Goleadores de un partido a partir del array `details` del scoreboard de
+ * ESPN, separados por equipo. Cada gol queda atribuido al equipo cuyo marcador
+ * sube (el `team` de la jugada), así que la lista siempre cuadra con el
+ * resultado; los autogoles y penales se marcan aparte. Exportada para tests.
+ */
+export function extraerGoleadores(comp, local, visitante) {
+  const vacio = { local: [], visitante: [] };
+  const details = comp?.details;
+  if (!Array.isArray(details)) return vacio;
+
+  const localId = local?.id ?? local?.team?.id;
+  const visitanteId = visitante?.id ?? visitante?.team?.id;
+  const golesLocal = [];
+  const golesVisitante = [];
+
+  for (const d of details) {
+    if (!d?.scoringPlay) continue;
+    const nombre = nombreGoleador(d.athletesInvolved?.[0]);
+    if (!nombre) continue;
+
+    const tipo = (d.type?.text || "").toLowerCase();
+    // displayValue viene como "23'" o "45'+2'"; se guarda sin apóstrofo.
+    const minuto =
+      typeof d.clock?.displayValue === "string" && d.clock.displayValue.trim()
+        ? d.clock.displayValue.replace(/'/g, "").trim()
+        : null;
+    const gol = {
+      nombre,
+      minuto,
+      penal: Boolean(d.penaltyKick) || tipo.includes("penalty"),
+      autogol: Boolean(d.ownGoal) || tipo.includes("own goal"),
+    };
+
+    const teamId = d.team?.id;
+    if (teamId != null && String(teamId) === String(visitanteId)) {
+      golesVisitante.push(gol);
+    } else {
+      golesLocal.push(gol);
+    }
+  }
+
+  return { local: golesLocal, visitante: golesVisitante };
+}
+
 /**
  * Marcador en tiempo real de un partido "en vivo", consultado directamente
  * al scoreboard público de ESPN (la misma fuente que /api/sync-partidos).
  *
  * Devuelve `{ marcador }` donde marcador es
- * `{ golesLocal, golesVisitante, minuto, medioTiempo, finalizado }` o `null`
- * mientras no haya datos (antes del saque, sin red, o si ESPN no reconoce el
- * partido).
+ * `{ golesLocal, golesVisitante, minuto, medioTiempo, finalizado, goleadores }`
+ * (con `goleadores = { local, visitante }`) o `null` mientras no haya datos
+ * (antes del saque, sin red, o si ESPN no reconoce el partido).
  */
 export function useMarcadorEnVivo(partido) {
   const [marcador, setMarcador] = useState(null);
@@ -94,7 +144,16 @@ export function useMarcadorEnVivo(partido) {
             ? clock.replace(/'/g, "").trim()
             : null;
 
-        setMarcador({ golesLocal, golesVisitante, minuto, medioTiempo, finalizado });
+        const goleadores = extraerGoleadores(hit.comp, hit.local, hit.visitante);
+
+        setMarcador({
+          golesLocal,
+          golesVisitante,
+          minuto,
+          medioTiempo,
+          finalizado,
+          goleadores,
+        });
         if (finalizado && timer) {
           clearInterval(timer);
           timer = null;
