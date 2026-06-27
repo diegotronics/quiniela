@@ -152,6 +152,11 @@ export default function Inicio() {
   const ratio =
     liderPts > 0 ? Math.min(100, Math.round((myPts / liderPts) * 100)) : 0
   const diff = (lider?.puntos || 0) - myPts
+  // Cuando el usuario es el líder, la ventaja sobre el 2° es el dato útil:
+  // sustituye al "100%" decorativo de la barra y da contexto de qué tan
+  // cómodo es el liderato.
+  const segundo = me && lider && me.id === lider.id ? ranking[1] : null
+  const ventaja = segundo ? (lider?.puntos || 0) - (segundo?.puntos || 0) : null
 
   const myPtsDisplay = useCountUp(myPts, { duration: 800 })
   const myRankDisplay = useCountUp(me?.rank || 0, { duration: 600 })
@@ -333,7 +338,8 @@ export default function Inicio() {
               {stats.jugados > 0 && (
                 <div style={{ marginTop: 10 }}>
                   <Pill tone="accent">
-                    {stats.exactos} exactos · {stats.ganador} ganadores
+                    {stats.ganador} {stats.ganador === 1 ? 'resultado' : 'resultados'} ·{' '}
+                    {stats.exactos} {stats.exactos === 1 ? 'exacto' : 'exactos'}
                   </Pill>
                 </div>
               )}
@@ -423,7 +429,11 @@ export default function Inicio() {
                   letterSpacing: -0.2,
                 }}
               >
-                {me?.id === lider?.id ? '100%' : `${ratio}%`}
+                {me?.id === lider?.id
+                  ? ventaja != null && ventaja > 0
+                    ? `+${ventaja} pts`
+                    : '100%'
+                  : `${ratio}%`}
               </span>
               <span
                 style={{
@@ -432,7 +442,11 @@ export default function Inicio() {
                   letterSpacing: 0.5,
                 }}
               >
-                {me?.id === lider?.id ? 'Eres el líder' : 'del líder'}
+                {me?.id === lider?.id
+                  ? ventaja != null && ventaja > 0
+                    ? 'sobre el 2°'
+                    : 'Eres el líder'
+                  : 'del líder'}
               </span>
             </div>
             <div
@@ -484,37 +498,72 @@ export default function Inicio() {
                 color: 'var(--ink-3)',
               }}
             >
-              {lider && (
-                <>
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '2px 8px 2px 2px',
-                      borderRadius: 999,
-                      background: 'var(--gold-soft)',
-                      border: '1px solid var(--gold)',
-                      color: 'var(--gold-ink)',
-                      fontWeight: 700,
-                    }}
-                  >
-                    <Avatar name={lider.nombre} size={18} ring="gold" />
-                    {(lider.nombre || '').split(' ')[0]}
-                  </span>
-                  <span>lidera</span>
-                </>
+              {/* Si eres el líder no tiene sentido mostrar tu propio nombre
+                  con "lidera": mostramos a quien te persigue (el 2°). Si no
+                  hay 2°, un texto simple. Para el resto, el líder. */}
+              {me?.id === lider?.id ? (
+                segundo ? (
+                  <>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '2px 8px 2px 2px',
+                        borderRadius: 999,
+                        background: 'var(--line-2)',
+                        border: '1px solid var(--line)',
+                        color: 'var(--ink-2)',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <Avatar name={segundo.nombre} size={18} />
+                      {(segundo.nombre || '').split(' ')[0]}
+                    </span>
+                    <span>te persigue</span>
+                  </>
+                ) : (
+                  <span>Lideras la quiniela</span>
+                )
+              ) : (
+                lider && (
+                  <>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '2px 8px 2px 2px',
+                        borderRadius: 999,
+                        background: 'var(--gold-soft)',
+                        border: '1px solid var(--gold)',
+                        color: 'var(--gold-ink)',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <Avatar name={lider.nombre} size={18} ring="gold" />
+                      {(lider.nombre || '').split(' ')[0]}
+                    </span>
+                    <span>lidera</span>
+                  </>
+                )
               )}
             </span>
             <span
               style={{
-                color: pendientes > 0 ? 'var(--coral-ink)' : 'var(--ink-3)',
-                fontWeight: pendientes > 0 ? 600 : 400,
+                // El coral de urgencia se reserva para la recta final
+                // (3 partidos o menos); con más, un tono neutro.
+                color: pendientes > 0 && pendientes <= 3
+                  ? 'var(--coral-ink)'
+                  : 'var(--ink-3)',
+                fontWeight: pendientes > 0 && pendientes <= 3 ? 600 : 400,
               }}
             >
-              {pendientes > 0
-                ? `Quedan ${pendientes} partidos`
-                : 'Torneo cerrado'}
+              {pendientes === 0
+                ? 'Torneo cerrado'
+                : pendientes === 1
+                  ? 'Queda 1 partido'
+                  : `Quedan ${pendientes} partidos`}
             </span>
           </div>
         </Card>
