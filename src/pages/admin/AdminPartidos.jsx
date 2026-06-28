@@ -49,6 +49,7 @@ export default function AdminPartidos() {
 
   const [selected, setSelected] = useState(null)
   const [draft, setDraft] = useState({ local: 0, visitante: 0 })
+  const [ganador, setGanador] = useState(null)
   const [fechaDraft, setFechaDraft] = useState('')
   const [busy, setBusy] = useState(false)
   const [busyFecha, setBusyFecha] = useState(false)
@@ -87,8 +88,15 @@ export default function AdminPartidos() {
       local: p.goles_local ?? 0,
       visitante: p.goles_visitante ?? 0,
     })
+    setGanador(p.ganador ?? null)
     setFechaDraft(aInputDatetimeCaracas(p.fecha))
   }
+
+  // En eliminatoria, un empate se define por penales: hay que registrar qué
+  // equipo avanzó para que el cuadro se arme solo. En grupos no aplica.
+  const esEliminatoria = selected && selected.fase_id !== 'grupos'
+  const esEmpate = draft.local === draft.visitante
+  const requiereGanador = !!esEliminatoria && esEmpate
 
   const guardarFecha = async () => {
     if (!selected) return
@@ -111,9 +119,20 @@ export default function AdminPartidos() {
 
   const guardar = async () => {
     if (!selected) return
+    if (requiereGanador && !ganador) {
+      alert('Empate en eliminatoria: indica qué equipo avanzó (penales).')
+      return
+    }
     setBusy(true)
     try {
-      await setResultadoPartido(selected.id, draft.local, draft.visitante)
+      // El ganador solo se guarda en eliminatoria empatada; en cualquier otro
+      // caso va null y el avance se deduce del marcador.
+      await setResultadoPartido(
+        selected.id,
+        draft.local,
+        draft.visitante,
+        requiereGanador ? ganador : null,
+      )
       await refresh()
       setSelected(null)
     } catch (e) {
@@ -494,6 +513,64 @@ export default function AdminPartidos() {
             />
           </div>
 
+          {/* Empate en eliminatoria: registrar quién avanzó (penales) */}
+          {requiereGanador && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: 16,
+                borderRadius: 'var(--r-lg)',
+                background: 'var(--surface-2)',
+                border: '0.5px solid var(--line)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 12,
+                  color: 'var(--ink-3)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginBottom: 10,
+                  fontWeight: 600,
+                }}
+              >
+                <Icon.Lock /> Empate: ¿quién avanzó por penales?
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {[selected.equipo_local, selected.equipo_visitante].map((eq) => {
+                  const on = ganador === eq
+                  return (
+                    <button
+                      key={eq}
+                      onClick={() => setGanador(eq)}
+                      style={{
+                        flex: '1 1 140px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        background: on ? 'var(--ink)' : 'var(--surface)',
+                        color: on ? 'var(--bg)' : 'var(--ink-2)',
+                        border: on ? 'none' : '0.5px solid var(--line)',
+                        fontWeight: 600,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Flag code={code(eq)} w={22} h={16} /> {eq}
+                    </button>
+                  )
+                })}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 8 }}>
+                El equipo elegido avanza en el cuadro a la siguiente fase.
+              </div>
+            </div>
+          )}
+
           <div
             style={{
               marginTop: 14,
@@ -528,7 +605,10 @@ export default function AdminPartidos() {
               <Button variant="ghost" onClick={() => setSelected(null)}>
                 Cancelar
               </Button>
-              <Button onClick={guardar} disabled={busy}>
+              <Button
+                onClick={guardar}
+                disabled={busy || (requiereGanador && !ganador)}
+              >
                 <Icon.Check /> {busy ? 'Guardando…' : 'Guardar resultado'}
               </Button>
             </div>
