@@ -78,34 +78,48 @@ export const TEAMS_MUNDIAL_2026 = [
 ];
 
 // ------------------------------------------------------------
-// Apuesta especial "Sorpresa del Mundial": selección revelación + hasta
-// qué fase llega. Se guarda como un único texto canónico para que el
-// cálculo de puntos del servidor (comparación case-insensitive) coincida
-// con el resultado oficial que carga el admin.
+// Apuesta especial "Se queda en semifinales": el jugador elige un equipo
+// que llegará a semifinales pero no a la final, es decir, que termina 3.º o
+// 4.º. El resultado oficial son los dos perdedores de las semifinales; el
+// jugador acierta si su equipo es cualquiera de los dos. Ambos se guardan en
+// un único texto canónico separados por SEMIFINAL_SEP para que el cálculo de
+// puntos del servidor (comparación case-insensitive) coincida.
 // ------------------------------------------------------------
-export const SORPRESA_FASES = [
-  "Octavos de final",
-  "Cuartos de final",
-  "Semifinal",
-  "Final",
-];
+export const SEMIFINAL_SEP = " · ";
 
+// Formato anterior de la apuesta "Sorpresa" ("Equipo — Fase"), que se tolera
+// al precargar picks viejos en el nuevo selector de un solo equipo.
 const SORPRESA_SEP = " — ";
 
-// Construye el valor canónico: "Selección — Fase". Devuelve "" si falta algo.
-export function formatSorpresa(equipo, fase) {
-  if (!equipo || !fase) return "";
-  return `${equipo}${SORPRESA_SEP}${fase}`;
+// Combina los dos semifinalistas eliminados en el valor canónico. Devuelve ""
+// si no hay ninguno.
+export function formatSemifinalistas(a, b) {
+  return [a, b]
+    .map((s) => (s || "").trim())
+    .filter(Boolean)
+    .join(SEMIFINAL_SEP);
 }
 
-// Descompone un valor guardado en { equipo, fase }. Tolera datos antiguos
-// en texto libre (sin separador): los devuelve como `equipo` y `fase` vacía.
-export function parseSorpresa(value) {
-  if (!value) return { equipo: "", fase: "" };
-  const idx = value.indexOf(SORPRESA_SEP);
-  if (idx === -1) return { equipo: value.trim(), fase: "" };
-  return {
-    equipo: value.slice(0, idx).trim(),
-    fase: value.slice(idx + SORPRESA_SEP.length).trim(),
-  };
+// Descompone un resultado oficial guardado en la lista de equipos.
+export function parseSemifinalistas(value) {
+  if (!value) return [];
+  return value
+    .split(SEMIFINAL_SEP)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+// True si el pick del jugador (un equipo) coincide con alguno de los
+// semifinalistas eliminados del resultado oficial.
+export function aciertaSemifinalista(pick, oficial) {
+  if (!pick || !oficial) return false;
+  const p = pick.toString().trim().toLowerCase();
+  return parseSemifinalistas(oficial).some((t) => t.toLowerCase() === p);
+}
+
+// Extrae solo el nombre del equipo de un pick, tolerando el formato anterior
+// "Equipo — Fase", para precargarlo en el selector de un solo equipo.
+export function soloEquipoSemifinalista(value) {
+  if (!value) return "";
+  return value.split(SORPRESA_SEP)[0].split(SEMIFINAL_SEP)[0].trim();
 }

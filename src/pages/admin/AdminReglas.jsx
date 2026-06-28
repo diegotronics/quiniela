@@ -9,9 +9,8 @@ import { Button, Card, Flag, Icon, Pill, SearchSelect, Skeleton } from "@/compon
 import {
   FASES_INFO,
   code,
-  formatSorpresa,
-  parseSorpresa,
-  SORPRESA_FASES,
+  formatSemifinalistas,
+  parseSemifinalistas,
   TEAMS_MUNDIAL_2026,
 } from "@/lib/constants";
 import { GOLEADOR_OPTIONS } from "@/lib/jugadores";
@@ -172,8 +171,8 @@ function ApuestasEspecialesAdminCard() {
             onSave={refresh}
           />
           <CategoriaRow
-            label="Sorpresa"
-            hint="Selección revelación y hasta qué fase llega."
+            label="Se queda en semifinales"
+            hint="Los dos equipos que pierden en semifinales (3.º y 4.º puesto)."
             ptsKey="pts_sorpresa"
             resultKey="sorpresa"
             kind="sorpresa"
@@ -458,7 +457,7 @@ function CategoriaRow({ label, hint, ptsKey, resultKey, kind, config, onSave, la
             />
           </div>
         ) : kind === "sorpresa" ? (
-          <SorpresaResultSelect
+          <SemifinalistasResultSelect
             value={resultado}
             onChange={setResultado}
             disabled={busy}
@@ -500,54 +499,57 @@ const teamSelectStyle = {
   outline: "none",
 };
 
-// Resultado oficial de la "Sorpresa": selección revelación + fase, combinados
-// en el mismo valor canónico que usa la apuesta del usuario.
-function SorpresaResultSelect({ value, onChange, disabled }) {
-  const [equipo, setEquipo] = useState(() => parseSorpresa(value).equipo);
-  const [fase, setFase] = useState(() => parseSorpresa(value).fase);
+// Resultado oficial de "Se queda en semifinales": los dos equipos que pierden
+// en semifinales (3.º y 4.º puesto), combinados en el mismo valor canónico que
+// compara la apuesta del usuario.
+function SemifinalistasResultSelect({ value, onChange, disabled }) {
+  const parsed = parseSemifinalistas(value);
+  const [a, setA] = useState(parsed[0] || "");
+  const [b, setB] = useState(parsed[1] || "");
 
   useEffect(() => {
-    const parsed = parseSorpresa(value);
-    if (
-      formatSorpresa(parsed.equipo, parsed.fase) !== formatSorpresa(equipo, fase)
-    ) {
-      setEquipo(parsed.equipo);
-      setFase(parsed.fase);
+    const p = parseSemifinalistas(value);
+    if (formatSemifinalistas(p[0], p[1]) !== formatSemifinalistas(a, b)) {
+      setA(p[0] || "");
+      setB(p[1] || "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  const setParte = (nextEquipo, nextFase) => {
-    setEquipo(nextEquipo);
-    setFase(nextFase);
-    onChange(formatSorpresa(nextEquipo, nextFase));
+  const setParte = (nextA, nextB) => {
+    setA(nextA);
+    setB(nextB);
+    onChange(formatSemifinalistas(nextA, nextB));
   };
+
+  const opcionesPara = (otro) =>
+    TEAMS_MUNDIAL_2026.filter((t) => t !== otro);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 200px", minWidth: 180 }}>
       <select
-        value={equipo}
-        onChange={(e) => setParte(e.target.value, fase)}
+        value={a}
+        onChange={(e) => setParte(e.target.value, b)}
         disabled={disabled}
         style={teamSelectStyle}
       >
-        <option value="">— Sin selección —</option>
-        {TEAMS_MUNDIAL_2026.map((t) => (
+        <option value="">— Semifinalista 1 —</option>
+        {opcionesPara(b).map((t) => (
           <option key={t} value={t}>
             {t}
           </option>
         ))}
       </select>
       <select
-        value={fase}
-        onChange={(e) => setParte(equipo, e.target.value)}
+        value={b}
+        onChange={(e) => setParte(a, e.target.value)}
         disabled={disabled}
         style={teamSelectStyle}
       >
-        <option value="">— Sin fase —</option>
-        {SORPRESA_FASES.map((f) => (
-          <option key={f} value={f}>
-            {f}
+        <option value="">— Semifinalista 2 —</option>
+        {opcionesPara(a).map((t) => (
+          <option key={t} value={t}>
+            {t}
           </option>
         ))}
       </select>
