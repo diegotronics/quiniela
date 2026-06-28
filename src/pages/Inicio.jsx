@@ -577,6 +577,7 @@ export default function Inicio() {
             rightLabel={
               m.grupo ? `Grupo ${m.grupo}` : faseLabel(fases, m.fase_id)
             }
+            fase={fases.find((f) => f.id === m.fase_id)}
             ahora={ahora}
             onClick={() => navigate(`/app/partido/${m.id}`)}
           />

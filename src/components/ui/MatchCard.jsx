@@ -92,6 +92,72 @@ function hour(iso) {
 }
 
 /**
+ * Leyenda de puntos en juego para la tarjeta en vivo: recuerda cuántos puntos
+ * otorga el resultado exacto y cuántos el acierto del ganador, según la fase.
+ */
+function LivePointsLegend({ ptsExacto, ptsGanador }) {
+  if (ptsExacto == null && ptsGanador == null) return null
+
+  const chip = (icon, label, pts, gold) => (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 5,
+        padding: '4px 10px',
+        borderRadius: 999,
+        background: gold ? 'rgba(245,200,90,0.16)' : 'rgba(255,255,255,0.1)',
+        border: `1px solid ${
+          gold ? 'rgba(245,200,90,0.42)' : 'rgba(255,255,255,0.18)'
+        }`,
+        color: gold ? 'var(--gold)' : 'rgba(255,255,255,0.92)',
+        fontSize: 11.5,
+        fontWeight: 600,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {icon}
+      {label}
+      <span className="font-score" style={{ fontWeight: 700, letterSpacing: 0.3 }}>
+        +{pts}
+      </span>
+    </span>
+  )
+
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div
+        style={{
+          fontSize: 10,
+          letterSpacing: 0.6,
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.55)',
+          marginBottom: 6,
+        }}
+      >
+        Puntos en juego
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {ptsExacto != null &&
+          chip(
+            <Icon.Crown style={{ width: 13, height: 13 }} />,
+            'Resultado exacto',
+            ptsExacto,
+            true,
+          )}
+        {ptsGanador != null &&
+          chip(
+            <Icon.Check style={{ width: 13, height: 13 }} />,
+            'Acierto del ganador',
+            ptsGanador,
+            false,
+          )}
+      </div>
+    </div>
+  )
+}
+
+/**
  * MatchCard — tarjeta de partido en sus distintas variantes.
  *
  * Variants:
@@ -254,6 +320,8 @@ function MatchCardLive({
   pulseLocal = 0,
   pulseVisitante = 0,
   goleadores,
+  ptsExacto,
+  ptsGanador,
   onClick,
 }) {
   return (
@@ -384,6 +452,7 @@ function MatchCardLive({
           visitante={goleadores.visitante}
         />
       )}
+      <LivePointsLegend ptsExacto={ptsExacto} ptsGanador={ptsGanador} />
       <div
         style={{
           marginTop: 12,
