@@ -38,10 +38,17 @@ export function getNextUnpredictedIndex(partidos, predicciones) {
   return partidos.length;
 }
 
-export function countPredicciones(predicciones) {
+// Cuenta los pronósticos hechos restringidos a un conjunto de partidos. El
+// onboarding solo cubre la fase de grupos, así que medir el progreso contando
+// `predicciones` completas (que también incluye eliminatorias) contra el total
+// de grupos da números inconsistentes: el banner dice "te faltan N" mientras el
+// asistente ya se considera completo. Contar solo sobre los partidos reales de
+// grupos mantiene a banner, compuerta y asistente de acuerdo.
+export function countPrediccionesDe(partidos, predicciones) {
+  if (!partidos || !predicciones) return 0;
   let n = 0;
-  for (const k in predicciones) {
-    const p = predicciones[k];
+  for (const partido of partidos) {
+    const p = predicciones[partido.id];
     if (p && p.goles_local != null && p.goles_visitante != null) n++;
   }
   return n;
