@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { Flag } from "./Flag.jsx";
+import { Icon } from "./Icon.jsx";
 import { code } from "@/lib/constants";
 import { resumenEquipo, caraACara } from "@/lib/historial";
 
-// Contexto para pronosticar: cómo llega cada equipo según los partidos que ya
-// jugó en el torneo (racha, balance y goles) más el cara a cara entre ambos.
-// Todo se deriva de los resultados ya cargados; si ninguno de los dos equipos
-// ha jugado todavía, el componente no renderiza nada para no estorbar.
+// Contexto para pronosticar: el historial de cada equipo según los partidos
+// que ya jugó en el torneo (racha, balance y goles) más el cara a cara entre
+// ambos. Todo se deriva de los resultados ya cargados; si ninguno de los dos
+// equipos ha jugado todavía, el componente no renderiza nada para no estorbar.
+//
+// Cada equipo es colapsable: al tocarlo se despliega el marcador de cada uno
+// de sus partidos.
 //
 // `compacto` reduce el espaciado para usarlo dentro del asistente de
 // predicciones, donde el espacio vertical es valioso.
@@ -44,7 +49,7 @@ export function HistorialEquipos({
           color: "var(--ink-3)",
         }}
       >
-        Cómo llegan
+        Historial
       </div>
 
       <FilaEquipo equipo={equipoLocal} resumen={local} />
@@ -78,9 +83,11 @@ export function HistorialEquipos({
   );
 }
 
-// Una línea por equipo: bandera + nombre a la izquierda, racha y balance a la
-// derecha.
+// Una fila por equipo: bandera + nombre + balance a la izquierda y la racha a
+// la derecha. Al tocarla se despliega el marcador de cada partido jugado.
 function FilaEquipo({ equipo, resumen }) {
+  const [abierto, setAbierto] = useState(false);
+
   if (resumen.jugados === 0) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -92,35 +99,128 @@ function FilaEquipo({ equipo, resumen }) {
       </div>
     );
   }
+
   // Los 5 partidos más recientes, mostrados en orden cronológico (el último
   // jugado queda a la derecha), como una guía de forma.
   const racha = resumen.partidos.slice(0, 5).reverse();
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <Flag code={code(equipo)} w={22} h={16} rounded={3} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
+    <div>
+      <button
+        type="button"
+        onClick={() => setAbierto((v) => !v)}
+        aria-expanded={abierto}
+        aria-label={`Historial de ${equipo}`}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          background: "none",
+          border: "none",
+          padding: 0,
+          textAlign: "left",
+          cursor: "pointer",
+          color: "inherit",
+          fontFamily: "inherit",
+        }}
+      >
+        <Flag code={code(equipo)} w={22} h={16} rounded={3} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--ink)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {equipo}
+          </div>
+          <div className="mono" style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 1 }}>
+            {resumen.ganados}G {resumen.empatados}E {resumen.perdidos}P · {resumen.golesFavor}:
+            {resumen.golesContra}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 3 }}>
+          {racha.map((j) => (
+            <ChipResultado key={j.id} letra={j.letra} />
+          ))}
+        </div>
+        <span
+          aria-hidden
           style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--ink)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            display: "inline-flex",
+            color: "var(--ink-3)",
+            transform: abierto ? "rotate(180deg)" : "none",
+            transition: "transform 180ms ease",
           }}
         >
-          {equipo}
+          <Icon.ChevronD />
+        </span>
+      </button>
+
+      {abierto && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
+          {resumen.partidos.map((j) => (
+            <PartidoLinea key={j.id} j={j} />
+          ))}
         </div>
-        <div className="mono" style={{ fontSize: 10.5, color: "var(--ink-3)", marginTop: 1 }}>
-          {resumen.ganados}G {resumen.empatados}E {resumen.perdidos}P · {resumen.golesFavor}:
-          {resumen.golesContra}
-        </div>
-      </div>
-      <div style={{ display: "flex", gap: 3 }}>
-        {racha.map((j) => (
-          <ChipResultado key={j.id} letra={j.letra} />
-        ))}
-      </div>
+      )}
+    </div>
+  );
+}
+
+// Una línea con el marcador de un partido ya jugado, desde la óptica del equipo.
+function PartidoLinea({ j }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 8px",
+        background: "var(--surface-2)",
+        borderRadius: "var(--r-md)",
+      }}
+    >
+      <ChipResultado letra={j.letra} />
+      <span style={{ fontSize: 11, color: "var(--ink-4)", flexShrink: 0 }}>
+        {j.esLocal ? "vs" : "en"}
+      </span>
+      <Flag code={code(j.rival)} w={18} h={13} rounded={2} />
+      <span
+        style={{
+          flex: 1,
+          minWidth: 0,
+          fontSize: 12.5,
+          color: "var(--ink-2)",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {j.rival}
+      </span>
+      {j.porPenales && (
+        <span style={{ fontSize: 10.5, color: "var(--ink-4)", flexShrink: 0 }}>
+          {j.avanzoPorPenales ? "pen. ✓" : "pen."}
+        </span>
+      )}
+      <span
+        className="mono"
+        style={{
+          fontSize: 13,
+          fontWeight: 600,
+          color: "var(--ink)",
+          letterSpacing: -0.3,
+          flexShrink: 0,
+        }}
+      >
+        {j.gf}–{j.gc}
+      </span>
     </div>
   );
 }
@@ -147,6 +247,7 @@ function ChipResultado({ letra }) {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
+        flexShrink: 0,
       }}
     >
       {letra}
