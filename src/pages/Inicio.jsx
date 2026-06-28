@@ -157,6 +157,14 @@ export default function Inicio() {
     !apuestaLoading &&
     apuestasAbiertas &&
     !apuestasCompletadas
+  // Enlace permanente a las apuestas especiales: cuando el banner de invitación
+  // no aplica (admin, apuestas cerradas o ya completadas) el home igual debe
+  // tener una entrada directa a la sección, porque la barra inferior no la lista.
+  const apuestasLinkSubtitle = apuestasCompletadas
+    ? 'Revisa o edita tus pronósticos'
+    : apuestasAbiertas
+      ? 'Pronostica Campeón, Goleador y más'
+      : 'Mira los pronósticos premundiales'
 
   const myPts = me?.puntos || 0
   const liderPts = lider?.puntos || 0
@@ -288,6 +296,77 @@ export default function Inicio() {
                       (apuestasCfg?.pts_sorpresa ?? 0)}
                   </span>{' '}
                   pts en juego
+                </div>
+              </div>
+              <Icon.Chevron />
+            </div>
+          </Card>
+        )}
+
+        {/* Enlace directo permanente a apuestas especiales. Se muestra cuando el
+            banner dorado de invitación no aplica, para que siempre haya una
+            forma de llegar a la sección desde el inicio. */}
+        {!mostrarBannerApuestas && (
+          <Card
+            pad={14}
+            onClick={() => navigate('/app/apuestas')}
+            style={{ cursor: 'pointer' }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  aria-hidden
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: '50%',
+                    background: 'var(--gold-soft)',
+                    color: 'var(--gold-ink)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon.Crown />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      letterSpacing: -0.2,
+                    }}
+                  >
+                    Apuestas especiales
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 2,
+                      fontSize: 12,
+                      color: 'var(--ink-3)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {apuestasLinkSubtitle}
+                  </div>
                 </div>
               </div>
               <Icon.Chevron />
