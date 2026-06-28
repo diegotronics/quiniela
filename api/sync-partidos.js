@@ -103,7 +103,7 @@ export default async function handler(req, res) {
     const { data: partidos, error: errPartidos } = await supabase
         .from('partidos')
         .select(
-            'id, equipo_local, equipo_visitante, goles_local, goles_visitante, resultado_ingresado, api_fixture_id',
+            'id, equipo_local, equipo_visitante, goles_local, goles_visitante, resultado_ingresado, api_fixture_id, ganador',
         )
     if (errPartidos) {
         return res.status(500).json({ error: `supabase: ${errPartidos.message}` })
@@ -150,6 +150,16 @@ export default async function handler(req, res) {
         const homeEs = mapTeam(home)
         const awayEs = mapTeam(away)
 
+        // En eliminatoria, un empate se define por penales: ESPN marca al
+        // competidor que avanzó con `winner: true` (incluye la tanda). Solo en
+        // ese caso registramos el ganador, para que el cuadro avance solo. En
+        // grupos un empate no tiene ganador, así que queda null.
+        let ganador = null
+        if (golesL === golesV) {
+            if (homeC.winner === true) ganador = homeEs
+            else if (awayC.winner === true) ganador = awayEs
+        }
+
         // Match: primero por api_fixture_id, luego por equipos
         let partido = partidos.find((p) => p.api_fixture_id === apiId)
         if (!partido) {
@@ -163,25 +173,32 @@ export default async function handler(req, res) {
             continue
         }
 
-        // Idempotencia: skip si ya está igual
+        // Idempotencia: skip si ya está igual. Si hay un ganador por penales
+        // que aún no está guardado, no se considera "sin cambios".
         if (
             partido.resultado_ingresado &&
             partido.goles_local === golesL &&
             partido.goles_visitante === golesV &&
-            partido.api_fixture_id === apiId
+            partido.api_fixture_id === apiId &&
+            (ganador == null || partido.ganador === ganador)
         ) {
             ignorados.push({ id: partido.id, motivo: 'sin cambios' })
             continue
         }
 
+        const update = {
+            goles_local: golesL,
+            goles_visitante: golesV,
+            resultado_ingresado: true,
+            api_fixture_id: apiId,
+        }
+        // Solo tocamos `ganador` cuando ESPN lo informa, para no pisar uno
+        // cargado a mano si la fuente no trae el dato de la tanda.
+        if (ganador != null) update.ganador = ganador
+
         const { error: errUpdate } = await supabase
             .from('partidos')
-            .update({
-                goles_local: golesL,
-                goles_visitante: golesV,
-                resultado_ingresado: true,
-                api_fixture_id: apiId,
-            })
+            .update(update)
             .eq('id', partido.id)
         if (errUpdate) {
             ignorados.push({

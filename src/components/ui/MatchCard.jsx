@@ -5,16 +5,20 @@ import { TeamRow } from './TeamRow.jsx'
 import { LiveBadge } from './LiveBadge.jsx'
 import { Goleadores } from './Goleadores.jsx'
 import { formatearHoraCorta } from '@/lib/fechas'
+import { ladoGanador, equipoGanador, definidoPorPenales } from '@/lib/pronosticos'
 
 function winnerSideOf(m) {
-  if (!m || !m.resultado_ingresado) return null
-  if (m.goles_local === m.goles_visitante) return null
-  return m.goles_local > m.goles_visitante ? 'local' : 'visitante'
+  return ladoGanador(m)
 }
 
 function StatusPill({ match, pred }) {
   const isFinal = !!match.resultado_ingresado
-  const isDraw = isFinal && match.goles_local === match.goles_visitante
+  // Un empate solo se muestra como tal si no se resolvió por penales; si hay
+  // clasificado, el partido quedó definido.
+  const isDraw =
+    isFinal &&
+    match.goles_local === match.goles_visitante &&
+    !definidoPorPenales(match)
   const tienePick =
     pred && pred.goles_local != null && pred.goles_visitante != null
 
@@ -151,44 +155,59 @@ function MatchCardList({ match, pred, onClick, groupLabel }) {
         />
         <div style={{ textAlign: 'center' }}>
           {isFinal ? (
-            <span
-              className="font-score score-reveal"
-              style={{
-                fontSize: 30,
-                fontWeight: 400,
-                color: 'var(--ink)',
-                lineHeight: 1,
-                display: 'inline-flex',
-                alignItems: 'baseline',
-                gap: 6,
-              }}
-            >
+            <div>
               <span
+                className="font-score score-reveal"
                 style={{
-                  color:
-                    winnerSide === 'local'
-                      ? 'var(--accent-ink)'
-                      : winnerSide === 'visitante'
-                        ? 'var(--ink-3)'
-                        : 'var(--ink)',
+                  fontSize: 30,
+                  fontWeight: 400,
+                  color: 'var(--ink)',
+                  lineHeight: 1,
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: 6,
                 }}
               >
-                {match.goles_local}
+                <span
+                  style={{
+                    color:
+                      winnerSide === 'local'
+                        ? 'var(--accent-ink)'
+                        : winnerSide === 'visitante'
+                          ? 'var(--ink-3)'
+                          : 'var(--ink)',
+                  }}
+                >
+                  {match.goles_local}
+                </span>
+                <span style={{ opacity: 0.45 }}>–</span>
+                <span
+                  style={{
+                    color:
+                      winnerSide === 'visitante'
+                        ? 'var(--accent-ink)'
+                        : winnerSide === 'local'
+                          ? 'var(--ink-3)'
+                          : 'var(--ink)',
+                  }}
+                >
+                  {match.goles_visitante}
+                </span>
               </span>
-              <span style={{ opacity: 0.45 }}>–</span>
-              <span
-                style={{
-                  color:
-                    winnerSide === 'visitante'
-                      ? 'var(--accent-ink)'
-                      : winnerSide === 'local'
-                        ? 'var(--ink-3)'
-                        : 'var(--ink)',
-                }}
-              >
-                {match.goles_visitante}
-              </span>
-            </span>
+              {definidoPorPenales(match) && (
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--ink-3)',
+                    marginTop: 2,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  Penales
+                </div>
+              )}
+            </div>
           ) : tienePick ? (
             <div>
               <span
@@ -417,15 +436,9 @@ function MatchCardLive({
 }
 
 function MatchCardBracket({ match, pred }) {
-  const winner =
-    match && match.resultado_ingresado
-      ? match.goles_local === match.goles_visitante
-        ? null
-        : match.goles_local > match.goles_visitante
-          ? match.equipo_local
-          : match.equipo_visitante
-      : null
+  const winner = equipoGanador(match)
   const isFinal = Boolean(match?.resultado_ingresado)
+  const porPenales = definidoPorPenales(match)
 
   const Row = ({ equipo, isWinner, isLoser }) => (
     <div
@@ -497,6 +510,19 @@ function MatchCardBracket({ match, pred }) {
         isWinner={winner && winner === match.equipo_visitante}
         isLoser={isFinal && winner && winner !== match.equipo_visitante}
       />
+      {porPenales && (
+        <div
+          style={{
+            padding: '2px 10px 0',
+            fontSize: 10,
+            color: 'var(--ink-3)',
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}
+        >
+          Avanzó por penales
+        </div>
+      )}
       {match && pred?.goles_local != null && (
         <div
           style={{
