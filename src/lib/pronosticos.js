@@ -36,6 +36,17 @@ export function partidoAbierto(partido, ahora = Date.now()) {
   return !pronosticoCerrado(partido, ahora);
 }
 
+// A un usuario le "falta" un pronóstico cuando el partido sigue abierto y aún
+// no cargó su marcador. Es la base del asistente para completar lo pendiente.
+export function faltaPronostico(partido, prediccion, ahora = Date.now()) {
+  if (!partidoAbierto(partido, ahora)) return false;
+  return (
+    !prediccion ||
+    prediccion.goles_local == null ||
+    prediccion.goles_visitante == null
+  );
+}
+
 // Lado ganador de un partido finalizado: "local" | "visitante" | null.
 // Si el marcador es decisivo, gana quien hizo más goles. En eliminatoria un
 // empate se define por penales: en ese caso se usa la columna `ganador`.
