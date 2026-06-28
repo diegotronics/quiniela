@@ -46,7 +46,7 @@ import { ChatPreview } from '@/components/chat/ChatPreview'
 import { LiveMatchCard } from '@/components/LiveMatchCard'
 import { BannerPredicciones } from '@/components/BannerPredicciones'
 import { BannerPrediccionesPendientes } from '@/components/BannerPrediccionesPendientes'
-import { TOTAL_PARTIDOS_GRUPOS, countPredicciones } from '@/lib/onboarding'
+import { countPrediccionesDe } from '@/lib/onboarding'
 import { faltaPronostico } from '@/lib/pronosticos'
 
 export default function Inicio() {
@@ -120,17 +120,29 @@ export default function Inicio() {
     [partidos, predicciones, ahora],
   )
 
-  const picksCompletas = useMemo(
-    () => countPredicciones(predicciones),
-    [predicciones],
+  // El onboarding solo cubre la fase de grupos: el progreso se mide sobre los
+  // partidos reales de esa fase, no contra un total fijo ni mezclando los
+  // pronósticos de eliminatorias. Así el banner y el asistente coinciden.
+  const partidosGrupos = useMemo(
+    () => partidos.filter((p) => p.fase_id === 'grupos'),
+    [partidos],
+  )
+  const gruposTotal = partidosGrupos.length
+  const picksGrupos = useMemo(
+    () => countPrediccionesDe(partidosGrupos, predicciones),
+    [partidosGrupos, predicciones],
   )
   // El admin no juega ni pronostica: no se le muestran los avisos que
   // invitan a completar predicciones o apuestas especiales.
   const esAdmin = !!user?.es_admin
-  // Mientras las predicciones siguen cargando no se sabe cuántas hay; sin
-  // este guard el banner aparece un instante aunque ya estén completas.
+  // Mientras las predicciones o los partidos siguen cargando no se sabe cuántos
+  // hay; el guard evita que el banner aparezca un instante aunque ya estén
+  // completas.
   const onboardingPendiente =
-    !esAdmin && !prediccionesLoading && picksCompletas < TOTAL_PARTIDOS_GRUPOS
+    !esAdmin &&
+    !prediccionesLoading &&
+    gruposTotal > 0 &&
+    picksGrupos < gruposTotal
   const pendientes = partidos.filter((p) => !p.resultado_ingresado).length
 
   // Pronósticos que faltan de partidos aún abiertos (cualquier fase). Es lo que
@@ -223,7 +235,9 @@ export default function Inicio() {
           gap: 14,
         }}
       >
-        {onboardingPendiente && <BannerPredicciones picks={picksCompletas} />}
+        {onboardingPendiente && (
+          <BannerPredicciones picks={picksGrupos} total={gruposTotal} />
+        )}
 
         {!onboardingPendiente && pronosticosPendientes > 0 && (
           <BannerPrediccionesPendientes pendientes={pronosticosPendientes} />

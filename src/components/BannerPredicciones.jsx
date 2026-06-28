@@ -8,11 +8,13 @@ import {
 } from "@/lib/onboarding";
 
 // Banner persistente en /app/inicio que invita a completar las predicciones
-// pendientes. Sólo se muestra cuando picks < 72 (la lógica vive en el padre).
-export function BannerPredicciones({ picks }) {
+// pendientes. Sólo se muestra cuando faltan pronósticos de grupos (la lógica
+// vive en el padre). `total` es la cantidad real de partidos de grupos; si no
+// se pasa, cae al total nominal del Mundial.
+export function BannerPredicciones({ picks, total = TOTAL_PARTIDOS_GRUPOS }) {
   const navigate = useNavigate();
-  const restantes = Math.max(0, TOTAL_PARTIDOS_GRUPOS - picks);
-  const pct = Math.round((picks / TOTAL_PARTIDOS_GRUPOS) * 100);
+  const restantes = Math.max(0, total - picks);
+  const pct = total > 0 ? Math.round((picks / total) * 100) : 0;
   const cd = formatCountdown();
   const urgente = cd.urgente;
 
@@ -87,7 +89,7 @@ export function BannerPredicciones({ picks }) {
           borderRadius: 999,
           overflow: "hidden",
         }}
-        aria-label={`${picks} de ${TOTAL_PARTIDOS_GRUPOS} predicciones`}
+        aria-label={`${picks} de ${total} predicciones`}
       >
         <div
           style={{
@@ -103,7 +105,7 @@ export function BannerPredicciones({ picks }) {
 
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--ink-3)" }}>
         <span className="mono" style={{ color: "var(--ink-2)", fontWeight: 600 }}>
-          {picks} / {TOTAL_PARTIDOS_GRUPOS}
+          {picks} / {total}
         </span>
         <span>Toca para continuar →</span>
       </div>

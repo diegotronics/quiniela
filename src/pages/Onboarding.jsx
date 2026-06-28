@@ -11,7 +11,7 @@ import {
   FECHA_CIERRE_TEXTO,
   MILESTONES,
   TOTAL_PARTIDOS_GRUPOS,
-  countPredicciones,
+  countPrediccionesDe,
   countdownLabel,
   formatCountdown,
   getNextUnpredictedIndex,
@@ -44,9 +44,11 @@ export default function Onboarding() {
     setIndex(Math.min(start, ordered.length));
   }, [index, loadingPartidos, loadingPreds, ordered, predicciones]);
 
+  // Progreso medido solo sobre los partidos de grupos que se están
+  // pronosticando aquí; contar también las eliminatorias desajustaría el total.
   const completados = useMemo(
-    () => countPredicciones(predicciones || {}),
-    [predicciones],
+    () => countPrediccionesDe(ordered, predicciones || {}),
+    [ordered, predicciones],
   );
 
   if (loadingPartidos || loadingPreds || index == null) {
