@@ -95,14 +95,23 @@ function hour(iso) {
   return formatearHoraCorta(iso)
 }
 
-/**
- * Leyenda de puntos en juego para la tarjeta en vivo: recuerda cuántos puntos
- * otorga el resultado exacto y cuántos el acierto del ganador, según la fase.
- */
-function LivePointsLegend({ ptsExacto, ptsGanador }) {
-  if (ptsExacto == null && ptsGanador == null) return null
+// Signo del marcador: "local" | "visitante" | "empate". Replica la lógica del
+// servidor (comparar sign(local - visitante)) para decidir el acierto del
+// ganador, sin tener en cuenta penales.
+function signoMarcador(local, visitante) {
+  const l = Number(local)
+  const v = Number(visitante)
+  if (l > v) return 'local'
+  if (v > l) return 'visitante'
+  return 'empate'
+}
 
-  const chip = (icon, label, pts, gold) => (
+// Chip reutilizable de la leyenda de puntos. `tone`: 'gold' resalta el premio
+// mayor, 'plain' lo neutral y 'muted' los casos sin puntos.
+function legendChip({ icon, label, pts, tone = 'plain', showSign = true }) {
+  const gold = tone === 'gold'
+  const muted = tone === 'muted'
+  return (
     <span
       style={{
         display: 'inline-flex',
@@ -110,11 +119,23 @@ function LivePointsLegend({ ptsExacto, ptsGanador }) {
         gap: 5,
         padding: '4px 10px',
         borderRadius: 999,
-        background: gold ? 'rgba(245,200,90,0.16)' : 'rgba(255,255,255,0.1)',
+        background: gold
+          ? 'rgba(245,200,90,0.16)'
+          : muted
+            ? 'rgba(255,255,255,0.06)'
+            : 'rgba(255,255,255,0.1)',
         border: `1px solid ${
-          gold ? 'rgba(245,200,90,0.42)' : 'rgba(255,255,255,0.18)'
+          gold
+            ? 'rgba(245,200,90,0.42)'
+            : muted
+              ? 'rgba(255,255,255,0.12)'
+              : 'rgba(255,255,255,0.18)'
         }`,
-        color: gold ? 'var(--gold)' : 'rgba(255,255,255,0.92)',
+        color: gold
+          ? 'var(--gold)'
+          : muted
+            ? 'rgba(255,255,255,0.6)'
+            : 'rgba(255,255,255,0.92)',
         fontSize: 11.5,
         fontWeight: 600,
         whiteSpace: 'nowrap',
@@ -123,11 +144,88 @@ function LivePointsLegend({ ptsExacto, ptsGanador }) {
       {icon}
       {label}
       <span className="font-score" style={{ fontWeight: 700, letterSpacing: 0.3 }}>
-        +{pts}
+        {showSign ? `+${pts}` : `${pts} pts`}
       </span>
     </span>
   )
+}
 
+/**
+ * Leyenda de puntos para la tarjeta en vivo.
+ *
+ * Mientras el partido sigue en juego muestra cuántos puntos están EN JUEGO
+ * (resultado exacto y acierto del ganador, según la fase). Al finalizar cambia
+ * a los puntos OBTENIDOS por tu pronóstico, para no dar la impresión de que ya
+ * ganaste los puntos que solo estaban disponibles.
+ */
+function LivePointsLegend({
+  ptsExacto,
+  ptsGanador,
+  finished = false,
+  pred,
+  localFinal,
+  visitanteFinal,
+}) {
+  if (ptsExacto == null && ptsGanador == null) return null
+
+  const tienePred =
+    pred && pred.goles_local != null && pred.goles_visitante != null
+  const hayMarcador = localFinal != null && visitanteFinal != null
+
+  // Vista final: el partido terminó y tenemos pronóstico y marcador para
+  // comparar. Mostramos lo que realmente sumaste.
+  if (finished && tienePred && hayMarcador) {
+    const exacto =
+      Number(pred.goles_local) === Number(localFinal) &&
+      Number(pred.goles_visitante) === Number(visitanteFinal)
+    const acertoGanador =
+      signoMarcador(pred.goles_local, pred.goles_visitante) ===
+      signoMarcador(localFinal, visitanteFinal)
+
+    let chip
+    if (exacto && ptsExacto != null) {
+      chip = legendChip({
+        icon: <Icon.Crown style={{ width: 13, height: 13 }} />,
+        label: 'Resultado exacto',
+        pts: ptsExacto,
+        tone: 'gold',
+      })
+    } else if (acertoGanador && ptsGanador != null) {
+      chip = legendChip({
+        icon: <Icon.Check style={{ width: 13, height: 13 }} />,
+        label: 'Acierto del ganador',
+        pts: ptsGanador,
+        tone: 'plain',
+      })
+    } else {
+      chip = legendChip({
+        icon: null,
+        label: 'Sin aciertos',
+        pts: 0,
+        tone: 'muted',
+        showSign: false,
+      })
+    }
+
+    return (
+      <div style={{ marginTop: 12 }}>
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: 0.6,
+            textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.55)',
+            marginBottom: 6,
+          }}
+        >
+          Puntos obtenidos
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{chip}</div>
+      </div>
+    )
+  }
+
+  // Vista en juego (o sin datos para comparar): puntos disponibles en la fase.
   return (
     <div style={{ marginTop: 12 }}>
       <div
@@ -143,19 +241,19 @@ function LivePointsLegend({ ptsExacto, ptsGanador }) {
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {ptsExacto != null &&
-          chip(
-            <Icon.Crown style={{ width: 13, height: 13 }} />,
-            'Resultado exacto',
-            ptsExacto,
-            true,
-          )}
+          legendChip({
+            icon: <Icon.Crown style={{ width: 13, height: 13 }} />,
+            label: 'Resultado exacto',
+            pts: ptsExacto,
+            tone: 'gold',
+          })}
         {ptsGanador != null &&
-          chip(
-            <Icon.Check style={{ width: 13, height: 13 }} />,
-            'Acierto del ganador',
-            ptsGanador,
-            false,
-          )}
+          legendChip({
+            icon: <Icon.Check style={{ width: 13, height: 13 }} />,
+            label: 'Acierto del ganador',
+            pts: ptsGanador,
+            tone: 'plain',
+          })}
       </div>
     </div>
   )
@@ -471,7 +569,14 @@ function MatchCardLive({
           visitante={goleadores.visitante}
         />
       )}
-      <LivePointsLegend ptsExacto={ptsExacto} ptsGanador={ptsGanador} />
+      <LivePointsLegend
+        ptsExacto={ptsExacto}
+        ptsGanador={ptsGanador}
+        finished={finished}
+        pred={pred}
+        localFinal={liveLocal}
+        visitanteFinal={liveVisitante}
+      />
       <div
         style={{
           marginTop: 12,
