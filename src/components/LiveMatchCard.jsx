@@ -12,7 +12,7 @@ import { partidoTerminado } from '@/lib/stats'
  * por partido, la sección puede mostrar varias tarjetas en vivo a la vez sin
  * romper las reglas de los hooks.
  */
-export function LiveMatchCard({ match, pred, rightLabel, ahora, onClick }) {
+export function LiveMatchCard({ match, pred, rightLabel, fase, ahora, onClick }) {
   const { marcador } = useMarcadorEnVivo(match)
   // Con datos de ESPN su estado manda (cubre prórrogas y penales más allá de
   // la ventana); sin ellos decide la BD o el vencimiento de la ventana.
@@ -63,6 +63,8 @@ export function LiveMatchCard({ match, pred, rightLabel, ahora, onClick }) {
       pulseLocal={pulseLocal}
       pulseVisitante={pulseVisitante}
       goleadores={marcador?.goleadores}
+      ptsExacto={fase?.pts_exacto}
+      ptsGanador={fase?.pts_ganador}
       onClick={onClick}
     />
   )
