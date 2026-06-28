@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useFases } from '@/hooks/useFases'
+import { useAllPartidos } from '@/hooks/useAllPartidos'
 import { usePrediccionesUsuario } from '@/hooks/usePredicciones'
 import { useUsuariosPublic } from '@/hooks/useUsuarios'
 import { useAsync } from '@/hooks/useAsync'
@@ -14,6 +15,7 @@ import {
   EmptyState,
   Flag,
   Goleadores,
+  HistorialEquipos,
   Icon,
   LiveBadge,
   Pill,
@@ -43,6 +45,7 @@ export default function MatchDetail() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { fases } = useFases()
+  const { partidos: todosLosPartidos } = useAllPartidos(fases)
   const { usuarios } = useUsuariosPublic()
   const { predicciones, setMarcador } = usePrediccionesUsuario(user?.id)
 
@@ -686,6 +689,16 @@ export default function MatchDetail() {
             </div>
           )}
         </Card>
+      </div>
+
+      {/* Historial de los equipos: cómo llegan según lo jugado en el torneo */}
+      <div style={{ padding: '14px 20px 0' }}>
+        <HistorialEquipos
+          equipoLocal={partido.equipo_local}
+          equipoVisitante={partido.equipo_visitante}
+          partidos={todosLosPartidos}
+          excluirId={partido.id}
+        />
       </div>
 
       {/* Tabs */}

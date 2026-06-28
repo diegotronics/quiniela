@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useFases } from "@/hooks/useFases";
 import { useAllPartidos } from "@/hooks/useAllPartidos";
 import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
-import { Button, Card, Icon, Pill } from "@/components/ui";
+import { Button, Card, Icon, Pill, HistorialEquipos } from "@/components/ui";
 import { PrediccionWizardStep } from "@/components/PrediccionWizard";
 import { esErrorCierre, faltaPronostico, instanteCierre } from "@/lib/pronosticos";
 import { formatearFechaHora } from "@/lib/fechas";
@@ -99,6 +99,15 @@ export default function Predecir() {
           {faseNombre(partido.fase_id)}
           {grupo} · {formatearFechaHora(partido.fecha)}
         </Pill>
+      }
+      historialNode={
+        <HistorialEquipos
+          equipoLocal={partido.equipo_local}
+          equipoVisitante={partido.equipo_visitante}
+          partidos={partidos}
+          excluirId={partido.id}
+          compacto
+        />
       }
       onConfirmar={async (local, visitante) => {
         try {
