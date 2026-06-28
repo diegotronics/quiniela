@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
 const COLS =
-  "id, fase_id, grupo, equipo_local, equipo_visitante, fecha, goles_local, goles_visitante, resultado_ingresado";
+  "id, fase_id, grupo, equipo_local, equipo_visitante, fecha, goles_local, goles_visitante, resultado_ingresado, ganador";
 
 export async function listPartidosByFase(faseId) {
   const { data, error } = await supabase
@@ -23,11 +23,14 @@ export async function listPartidosGrupos() {
   return data || [];
 }
 
-export async function setResultadoPartido(id, goles_local, goles_visitante) {
+export async function setResultadoPartido(id, goles_local, goles_visitante, ganador = null) {
   // El trigger en BD recalcula puntos_obtenidos de todas las predicciones.
+  // `ganador` solo aplica a eliminatorias empatadas (definidas por penales):
+  // sirve para que el trigger de avance sepa qué equipo pasa a la siguiente
+  // fase. En partidos con marcador decisivo o de grupos va NULL.
   const { error } = await supabase
     .from("partidos")
-    .update({ goles_local, goles_visitante, resultado_ingresado: true })
+    .update({ goles_local, goles_visitante, resultado_ingresado: true, ganador })
     .eq("id", id);
   if (error) throw error;
 }
@@ -47,7 +50,7 @@ export async function clearResultadoPartido(id) {
   // El trigger en BD recalcula puntos_obtenidos de todas las predicciones.
   const { error } = await supabase
     .from("partidos")
-    .update({ goles_local: null, goles_visitante: null, resultado_ingresado: false })
+    .update({ goles_local: null, goles_visitante: null, resultado_ingresado: false, ganador: null })
     .eq("id", id);
   if (error) throw error;
 }

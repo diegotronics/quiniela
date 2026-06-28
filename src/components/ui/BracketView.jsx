@@ -5,6 +5,7 @@ import { Icon } from "./Icon.jsx";
 import { MatchCard } from "./MatchCard.jsx";
 import { ChampionReveal } from "./ChampionReveal.jsx";
 import { code } from "@/lib/constants";
+import { equipoGanador } from "@/lib/pronosticos";
 import { celebrateChampion, celebrateOnce } from "@/lib/celebrate";
 
 const KNOCKOUT_PHASES = [
@@ -106,13 +107,7 @@ export function ChampionCard({ rounds, predicciones }) {
     return pr.goles_local > pr.goles_visitante ? finalMatch.equipo_local : finalMatch.equipo_visitante;
   }, [finalMatch, predicciones]);
 
-  const campeonReal = useMemo(() => {
-    if (!finalMatch || !finalMatch.resultado_ingresado) return null;
-    if (finalMatch.goles_local === finalMatch.goles_visitante) return null;
-    return finalMatch.goles_local > finalMatch.goles_visitante
-      ? finalMatch.equipo_local
-      : finalMatch.equipo_visitante;
-  }, [finalMatch]);
+  const campeonReal = useMemo(() => equipoGanador(finalMatch), [finalMatch]);
   const acertoCampeon = campeonReal && campeonPred && campeonReal === campeonPred;
 
   useEffect(() => {

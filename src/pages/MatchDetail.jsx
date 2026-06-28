@@ -28,7 +28,11 @@ import {
 } from '@/hooks/useAutoSyncResultado'
 import { code } from '@/lib/constants'
 import { formatearFechaHora } from '@/lib/fechas'
-import { pronosticoCerrado } from '@/lib/pronosticos'
+import {
+  pronosticoCerrado,
+  ladoGanador,
+  definidoPorPenales,
+} from '@/lib/pronosticos'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import { ShareableMatchCard } from '@/components/ShareableMatchCard'
 import { nodeToPngBlob, shareOrDownloadImage } from '@/lib/shareImage'
@@ -51,7 +55,7 @@ export default function MatchDetail() {
     const { data, error } = await supabase
       .from('partidos')
       .select(
-        'id, fase_id, grupo, equipo_local, equipo_visitante, fecha, goles_local, goles_visitante, resultado_ingresado',
+        'id, fase_id, grupo, equipo_local, equipo_visitante, fecha, goles_local, goles_visitante, resultado_ingresado, ganador',
       )
       .eq('id', id)
       .maybeSingle()
@@ -309,14 +313,13 @@ export default function MatchDetail() {
         </div>
 
         {(() => {
+          const porPenales = definidoPorPenales(partido)
+          // Un empate solo se muestra como tal si no se resolvió por penales.
           const isDraw =
-            isFinal && partido.goles_local === partido.goles_visitante
-          const winnerSide =
-            isFinal && !isDraw
-              ? partido.goles_local > partido.goles_visitante
-                ? 'local'
-                : 'visitante'
-              : null
+            isFinal &&
+            partido.goles_local === partido.goles_visitante &&
+            !porPenales
+          const winnerSide = ladoGanador(partido)
           const HeaderTeam = ({ team, side }) => {
             const isWinner = winnerSide === side
             const isLoser = winnerSide && !isWinner
@@ -434,6 +437,19 @@ export default function MatchDetail() {
                         {partido.goles_visitante}
                       </span>
                     </span>
+                    {porPenales && (
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'oklch(0.75 0.02 60)',
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.6,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {partido.ganador} avanzó por penales
+                      </div>
+                    )}
                   </>
                 ) : enVivo ? (
                   <>

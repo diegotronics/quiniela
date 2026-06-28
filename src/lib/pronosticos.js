@@ -36,6 +36,37 @@ export function partidoAbierto(partido, ahora = Date.now()) {
   return !pronosticoCerrado(partido, ahora);
 }
 
+// Lado ganador de un partido finalizado: "local" | "visitante" | null.
+// Si el marcador es decisivo, gana quien hizo más goles. En eliminatoria un
+// empate se define por penales: en ese caso se usa la columna `ganador`.
+export function ladoGanador(m) {
+  if (!m || !m.resultado_ingresado) return null;
+  if (m.goles_local > m.goles_visitante) return "local";
+  if (m.goles_visitante > m.goles_local) return "visitante";
+  if (m.ganador && m.ganador === m.equipo_local) return "local";
+  if (m.ganador && m.ganador === m.equipo_visitante) return "visitante";
+  return null;
+}
+
+// Nombre del equipo que avanza de un partido finalizado, o null.
+export function equipoGanador(m) {
+  const lado = ladoGanador(m);
+  if (lado === "local") return m.equipo_local;
+  if (lado === "visitante") return m.equipo_visitante;
+  return null;
+}
+
+// True si el partido terminó empatado en el marcador pero tiene un clasificado
+// definido (es decir, se resolvió por penales).
+export function definidoPorPenales(m) {
+  return !!(
+    m &&
+    m.resultado_ingresado &&
+    m.goles_local === m.goles_visitante &&
+    m.ganador
+  );
+}
+
 // Códigos con los que la base de datos rechaza un pronóstico ya cerrado.
 const CODIGOS_CIERRE = ["PRONOSTICO_CERRADO", "PARTIDO_INICIADO", "PARTIDO_CERRADO"];
 
