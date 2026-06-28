@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useAsync } from "@/hooks/useAsync";
 import { usePrediccionesUsuario } from "@/hooks/usePredicciones";
 import { listPartidosGrupos } from "@/api/partidos";
-import { Button, Card, Icon, Pill } from "@/components/ui";
+import { Button, Card, Icon, Pill, HistorialEquipos } from "@/components/ui";
 import { PrediccionWizardStep } from "@/components/PrediccionWizard";
 import { esErrorCierre } from "@/lib/pronosticos";
 import {
@@ -127,6 +127,15 @@ export default function Onboarding() {
           {grupoLabel}
           {partidoNum ? ` · partido ${partidoNum} de 6` : ""} · {partido.fecha}
         </Pill>
+      }
+      historialNode={
+        <HistorialEquipos
+          equipoLocal={partido.equipo_local}
+          equipoVisitante={partido.equipo_visitante}
+          partidos={ordered}
+          excluirId={partido.id}
+          compacto
+        />
       }
       milestoneNode={
         milestoneShown != null && MILESTONES[milestoneShown] ? (

@@ -21,6 +21,7 @@ export function PrediccionWizardStep({
   exitLabel = "Omitir por ahora",
   cierreNode = null,
   contextoNode = null,
+  historialNode = null,
   instruccion = "",
   milestoneNode = null,
 }) {
@@ -236,6 +237,9 @@ export function PrediccionWizardStep({
             {instruccion}
           </div>
         )}
+
+        {/* Historial de los equipos (contexto para pronosticar) */}
+        {historialNode}
 
         {/* Quick picks */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
