@@ -45,7 +45,9 @@ import { apuestasEspecialesCerradas } from '@/lib/apuestasEspeciales'
 import { ChatPreview } from '@/components/chat/ChatPreview'
 import { LiveMatchCard } from '@/components/LiveMatchCard'
 import { BannerPredicciones } from '@/components/BannerPredicciones'
+import { BannerPrediccionesPendientes } from '@/components/BannerPrediccionesPendientes'
 import { TOTAL_PARTIDOS_GRUPOS, countPredicciones } from '@/lib/onboarding'
+import { faltaPronostico } from '@/lib/pronosticos'
 
 export default function Inicio() {
   const { user } = useAuth()
@@ -131,6 +133,15 @@ export default function Inicio() {
     !esAdmin && !prediccionesLoading && picksCompletas < TOTAL_PARTIDOS_GRUPOS
   const pendientes = partidos.filter((p) => !p.resultado_ingresado).length
 
+  // Pronósticos que faltan de partidos aún abiertos (cualquier fase). Es lo que
+  // alimenta el asistente para completarlos de corrido. No se muestra junto al
+  // banner del onboarding de grupos para no duplicar avisos.
+  const pronosticosPendientes = useMemo(() => {
+    if (esAdmin || prediccionesLoading) return 0
+    return partidos.filter((p) => faltaPronostico(p, predicciones[p.id], ahora))
+      .length
+  }, [esAdmin, prediccionesLoading, partidos, predicciones, ahora])
+
   const apuestasAbiertas = !apuestasEspecialesCerradas(apuestasCfg)
   const apuestasCompletadas = Boolean(
     apuestaUsuario?.campeon &&
@@ -205,6 +216,10 @@ export default function Inicio() {
         }}
       >
         {onboardingPendiente && <BannerPredicciones picks={picksCompletas} />}
+
+        {!onboardingPendiente && pronosticosPendientes > 0 && (
+          <BannerPrediccionesPendientes pendientes={pronosticosPendientes} />
+        )}
 
         {mostrarBannerApuestas && (
           <Card
