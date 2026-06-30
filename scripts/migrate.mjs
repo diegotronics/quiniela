@@ -70,6 +70,16 @@ try {
     );
   `)
 
+    // Activamos RLS sobre la propia tabla de control. PostgREST expone
+    // todas las tablas de public a través de la llave anónima; sin RLS,
+    // schema_migrations queda legible/escribible por cualquiera (aviso
+    // rls_disabled_in_public). El runner conecta con conexión directa de
+    // Postgres (dueño de la tabla) e ignora RLS, así que esto no rompe el
+    // registro de migraciones. Sin policies: anon/authenticated no la tocan.
+    await client.query(
+        'alter table schema_migrations enable row level security;',
+    )
+
     const files = (await readdir(migrationsDir))
         .filter((f) => f.endsWith('.sql'))
         .sort()
