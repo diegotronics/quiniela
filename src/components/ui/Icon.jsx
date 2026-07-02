@@ -154,6 +154,13 @@ export const Icon = {
       <path d="M8 10V7a4 4 0 0 1 8 0v3" />
     </>
   )),
+  Book: svgFactory(16, (
+    <>
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5z" />
+      <path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20" />
+      <path d="M9 7.5h7" />
+    </>
+  )),
 
   // ── Utilidades (16px) ─────────────────────────────────────────
   Gear: svgFactory(16, (

@@ -4,6 +4,7 @@ import {
   partidoEnVivo,
   partidosEnVivo,
   partidoTerminado,
+  rankingFromUsers,
   resultadosPendientes,
 } from "@/lib/stats";
 
@@ -202,5 +203,52 @@ describe("familyScoreboard", () => {
     expect(sb.totalJornadas).toBe(0);
     expect(sb.exactos).toHaveLength(3);
     expect(sb.exactos.every((r) => r.valor === 0)).toBe(true);
+  });
+});
+
+describe("rankingFromUsers", () => {
+  const USUARIOS = [
+    { id: "u1", nombre: "Zoe" },
+    { id: "u2", nombre: "Ana" },
+    { id: "adm", nombre: "Admin", es_admin: true },
+    { id: "u3", nombre: "Beto" },
+  ];
+  const pts = (usuario_id, puntos_obtenidos) => ({ usuario_id, puntos_obtenidos });
+
+  test("suma puntos por usuario y excluye al admin", () => {
+    const r = rankingFromUsers(USUARIOS, [
+      pts("u1", 3),
+      pts("u1", 4),
+      pts("u2", 5),
+      pts("adm", 99),
+    ]);
+    expect(r.map((u) => u.id)).toEqual(["u1", "u2", "u3"]);
+    expect(r[0].puntos).toBe(7);
+    expect(r.map((u) => u.rank)).toEqual([1, 2, 3]);
+  });
+
+  test("empate en puntos comparte posición y la siguiente se salta", () => {
+    const r = rankingFromUsers(USUARIOS, [
+      pts("u1", 10),
+      pts("u2", 10),
+      pts("u3", 4),
+    ]);
+    expect(r.map((u) => u.rank)).toEqual([1, 1, 3]);
+  });
+
+  test("los empatados se ordenan alfabéticamente para una lista estable", () => {
+    const r = rankingFromUsers(USUARIOS, [
+      pts("u1", 10),
+      pts("u2", 10),
+    ]);
+    expect(r.map((u) => u.nombre)).toEqual(["Ana", "Zoe", "Beto"]);
+    expect(r[2].rank).toBe(3);
+  });
+
+  test("usuarios sin predicciones quedan con 0 puntos y comparten el último puesto", () => {
+    const r = rankingFromUsers(USUARIOS, [pts("u1", 2)]);
+    expect(r[0]).toMatchObject({ id: "u1", rank: 1 });
+    expect(r[1]).toMatchObject({ nombre: "Ana", puntos: 0, rank: 2 });
+    expect(r[2]).toMatchObject({ nombre: "Beto", puntos: 0, rank: 2 });
   });
 });

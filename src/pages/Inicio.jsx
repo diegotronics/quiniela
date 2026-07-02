@@ -486,7 +486,9 @@ export default function Inicio() {
                     fontWeight: 600,
                   }}
                 >
-                  −{diff} pts del 1°
+                  {/* Con el ranking de posición compartida un empate en
+                      puntos deja rank 1 a ambos: "−0 pts" confundiría. */}
+                  {diff > 0 ? `−${diff} pts del 1°` : 'Empatado con el 1°'}
                 </div>
               )}
               {lider && me?.id === lider.id && (
@@ -673,6 +675,74 @@ export default function Inicio() {
                   ? 'Queda 1 partido'
                   : `Quedan ${pendientes} partidos`}
             </span>
+          </div>
+        </Card>
+
+        {/* Reglamento oficial: siempre a mano desde el inicio, para que las
+            reglas y sus casos estén claros antes de cualquier reclamo. */}
+        <Card
+          pad={14}
+          onClick={() => navigate('/app/reglamento')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                minWidth: 0,
+              }}
+            >
+              <div
+                aria-hidden
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: '50%',
+                  background: 'var(--azure-soft)',
+                  color: 'var(--azure-ink)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Icon.Book />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    letterSpacing: -0.2,
+                  }}
+                >
+                  Reglamento oficial
+                </div>
+                <div
+                  style={{
+                    marginTop: 2,
+                    fontSize: 12,
+                    color: 'var(--ink-3)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Puntos, cierres, desempates y casos especiales
+                </div>
+              </div>
+            </div>
+            <Icon.Chevron />
           </div>
         </Card>
 
