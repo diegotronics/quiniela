@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import {
   getApuestasEspecialesConfig,
   getApuestaEspecialUsuario,
+  listApuestasEspecialesGrupo,
   upsertApuestaEspecial,
   updateApuestasEspecialesConfig,
 } from "@/api/apuestasEspeciales";
@@ -38,6 +39,18 @@ export function useApuestaEspecialUsuario(usuarioId) {
   );
 
   return { apuesta: data, loading, error, refresh, guardar };
+}
+
+// Apuestas de todos los miembros, para la vista pública de transparencia.
+// `enabled` debe ser el estado de cierre: mientras se puede editar no se piden
+// los picks ajenos, así la app no los expone antes de tiempo.
+export function useApuestasEspecialesGrupo(enabled) {
+  const fetcher = useCallback(
+    () => (enabled ? listApuestasEspecialesGrupo() : Promise.resolve([])),
+    [enabled]
+  );
+  const { data, loading, error } = useAsync(fetcher, [enabled]);
+  return { apuestas: data || [], loading, error };
 }
 
 export { updateApuestasEspecialesConfig };

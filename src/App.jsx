@@ -12,6 +12,7 @@ import Chat from "@/pages/Chat.jsx";
 import Onboarding from "@/pages/Onboarding.jsx";
 import Predecir from "@/pages/Predecir.jsx";
 import ApuestasEspeciales from "@/pages/ApuestasEspeciales.jsx";
+import Reglamento from "@/pages/Reglamento.jsx";
 import Admin from "@/pages/Admin.jsx";
 import AdminMiembros from "@/pages/admin/AdminMiembros.jsx";
 import AdminReglas from "@/pages/admin/AdminReglas.jsx";
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="partido/:id" element={<MatchDetail />} />
         <Route path="chat" element={<Chat />} />
         <Route path="apuestas" element={<ApuestasEspeciales />} />
+        <Route path="reglamento" element={<Reglamento />} />
         <Route path="onboarding" element={<Onboarding />} />
         <Route path="predecir" element={<Predecir />} />
       </Route>

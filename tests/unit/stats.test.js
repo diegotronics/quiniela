@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
   familyScoreboard,
-  partidoEnVivo,
   partidosEnVivo,
   partidoTerminado,
+  rankingFromUsers,
   resultadosPendientes,
 } from "@/lib/stats";
 
@@ -17,10 +17,10 @@ const partido = (id, horasDesdeAhora, extra = {}) => ({
   ...extra,
 });
 
-describe("partidoEnVivo", () => {
+describe("partidosEnVivo: primer destacado", () => {
   test("partido en juego dentro de la ventana → destacado y no terminado", () => {
     const partidos = [partido("a", -1)];
-    expect(partidoEnVivo(partidos, AHORA)?.id).toBe("a");
+    expect(partidosEnVivo(partidos, AHORA)[0]?.id).toBe("a");
     expect(partidoTerminado(partidos[0], AHORA)).toBe(false);
   });
 
@@ -29,7 +29,7 @@ describe("partidoEnVivo", () => {
       partido("a", -2, { resultado_ingresado: true, goles_local: 2, goles_visitante: 1 }),
       partido("b", +3),
     ];
-    expect(partidoEnVivo(partidos, AHORA)?.id).toBe("a");
+    expect(partidosEnVivo(partidos, AHORA)[0]?.id).toBe("a");
     expect(partidoTerminado(partidos[0], AHORA)).toBe(true);
   });
 
@@ -39,7 +39,7 @@ describe("partidoEnVivo", () => {
       partido("b", +3),
     ];
     const despues = AHORA + 3 * H + 60 * 1000;
-    expect(partidoEnVivo(partidos, despues)?.id).toBe("b");
+    expect(partidosEnVivo(partidos, despues)[0]?.id).toBe("b");
     expect(partidoTerminado(partidos[1], despues)).toBe(false);
   });
 
@@ -47,20 +47,20 @@ describe("partidoEnVivo", () => {
     const p = partido("c", -3);
     expect(partidoTerminado(p, AHORA)).toBe(true);
     // Sin próximo en agenda sigue visible dentro de las 24h…
-    expect(partidoEnVivo([p], AHORA)?.id).toBe("c");
+    expect(partidosEnVivo([p], AHORA)[0]?.id).toBe("c");
     // …y desaparece pasadas 24h.
-    expect(partidoEnVivo([p], AHORA + 26 * H)).toBeUndefined();
+    expect(partidosEnVivo([p], AHORA + 26 * H)[0]).toBeUndefined();
   });
 
   test("ningún partido comenzado → undefined", () => {
-    expect(partidoEnVivo([partido("x", +5)], AHORA)).toBeUndefined();
-    expect(partidoEnVivo([], AHORA)).toBeUndefined();
-    expect(partidoEnVivo(null, AHORA)).toBeUndefined();
+    expect(partidosEnVivo([partido("x", +5)], AHORA)[0]).toBeUndefined();
+    expect(partidosEnVivo([], AHORA)[0]).toBeUndefined();
+    expect(partidosEnVivo(null, AHORA)[0]).toBeUndefined();
   });
 
   test("con varios comenzados destaca el de inicio más reciente", () => {
     const partidos = [partido("viejo", -2), partido("nuevo", -0.5)];
-    expect(partidoEnVivo(partidos, AHORA)?.id).toBe("nuevo");
+    expect(partidosEnVivo(partidos, AHORA)[0]?.id).toBe("nuevo");
   });
 });
 
@@ -202,5 +202,52 @@ describe("familyScoreboard", () => {
     expect(sb.totalJornadas).toBe(0);
     expect(sb.exactos).toHaveLength(3);
     expect(sb.exactos.every((r) => r.valor === 0)).toBe(true);
+  });
+});
+
+describe("rankingFromUsers", () => {
+  const USUARIOS = [
+    { id: "u1", nombre: "Zoe" },
+    { id: "u2", nombre: "Ana" },
+    { id: "adm", nombre: "Admin", es_admin: true },
+    { id: "u3", nombre: "Beto" },
+  ];
+  const pts = (usuario_id, puntos_obtenidos) => ({ usuario_id, puntos_obtenidos });
+
+  test("suma puntos por usuario y excluye al admin", () => {
+    const r = rankingFromUsers(USUARIOS, [
+      pts("u1", 3),
+      pts("u1", 4),
+      pts("u2", 5),
+      pts("adm", 99),
+    ]);
+    expect(r.map((u) => u.id)).toEqual(["u1", "u2", "u3"]);
+    expect(r[0].puntos).toBe(7);
+    expect(r.map((u) => u.rank)).toEqual([1, 2, 3]);
+  });
+
+  test("empate en puntos comparte posición y la siguiente se salta", () => {
+    const r = rankingFromUsers(USUARIOS, [
+      pts("u1", 10),
+      pts("u2", 10),
+      pts("u3", 4),
+    ]);
+    expect(r.map((u) => u.rank)).toEqual([1, 1, 3]);
+  });
+
+  test("los empatados se ordenan alfabéticamente para una lista estable", () => {
+    const r = rankingFromUsers(USUARIOS, [
+      pts("u1", 10),
+      pts("u2", 10),
+    ]);
+    expect(r.map((u) => u.nombre)).toEqual(["Ana", "Zoe", "Beto"]);
+    expect(r[2].rank).toBe(3);
+  });
+
+  test("usuarios sin predicciones quedan con 0 puntos y comparten el último puesto", () => {
+    const r = rankingFromUsers(USUARIOS, [pts("u1", 2)]);
+    expect(r[0]).toMatchObject({ id: "u1", rank: 1 });
+    expect(r[1]).toMatchObject({ nombre: "Ana", puntos: 0, rank: 2 });
+    expect(r[2]).toMatchObject({ nombre: "Beto", puntos: 0, rank: 2 });
   });
 });

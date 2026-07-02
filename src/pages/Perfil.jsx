@@ -227,6 +227,18 @@ export default function Perfil() {
             </span>
             <Icon.Chevron />
           </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            block
+            onClick={() => navigate("/app/reglamento")}
+            style={{ justifyContent: "space-between", paddingLeft: 16, paddingRight: 16 }}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Icon.Book /> Reglamento oficial
+            </span>
+            <Icon.Chevron />
+          </Button>
           {user?.es_admin && (
             <Button
               variant="ghost"

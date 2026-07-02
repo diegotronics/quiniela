@@ -8,16 +8,32 @@ function ts(fecha) {
   return Number.isNaN(t) ? Infinity : t;
 }
 
+// Ranking de competencia: los empatados en puntos comparten la posición y la
+// siguiente se salta (1, 1, 3). Es la regla oficial del reglamento; si el
+// empate persiste al final en un puesto con premio, el premio se comparte.
+// Entre empatados el orden de la lista es alfabético, solo para que la tabla
+// no baile entre recargas: la posición mostrada es la misma para ambos.
 export function rankingFromUsers(usuarios, predicciones) {
   const totales = new Map();
   for (const p of predicciones) {
     totales.set(p.usuario_id, (totales.get(p.usuario_id) || 0) + (p.puntos_obtenidos || 0));
   }
-  return (usuarios || [])
+  const filas = (usuarios || [])
     .filter((u) => !u.es_admin)
     .map((u) => ({ ...u, puntos: totales.get(u.id) || 0 }))
-    .sort((a, b) => b.puntos - a.puntos)
-    .map((u, i) => ({ ...u, rank: i + 1 }));
+    .sort(
+      (a, b) =>
+        b.puntos - a.puntos ||
+        (a.nombre || "").localeCompare(b.nombre || "", "es"),
+    );
+  let rankAnterior = 0;
+  let puntosAnterior = null;
+  return filas.map((u, i) => {
+    const rank = u.puntos === puntosAnterior ? rankAnterior : i + 1;
+    rankAnterior = rank;
+    puntosAnterior = u.puntos;
+    return { ...u, rank };
+  });
 }
 
 // Devuelve aciertos exactos, aciertos ganador y partidos jugados (con resultado).
@@ -232,12 +248,6 @@ export function partidosEnVivo(partidos, ahora = Date.now()) {
     return [ultimo];
   }
   return [];
-}
-
-// Variante de un solo partido destacado, conservada para usos que solo
-// necesitan el más reciente. Devuelve `undefined` si no hay ninguno.
-export function partidoEnVivo(partidos, ahora = Date.now()) {
-  return partidosEnVivo(partidos, ahora)[0];
 }
 
 // Un partido destacado se considera terminado cuando ya tiene resultado
