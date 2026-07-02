@@ -66,6 +66,16 @@ export async function upsertApuestaEspecial({
   return data;
 }
 
+// Apuestas de todo el grupo, con picks y fecha de última edición. Alimenta la
+// vista pública de transparencia que se muestra cuando la edición ya cerró.
+export async function listApuestasEspecialesGrupo() {
+  const { data, error } = await supabase
+    .from("apuestas_especiales")
+    .select(COLS);
+  if (error) throw error;
+  return data || [];
+}
+
 export async function listPuntajesApuestasEspeciales() {
   const { data, error } = await supabase
     .from("apuestas_especiales")

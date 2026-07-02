@@ -176,7 +176,7 @@ export default function Inicio() {
     ? 'Revisa o edita tus pronósticos'
     : apuestasAbiertas
       ? 'Pronostica Campeón, Goleador y más'
-      : 'Mira los pronósticos premundiales'
+      : 'Mira las apuestas de todo el grupo'
 
   const myPts = me?.puntos || 0
   const liderPts = lider?.puntos || 0

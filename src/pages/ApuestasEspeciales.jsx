@@ -4,8 +4,11 @@ import { useAuth } from '@/context/AuthContext'
 import {
   useApuestasEspecialesConfig,
   useApuestaEspecialUsuario,
+  useApuestasEspecialesGrupo,
 } from '@/hooks/useApuestasEspeciales'
+import { useUsuariosPublic } from '@/hooks/useUsuarios'
 import {
+  Avatar,
   Button,
   Card,
   Flag,
@@ -26,7 +29,11 @@ import {
 } from '@/lib/constants'
 import { GOLEADOR_OPTIONS } from '@/lib/jugadores'
 import { formatearFechaHora } from '@/lib/fechas'
-import { apuestasEspecialesCerradas } from '@/lib/apuestasEspeciales'
+import {
+  aciertoEspecial,
+  apuestasEspecialesCerradas,
+  apuestasGrupoRows,
+} from '@/lib/apuestasEspeciales'
 
 export default function ApuestasEspeciales() {
   const navigate = useNavigate()
@@ -61,6 +68,12 @@ export default function ApuestasEspeciales() {
   const cierraEn = config?.cierra_en ? new Date(config.cierra_en) : null
   const ahora = Date.now()
   const cerrada = apuestasEspecialesCerradas(config, ahora)
+
+  // Vista de transparencia: al cerrar la edición, las apuestas de todos se
+  // hacen públicas. El hook no pide nada mientras siguen abiertas.
+  const { usuarios, loading: usuariosLoading } = useUsuariosPublic()
+  const { apuestas: apuestasGrupo, loading: grupoLoading } =
+    useApuestasEspecialesGrupo(cerrada)
   // El override manual del admin tiene prioridad sobre la fecha: cuando está
   // activo no aplica mostrar una fecha de cierre (sería engañosa, p. ej. una
   // fecha futura mientras está cerrada, o una pasada mientras está reabierta).
@@ -72,6 +85,13 @@ export default function ApuestasEspeciales() {
     config?.goleador ||
     config?.sorpresa,
   )
+
+  const grupoRows = useMemo(
+    () => apuestasGrupoRows(usuarios, apuestasGrupo, torneoFinalizado),
+    [usuarios, apuestasGrupo, torneoFinalizado],
+  )
+  const grupoConApuesta = grupoRows.filter((r) => r.apuesta).length
+  const grupoCargando = usuariosLoading || grupoLoading
 
   const dirty = useMemo(() => {
     if (!apuesta) {
@@ -161,9 +181,10 @@ export default function ApuestasEspeciales() {
                   lineHeight: 1.45,
                 }}
               >
-                Haz tus apuestas antes de que arranque el Mundial. Cuando
-                termine el torneo, el admin carga los resultados oficiales y se
-                reparten los puntos.
+                Haz tus apuestas antes de que arranque el Mundial. Al cierre
+                quedan congeladas y se hacen públicas para todo el grupo.
+                Cuando termine el torneo, el admin carga los resultados
+                oficiales y se reparten los puntos.
               </div>
             </div>
             <Pill tone={cerrada ? 'coral' : 'accent'}>
@@ -215,12 +236,7 @@ export default function ApuestasEspeciales() {
               hint="Equipo que levanta la copa"
               pts={config?.pts_campeon ?? 0}
               resultado={config?.campeon}
-              acierto={
-                torneoFinalizado &&
-                apuesta?.campeon &&
-                config?.campeon &&
-                norm(apuesta.campeon) === norm(config.campeon)
-              }
+              acierto={aciertoEspecial(apuesta?.campeon, config?.campeon)}
             >
               <TeamSelect
                 value={draft.campeon}
@@ -238,12 +254,7 @@ export default function ApuestasEspeciales() {
               hint="Finalista que pierde la final"
               pts={config?.pts_subcampeon ?? 0}
               resultado={config?.subcampeon}
-              acierto={
-                torneoFinalizado &&
-                apuesta?.subcampeon &&
-                config?.subcampeon &&
-                norm(apuesta.subcampeon) === norm(config.subcampeon)
-              }
+              acierto={aciertoEspecial(apuesta?.subcampeon, config?.subcampeon)}
             >
               <TeamSelect
                 value={draft.subcampeon}
@@ -261,12 +272,7 @@ export default function ApuestasEspeciales() {
               hint="Jugador que se lleva la Bota de Oro"
               pts={config?.pts_goleador ?? 0}
               resultado={config?.goleador}
-              acierto={
-                torneoFinalizado &&
-                apuesta?.goleador &&
-                config?.goleador &&
-                norm(apuesta.goleador) === norm(config.goleador)
-              }
+              acierto={aciertoEspecial(apuesta?.goleador, config?.goleador)}
             >
               <SearchSelect
                 value={draft.goleador}
@@ -286,12 +292,7 @@ export default function ApuestasEspeciales() {
               hint="Selección revelación y hasta qué fase llega"
               pts={config?.pts_sorpresa ?? 0}
               resultado={config?.sorpresa}
-              acierto={
-                torneoFinalizado &&
-                apuesta?.sorpresa &&
-                config?.sorpresa &&
-                norm(apuesta.sorpresa) === norm(config.sorpresa)
-              }
+              acierto={aciertoEspecial(apuesta?.sorpresa, config?.sorpresa)}
             >
               <SorpresaSelect
                 value={draft.sorpresa}
@@ -408,6 +409,79 @@ export default function ApuestasEspeciales() {
                 </div>
               )}
             </Card>
+
+            {/* Transparencia: al cerrar la edición, las apuestas de todos se
+                hacen públicas, con la fecha de última edición como constancia
+                de que nadie las modificó después. */}
+            {cerrada && (
+              <>
+                <SectionTitle
+                  action={
+                    grupoCargando
+                      ? null
+                      : `${grupoConApuesta} / ${grupoRows.length}`
+                  }
+                >
+                  Apuestas del grupo
+                </SectionTitle>
+                <Card pad={0} style={{ overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      borderBottom: '0.5px solid var(--line-2)',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 8,
+                      fontSize: 12,
+                      color: 'var(--ink-3)',
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <span
+                      aria-hidden
+                      style={{
+                        flexShrink: 0,
+                        display: 'inline-flex',
+                        marginTop: 1,
+                      }}
+                    >
+                      <Icon.Lock />
+                    </span>
+                    <span>
+                      Públicas desde el cierre: ya nadie puede editarlas. La
+                      fecha de última edición de cada apuesta queda registrada
+                      aquí.
+                    </span>
+                  </div>
+                  {grupoCargando ? (
+                    <div
+                      style={{
+                        padding: 16,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 12,
+                      }}
+                    >
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} w="100%" h={64} r={12} />
+                      ))}
+                    </div>
+                  ) : (
+                    grupoRows.map((r, i) => (
+                      <ApuestaGrupoRow
+                        key={r.usuario.id}
+                        usuario={r.usuario}
+                        apuesta={r.apuesta}
+                        config={config}
+                        esMe={r.usuario.id === user?.id}
+                        torneoFinalizado={torneoFinalizado}
+                        last={i === grupoRows.length - 1}
+                      />
+                    ))
+                  )}
+                </Card>
+              </>
+            )}
           </>
         )}
       </div>
@@ -593,7 +667,190 @@ function SorpresaSelect({ value, onChange, disabled }) {
   )
 }
 
-function norm(s) {
-  return (s || '').toString().trim().toLowerCase()
+// Fila de la vista pública "Apuestas del grupo": los cuatro picks de un
+// miembro con su bandera, el acierto marcado cuando ya hay resultado oficial
+// y la fecha de última edición como constancia de que nada cambió después
+// del cierre. Los miembros sin apuesta también aparecen, para que conste.
+function ApuestaGrupoRow({
+  usuario,
+  apuesta,
+  config,
+  esMe,
+  torneoFinalizado,
+  last,
+}) {
+  const nombre = (usuario.nombre || '').split(' ')[0] || 'Jugador'
+  const sorpresa = parseSorpresa(apuesta?.sorpresa)
+  const goleadorOpt = GOLEADOR_OPTIONS.find(
+    (o) => o.value === apuesta?.goleador,
+  )
+
+  const picks = apuesta
+    ? [
+        {
+          label: 'Campeón',
+          valor: apuesta.campeon,
+          flagCode: apuesta.campeon ? code(apuesta.campeon) : null,
+          acierto: aciertoEspecial(apuesta.campeon, config?.campeon),
+        },
+        {
+          label: 'Subcampeón',
+          valor: apuesta.subcampeon,
+          flagCode: apuesta.subcampeon ? code(apuesta.subcampeon) : null,
+          acierto: aciertoEspecial(apuesta.subcampeon, config?.subcampeon),
+        },
+        {
+          label: 'Goleador',
+          valor: apuesta.goleador,
+          flagCode: goleadorOpt?.code || null,
+          acierto: aciertoEspecial(apuesta.goleador, config?.goleador),
+        },
+        {
+          label: 'Sorpresa',
+          valor: sorpresa.equipo
+            ? sorpresa.fase
+              ? `${sorpresa.equipo} · ${sorpresa.fase}`
+              : sorpresa.equipo
+            : apuesta.sorpresa,
+          flagCode: sorpresa.equipo ? code(sorpresa.equipo) : null,
+          acierto: aciertoEspecial(apuesta.sorpresa, config?.sorpresa),
+        },
+      ]
+    : []
+
+  return (
+    <div
+      style={{
+        padding: '12px 16px',
+        borderBottom: last ? 'none' : '0.5px solid var(--line-2)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Avatar name={usuario.nombre} size={30} />
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: 'var(--ink)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {nombre}
+          </span>
+          {esMe && (
+            <span
+              style={{
+                flexShrink: 0,
+                fontSize: 9,
+                color: 'var(--accent-ink)',
+                fontWeight: 700,
+                letterSpacing: 0.4,
+                textTransform: 'uppercase',
+                padding: '1px 6px',
+                borderRadius: 999,
+                background: 'var(--accent-soft)',
+              }}
+            >
+              Tú
+            </span>
+          )}
+        </div>
+        {apuesta ? (
+          torneoFinalizado && (
+            <Pill tone={apuesta.puntos_obtenidos > 0 ? 'accent' : 'outline'}>
+              +{apuesta.puntos_obtenidos || 0} pts
+            </Pill>
+          )
+        ) : (
+          <Pill tone="outline">Sin apuestas</Pill>
+        )}
+      </div>
+
+      {apuesta ? (
+        <>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '10px 12px',
+            }}
+          >
+            {picks.map((p) => (
+              <div key={p.label} style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 9.5,
+                    color: 'var(--ink-3)',
+                    fontWeight: 700,
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {p.label}
+                </div>
+                <div
+                  style={{
+                    marginTop: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: p.acierto ? 'var(--accent-ink)' : 'var(--ink)',
+                  }}
+                >
+                  {p.flagCode && (
+                    <Flag code={p.flagCode} w={18} h={13} rounded={2} />
+                  )}
+                  <span
+                    style={{
+                      minWidth: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {p.valor || '—'}
+                  </span>
+                  {p.acierto && (
+                    <span
+                      aria-label="Acierto"
+                      style={{ flexShrink: 0, display: 'inline-flex' }}
+                    >
+                      <Icon.Check size={12} />
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+            Última edición ·{' '}
+            <span className="mono" style={{ color: 'var(--ink-2)' }}>
+              {formatearFechaHora(apuesta.updated_at)}
+            </span>
+          </div>
+        </>
+      ) : (
+        <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+          No registró apuestas antes del cierre.
+        </div>
+      )}
+    </div>
+  )
 }
 
