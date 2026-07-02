@@ -24,7 +24,6 @@ import {
   Icon,
   MobileHeader,
   MobileShell,
-  Pill,
   SectionTitle,
   StatTile,
   StreakFlame,
@@ -40,8 +39,10 @@ import {
   partidosEnVivo,
 } from '@/lib/stats'
 import { code, GROUP_NAME, GROUP_MOTTO } from '@/lib/constants'
-import { formatearFechaHora } from '@/lib/fechas'
+import { formatearFechaHora, fechaYmdCaracas } from '@/lib/fechas'
 import { apuestasEspecialesCerradas } from '@/lib/apuestasEspeciales'
+import { celebrateExact, celebrateOncePersisted } from '@/lib/celebrate'
+import { useChatNoLeidos } from '@/hooks/useChatNoLeidos'
 import { ChatPreview } from '@/components/chat/ChatPreview'
 import { LiveMatchCard } from '@/components/LiveMatchCard'
 import { BannerPredicciones } from '@/components/BannerPredicciones'
@@ -59,10 +60,11 @@ export default function Inicio() {
     listPuntajesGlobales,
     [],
   )
-  const { data: puntajesEspeciales } = useAsync(
+  const { data: puntajesEspeciales, refresh: refreshEspeciales } = useAsync(
     listPuntajesApuestasEspeciales,
     [],
   )
+  const noLeidos = useChatNoLeidos()
   const { predicciones, loading: prediccionesLoading } = usePrediccionesUsuario(
     user?.id,
   )
@@ -144,6 +146,14 @@ export default function Inicio() {
     gruposTotal > 0 &&
     picksGrupos < gruposTotal
   const pendientes = partidos.filter((p) => !p.resultado_ingresado).length
+  // Con un torneo de 104 partidos, "quedan 96" no dice mucho: cuando hay
+  // partidos hoy (día de Caracas), ese es el dato que se muestra.
+  const pendientesHoy = useMemo(() => {
+    const hoy = fechaYmdCaracas()
+    return partidos.filter(
+      (p) => !p.resultado_ingresado && fechaYmdCaracas(p.fecha) === hoy,
+    ).length
+  }, [partidos])
 
   // Pronósticos que faltan de partidos aún abiertos (cualquier fase). Es lo que
   // alimenta el asistente para completarlos de corrido. No se muestra junto al
@@ -169,14 +179,43 @@ export default function Inicio() {
     !apuestaLoading &&
     apuestasAbiertas &&
     !apuestasCompletadas
+  // Resultados oficiales de las apuestas especiales ya cargados por el admin
+  // (alguno o todos): el enlace del home lo anuncia en lugar de quedarse mudo
+  // mientras los totales saltan.
+  const resultadosEspeciales = Boolean(
+    apuestasCfg?.campeon ||
+    apuestasCfg?.subcampeon ||
+    apuestasCfg?.goleador ||
+    apuestasCfg?.sorpresa,
+  )
+  const ptsEspecialesMios = apuestaUsuario?.puntos_obtenidos || 0
   // Enlace permanente a las apuestas especiales: cuando el banner de invitación
   // no aplica (admin, apuestas cerradas o ya completadas) el home igual debe
   // tener una entrada directa a la sección, porque la barra inferior no la lista.
-  const apuestasLinkSubtitle = apuestasCompletadas
-    ? 'Revisa o edita tus pronósticos'
-    : apuestasAbiertas
-      ? 'Pronostica Campeón, Goleador y más'
-      : 'Mira las apuestas de todo el grupo'
+  const apuestasLinkSubtitle = resultadosEspeciales
+    ? esAdmin || ptsEspecialesMios === 0
+      ? 'Resultados oficiales · Mira quién ganó qué'
+      : `Resultados oficiales · Ganaste +${ptsEspecialesMios} pts`
+    : apuestasCompletadas
+      ? 'Revisa o edita tus pronósticos'
+      : apuestasAbiertas
+        ? 'Pronostica Campeón, Goleador y más'
+        : 'Mira las apuestas de todo el grupo'
+
+  // Celebración única cuando el torneo cierra con las 4 categorías cargadas y
+  // el usuario ganó puntos especiales: el salto en la tabla deja de ser mudo.
+  const especialesCompletos = Boolean(
+    apuestasCfg?.campeon &&
+    apuestasCfg?.subcampeon &&
+    apuestasCfg?.goleador &&
+    apuestasCfg?.sorpresa,
+  )
+  useEffect(() => {
+    if (!especialesCompletos || ptsEspecialesMios <= 0 || !user?.id) return
+    celebrateOncePersisted(`especiales-${user.id}`, () => {
+      setTimeout(celebrateExact, 400)
+    })
+  }, [especialesCompletos, ptsEspecialesMios, user])
 
   const myPts = me?.puntos || 0
   const liderPts = lider?.puntos || 0
@@ -198,7 +237,10 @@ export default function Inicio() {
   const onResultadoSincronizado = useCallback(() => {
     refreshPartidos().catch(() => {})
     refreshPuntajes().catch(() => {})
-  }, [refreshPartidos, refreshPuntajes])
+    // Los puntos de apuestas especiales también entran al total: se refrescan
+    // juntos para que el ranking no quede a medias en pantalla.
+    refreshEspeciales().catch(() => {})
+  }, [refreshPartidos, refreshPuntajes, refreshEspeciales])
   useOnResultadosSincronizados(onResultadoSincronizado)
 
   return (
@@ -219,6 +261,7 @@ export default function Inicio() {
           trailing={
             <HeaderIconButton
               label="Abrir chat"
+              badge={noLeidos}
               onClick={() => navigate('/app/chat')}
             >
               <Icon.Chat />
@@ -235,159 +278,6 @@ export default function Inicio() {
           gap: 14,
         }}
       >
-        {onboardingPendiente && (
-          <BannerPredicciones picks={picksGrupos} total={gruposTotal} />
-        )}
-
-        {!onboardingPendiente && pronosticosPendientes > 0 && (
-          <BannerPrediccionesPendientes pendientes={pronosticosPendientes} />
-        )}
-
-        {mostrarBannerApuestas && (
-          <Card
-            pad={16}
-            onClick={() => navigate('/app/apuestas')}
-            style={{
-              background: 'var(--gradient-trofeo)',
-              borderColor: 'transparent',
-              cursor: 'pointer',
-              color: '#1A1300',
-              boxShadow: 'var(--shadow-gold)',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 10,
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: '#1A1300',
-                    fontWeight: 800,
-                    letterSpacing: 0.6,
-                    textTransform: 'uppercase',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    opacity: 0.85,
-                  }}
-                >
-                  <Icon.Crown /> Apuestas especiales
-                </div>
-                <div
-                  style={{
-                    marginTop: 4,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: '#1A1300',
-                  }}
-                >
-                  {apuestaUsuario
-                    ? 'Completa tus pronósticos premundiales'
-                    : 'Pronostica Campeón, Goleador y más'}
-                </div>
-                <div
-                  style={{
-                    marginTop: 2,
-                    fontSize: 12,
-                    color: 'rgba(26,19,0,0.72)',
-                    fontWeight: 600,
-                  }}
-                >
-                  Hasta{' '}
-                  <span
-                    className="font-score"
-                    style={{ fontSize: 14, letterSpacing: 0.6 }}
-                  >
-                    {(apuestasCfg?.pts_campeon ?? 0) +
-                      (apuestasCfg?.pts_subcampeon ?? 0) +
-                      (apuestasCfg?.pts_goleador ?? 0) +
-                      (apuestasCfg?.pts_sorpresa ?? 0)}
-                  </span>{' '}
-                  pts en juego
-                </div>
-              </div>
-              <Icon.Chevron />
-            </div>
-          </Card>
-        )}
-
-        {/* Enlace directo permanente a apuestas especiales. Se muestra cuando el
-            banner dorado de invitación no aplica, para que siempre haya una
-            forma de llegar a la sección desde el inicio. */}
-        {!mostrarBannerApuestas && (
-          <Card
-            pad={14}
-            onClick={() => navigate('/app/apuestas')}
-            style={{ cursor: 'pointer' }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 12,
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  minWidth: 0,
-                }}
-              >
-                <div
-                  aria-hidden
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: '50%',
-                    background: 'var(--gold-soft)',
-                    color: 'var(--gold-ink)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon.Crown />
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                      letterSpacing: -0.2,
-                    }}
-                  >
-                    Apuestas especiales
-                  </div>
-                  <div
-                    style={{
-                      marginTop: 2,
-                      fontSize: 12,
-                      color: 'var(--ink-3)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {apuestasLinkSubtitle}
-                  </div>
-                </div>
-              </div>
-              <Icon.Chevron />
-            </div>
-          </Card>
-        )}
-
         {/* Puntaje + posición */}
         <Card
           pad={0}
@@ -443,14 +333,6 @@ export default function Inicio() {
                   pts
                 </span>
               </div>
-              {stats.jugados > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <Pill tone="accent">
-                    {stats.ganador} {stats.ganador === 1 ? 'resultado' : 'resultados'} ·{' '}
-                    {stats.exactos} {stats.exactos === 1 ? 'exacto' : 'exactos'}
-                  </Pill>
-                </div>
-              )}
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={kicker}>Posición</div>
@@ -671,12 +553,184 @@ export default function Inicio() {
             >
               {pendientes === 0
                 ? 'Torneo cerrado'
-                : pendientes === 1
-                  ? 'Queda 1 partido'
-                  : `Quedan ${pendientes} partidos`}
+                : pendientesHoy > 0
+                  ? pendientesHoy === 1
+                    ? 'Hoy: 1 partido'
+                    : `Hoy: ${pendientesHoy} partidos`
+                  : pendientes === 1
+                    ? 'Queda 1 partido'
+                    : `Quedan ${pendientes} partidos`}
             </span>
           </div>
         </Card>
+
+        {/* Avisos accionables después del dato principal: primero cómo vas,
+            luego qué te falta por hacer. */}
+        {onboardingPendiente && (
+          <BannerPredicciones picks={picksGrupos} total={gruposTotal} />
+        )}
+
+        {!onboardingPendiente && pronosticosPendientes > 0 && (
+          <BannerPrediccionesPendientes pendientes={pronosticosPendientes} />
+        )}
+
+        {mostrarBannerApuestas && (
+          <Card
+            pad={16}
+            onClick={() => navigate('/app/apuestas')}
+            style={{
+              background: 'var(--gradient-trofeo)',
+              borderColor: 'transparent',
+              cursor: 'pointer',
+              color: '#1A1300',
+              boxShadow: 'var(--shadow-gold)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 10,
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: '#1A1300',
+                    fontWeight: 800,
+                    letterSpacing: 0.6,
+                    textTransform: 'uppercase',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    opacity: 0.85,
+                  }}
+                >
+                  <Icon.Crown /> Apuestas especiales
+                </div>
+                <div
+                  style={{
+                    marginTop: 4,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: '#1A1300',
+                  }}
+                >
+                  {apuestaUsuario
+                    ? 'Completa tus pronósticos premundiales'
+                    : 'Pronostica Campeón, Goleador y más'}
+                </div>
+                <div
+                  style={{
+                    marginTop: 2,
+                    fontSize: 12,
+                    color: 'rgba(26,19,0,0.72)',
+                    fontWeight: 600,
+                  }}
+                >
+                  Hasta{' '}
+                  <span
+                    className="font-score"
+                    style={{ fontSize: 14, letterSpacing: 0.6 }}
+                  >
+                    {(apuestasCfg?.pts_campeon ?? 0) +
+                      (apuestasCfg?.pts_subcampeon ?? 0) +
+                      (apuestasCfg?.pts_goleador ?? 0) +
+                      (apuestasCfg?.pts_sorpresa ?? 0)}
+                  </span>{' '}
+                  pts en juego
+                </div>
+              </div>
+              <Icon.Chevron />
+            </div>
+          </Card>
+        )}
+
+        {/* Enlace directo permanente a apuestas especiales. Se muestra cuando el
+            banner dorado de invitación no aplica, para que siempre haya una
+            forma de llegar a la sección desde el inicio. Con los resultados
+            oficiales cargados se resalta en dorado: es la noticia del cierre. */}
+        {!mostrarBannerApuestas && (
+          <Card
+            pad={14}
+            onClick={() => navigate('/app/apuestas')}
+            style={
+              resultadosEspeciales
+                ? {
+                    cursor: 'pointer',
+                    background:
+                      'linear-gradient(180deg, var(--gold-soft) 0%, var(--surface) 100%)',
+                    border: '1px solid var(--gold)',
+                  }
+                : { cursor: 'pointer' }
+            }
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  aria-hidden
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: '50%',
+                    background: 'var(--gold-soft)',
+                    color: 'var(--gold-ink)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon.Crown />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      letterSpacing: -0.2,
+                    }}
+                  >
+                    Apuestas especiales
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 2,
+                      fontSize: 12,
+                      color: resultadosEspeciales
+                        ? 'var(--gold-ink)'
+                        : 'var(--ink-3)',
+                      fontWeight: resultadosEspeciales ? 600 : 400,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {apuestasLinkSubtitle}
+                  </div>
+                </div>
+              </div>
+              <Icon.Chevron />
+            </div>
+          </Card>
+        )}
 
         {/* Reglamento oficial: siempre a mano desde el inicio, para que las
             reglas y sus casos estén claros antes de cualquier reclamo. */}
@@ -930,42 +984,6 @@ export default function Inicio() {
                     {next.equipo_visitante}
                   </div>
                 </div>
-              </div>
-              <div
-                style={{
-                  marginTop: 14,
-                  padding: '10px 12px',
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  borderRadius: 'var(--r-md)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  backdropFilter: 'blur(8px)',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: 'rgba(255,255,255,0.75)',
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                    fontWeight: 600,
-                  }}
-                >
-                  Tu pronóstico
-                </span>
-                <span
-                  className="font-score"
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 400,
-                    color: '#fff',
-                    letterSpacing: 1,
-                  }}
-                >
-                  — · —
-                </span>
               </div>
               <Button
                 block

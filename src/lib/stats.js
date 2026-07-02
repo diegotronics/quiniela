@@ -250,12 +250,6 @@ export function partidosEnVivo(partidos, ahora = Date.now()) {
   return [];
 }
 
-// Variante de un solo partido destacado, conservada para usos que solo
-// necesitan el más reciente. Devuelve `undefined` si no hay ninguno.
-export function partidoEnVivo(partidos, ahora = Date.now()) {
-  return partidosEnVivo(partidos, ahora)[0];
-}
-
 // Un partido destacado se considera terminado cuando ya tiene resultado
 // oficial o cuando agotó la ventana de juego en vivo. Si hay marcador en
 // tiempo real disponible (ESPN), ese estado tiene la última palabra.

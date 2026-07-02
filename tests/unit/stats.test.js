@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
   familyScoreboard,
-  partidoEnVivo,
   partidosEnVivo,
   partidoTerminado,
   rankingFromUsers,
@@ -18,10 +17,10 @@ const partido = (id, horasDesdeAhora, extra = {}) => ({
   ...extra,
 });
 
-describe("partidoEnVivo", () => {
+describe("partidosEnVivo: primer destacado", () => {
   test("partido en juego dentro de la ventana → destacado y no terminado", () => {
     const partidos = [partido("a", -1)];
-    expect(partidoEnVivo(partidos, AHORA)?.id).toBe("a");
+    expect(partidosEnVivo(partidos, AHORA)[0]?.id).toBe("a");
     expect(partidoTerminado(partidos[0], AHORA)).toBe(false);
   });
 
@@ -30,7 +29,7 @@ describe("partidoEnVivo", () => {
       partido("a", -2, { resultado_ingresado: true, goles_local: 2, goles_visitante: 1 }),
       partido("b", +3),
     ];
-    expect(partidoEnVivo(partidos, AHORA)?.id).toBe("a");
+    expect(partidosEnVivo(partidos, AHORA)[0]?.id).toBe("a");
     expect(partidoTerminado(partidos[0], AHORA)).toBe(true);
   });
 
@@ -40,7 +39,7 @@ describe("partidoEnVivo", () => {
       partido("b", +3),
     ];
     const despues = AHORA + 3 * H + 60 * 1000;
-    expect(partidoEnVivo(partidos, despues)?.id).toBe("b");
+    expect(partidosEnVivo(partidos, despues)[0]?.id).toBe("b");
     expect(partidoTerminado(partidos[1], despues)).toBe(false);
   });
 
@@ -48,20 +47,20 @@ describe("partidoEnVivo", () => {
     const p = partido("c", -3);
     expect(partidoTerminado(p, AHORA)).toBe(true);
     // Sin próximo en agenda sigue visible dentro de las 24h…
-    expect(partidoEnVivo([p], AHORA)?.id).toBe("c");
+    expect(partidosEnVivo([p], AHORA)[0]?.id).toBe("c");
     // …y desaparece pasadas 24h.
-    expect(partidoEnVivo([p], AHORA + 26 * H)).toBeUndefined();
+    expect(partidosEnVivo([p], AHORA + 26 * H)[0]).toBeUndefined();
   });
 
   test("ningún partido comenzado → undefined", () => {
-    expect(partidoEnVivo([partido("x", +5)], AHORA)).toBeUndefined();
-    expect(partidoEnVivo([], AHORA)).toBeUndefined();
-    expect(partidoEnVivo(null, AHORA)).toBeUndefined();
+    expect(partidosEnVivo([partido("x", +5)], AHORA)[0]).toBeUndefined();
+    expect(partidosEnVivo([], AHORA)[0]).toBeUndefined();
+    expect(partidosEnVivo(null, AHORA)[0]).toBeUndefined();
   });
 
   test("con varios comenzados destaca el de inicio más reciente", () => {
     const partidos = [partido("viejo", -2), partido("nuevo", -0.5)];
-    expect(partidoEnVivo(partidos, AHORA)?.id).toBe("nuevo");
+    expect(partidosEnVivo(partidos, AHORA)[0]?.id).toBe("nuevo");
   });
 });
 
