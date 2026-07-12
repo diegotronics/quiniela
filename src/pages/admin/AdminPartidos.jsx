@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   clearResultadoPartido,
+  createPartido,
+  deletePartido,
+  setEquiposPartido,
   setFechaPartido,
   setResultadoPartido,
 } from '@/api/partidos'
@@ -20,8 +23,9 @@ import {
   Flag,
   Icon,
   Pill,
+  SearchSelect,
 } from '@/components/ui'
-import { code } from '@/lib/constants'
+import { code, TEAMS_MUNDIAL_2026 } from '@/lib/constants'
 
 const GRUPOS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
 const TABS = [
@@ -44,15 +48,37 @@ export default function AdminPartidos() {
   const [selectedFase, setSelectedFase] = useState('grupos')
   const [grupo, setGrupo] = useState('A')
   const [tab, setTab] = useState('proximos')
-  const { partidos: faseMatches, refresh } = usePartidosByFase(selectedFase)
-  const { partidos: allMatches } = useAllPartidos(fases)
+  const { partidos: faseMatches, refresh: refreshFase } = usePartidosByFase(selectedFase)
+  const { partidos: allMatches, refresh: refreshAll } = useAllPartidos(fases)
 
   const [selected, setSelected] = useState(null)
   const [draft, setDraft] = useState({ local: 0, visitante: 0 })
   const [ganador, setGanador] = useState(null)
   const [fechaDraft, setFechaDraft] = useState('')
+  const [equiposDraft, setEquiposDraft] = useState({ local: '', visitante: '' })
   const [busy, setBusy] = useState(false)
   const [busyFecha, setBusyFecha] = useState(false)
+  const [busyEquipos, setBusyEquipos] = useState(false)
+
+  // Formulario de creación manual de partidos.
+  const [creando, setCreando] = useState(false)
+  const [nuevo, setNuevo] = useState({
+    grupo: 'A',
+    local: '',
+    visitante: '',
+    fecha: '',
+  })
+  const [busyCrear, setBusyCrear] = useState(false)
+
+  const refresh = async () => {
+    await Promise.all([refreshFase(), refreshAll()])
+  }
+
+  const opcionesEquipos = useMemo(
+    () =>
+      TEAMS_MUNDIAL_2026.map((t) => ({ value: t, label: t, code: code(t) })),
+    [],
+  )
 
   const counts = useMemo(() => {
     const all = allMatches || []
@@ -67,6 +93,7 @@ export default function AdminPartidos() {
 
   useEffect(() => {
     setSelected(null)
+    setCreando(false)
   }, [selectedFase, grupo, tab])
 
   const filtered = useMemo(() => {
@@ -90,6 +117,8 @@ export default function AdminPartidos() {
     })
     setGanador(p.ganador ?? null)
     setFechaDraft(aInputDatetimeCaracas(p.fecha))
+    setEquiposDraft({ local: p.equipo_local, visitante: p.equipo_visitante })
+    setCreando(false)
   }
 
   // En eliminatoria, un empate se define por penales: hay que registrar qué
@@ -114,6 +143,108 @@ export default function AdminPartidos() {
       alert('Error: ' + e.message)
     } finally {
       setBusyFecha(false)
+    }
+  }
+
+  const equiposCambiados =
+    selected &&
+    (equiposDraft.local !== selected.equipo_local ||
+      equiposDraft.visitante !== selected.equipo_visitante)
+
+  const guardarEquipos = async () => {
+    if (!selected) return
+    if (!equiposDraft.local || !equiposDraft.visitante) {
+      alert('Elige los dos equipos del partido.')
+      return
+    }
+    if (equiposDraft.local === equiposDraft.visitante) {
+      alert('Los equipos deben ser distintos.')
+      return
+    }
+    setBusyEquipos(true)
+    try {
+      await setEquiposPartido(
+        selected.id,
+        equiposDraft.local,
+        equiposDraft.visitante,
+        selected.ganador ?? null,
+      )
+      await refresh()
+      setSelected((s) =>
+        s
+          ? {
+              ...s,
+              equipo_local: equiposDraft.local,
+              equipo_visitante: equiposDraft.visitante,
+            }
+          : s,
+      )
+      // Si el ganador registrado ya no coincide con los nuevos equipos,
+      // en la base quedó limpio: reflejarlo en el selector.
+      setGanador((g) =>
+        g && g !== equiposDraft.local && g !== equiposDraft.visitante
+          ? null
+          : g,
+      )
+    } catch (e) {
+      alert('Error: ' + e.message)
+    } finally {
+      setBusyEquipos(false)
+    }
+  }
+
+  const crearPartido = async () => {
+    if (!nuevo.local || !nuevo.visitante) {
+      alert('Elige los dos equipos del partido.')
+      return
+    }
+    if (nuevo.local === nuevo.visitante) {
+      alert('Los equipos deben ser distintos.')
+      return
+    }
+    const iso = desdeInputDatetimeCaracas(nuevo.fecha)
+    if (!iso) {
+      alert('Indica una fecha y hora válidas.')
+      return
+    }
+    setBusyCrear(true)
+    try {
+      await createPartido({
+        // Id único legible: fase + marca de tiempo en base 36.
+        id: `${selectedFase}-m${Date.now().toString(36)}`,
+        fase_id: selectedFase,
+        grupo: selectedFase === 'grupos' ? nuevo.grupo : null,
+        equipo_local: nuevo.local,
+        equipo_visitante: nuevo.visitante,
+        fecha: iso,
+      })
+      await refresh()
+      setCreando(false)
+      setNuevo({ grupo: 'A', local: '', visitante: '', fecha: '' })
+    } catch (e) {
+      alert('Error: ' + e.message)
+    } finally {
+      setBusyCrear(false)
+    }
+  }
+
+  const eliminarPartido = async () => {
+    if (!selected) return
+    if (
+      !confirm(
+        `¿Eliminar el partido ${selected.equipo_local} vs ${selected.equipo_visitante}? Se borrarán también las predicciones asociadas. Esta acción no se puede deshacer.`,
+      )
+    )
+      return
+    setBusy(true)
+    try {
+      await deletePartido(selected.id)
+      await refresh()
+      setSelected(null)
+    } catch (e) {
+      alert('Error: ' + e.message)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -268,6 +399,127 @@ export default function AdminPartidos() {
         ))}
       </div>
 
+      {/* Crear partido */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setCreando((v) => !v)
+            setSelected(null)
+            setNuevo((n) => ({ ...n, grupo }))
+          }}
+        >
+          {creando ? <Icon.X /> : <Icon.Plus />}{' '}
+          {creando ? 'Cancelar' : 'Nuevo partido'}
+        </Button>
+      </div>
+
+      {creando && (
+        <Card pad={20} style={{ marginBottom: 22 }}>
+          <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--ink)' }}>
+            Crear partido
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>
+            Se creará en la fase seleccionada:{' '}
+            <strong>
+              {fases.find((f) => f.id === selectedFase)?.nombre || selectedFase}
+            </strong>
+            . Las predicciones quedan abiertas hasta la hora del partido.
+          </div>
+
+          {selectedFase === 'grupos' && (
+            <div style={{ marginTop: 14 }}>
+              <FieldLabel>Grupo</FieldLabel>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {GRUPOS.map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setNuevo((n) => ({ ...n, grupo: g }))}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background:
+                        nuevo.grupo === g ? 'var(--ink)' : 'var(--surface)',
+                      color: nuevo.grupo === g ? 'var(--bg)' : 'var(--ink-2)',
+                      border:
+                        nuevo.grupo === g ? 'none' : '0.5px solid var(--line)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div
+            style={{
+              marginTop: 14,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: 12,
+            }}
+          >
+            <div>
+              <FieldLabel>Equipo local</FieldLabel>
+              <SearchSelect
+                value={nuevo.local}
+                onChange={(v) => setNuevo((n) => ({ ...n, local: v }))}
+                options={opcionesEquipos}
+                placeholder="Elige el equipo local"
+                searchPlaceholder="Buscar selección…"
+              />
+            </div>
+            <div>
+              <FieldLabel>Equipo visitante</FieldLabel>
+              <SearchSelect
+                value={nuevo.visitante}
+                onChange={(v) => setNuevo((n) => ({ ...n, visitante: v }))}
+                options={opcionesEquipos}
+                placeholder="Elige el equipo visitante"
+                searchPlaceholder="Buscar selección…"
+              />
+            </div>
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            <FieldLabel>
+              <Icon.Clock /> Fecha y hora (horario de Venezuela)
+            </FieldLabel>
+            <input
+              type="datetime-local"
+              value={nuevo.fecha}
+              onChange={(e) =>
+                setNuevo((n) => ({ ...n, fecha: e.target.value }))
+              }
+              style={inputStyle}
+            />
+          </div>
+
+          <div
+            style={{
+              marginTop: 16,
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Button variant="ghost" onClick={() => setCreando(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={crearPartido} disabled={busyCrear}>
+              <Icon.Plus /> {busyCrear ? 'Creando…' : 'Crear partido'}
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Lista */}
       {filtered.length === 0 ? (
         <div style={{ marginBottom: 22 }}>
@@ -411,6 +663,80 @@ export default function AdminPartidos() {
             <Pill tone="outline">
               {selected.equipo_local} vs {selected.equipo_visitante}
             </Pill>
+          </div>
+
+          {/* Corregir los equipos del cruce */}
+          <div
+            style={{
+              marginTop: 18,
+              padding: 18,
+              borderRadius: 'var(--r-lg)',
+              background: 'var(--surface-2)',
+              border: '0.5px solid var(--line)',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 12,
+                color: 'var(--ink-3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                marginBottom: 10,
+                fontWeight: 600,
+              }}
+            >
+              <Icon.Edit /> Equipos del partido
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: 12,
+              }}
+            >
+              <SearchSelect
+                value={equiposDraft.local}
+                onChange={(v) =>
+                  setEquiposDraft((d) => ({ ...d, local: v }))
+                }
+                options={opcionesEquipos}
+                placeholder="Equipo local"
+                searchPlaceholder="Buscar selección…"
+              />
+              <SearchSelect
+                value={equiposDraft.visitante}
+                onChange={(v) =>
+                  setEquiposDraft((d) => ({ ...d, visitante: v }))
+                }
+                options={opcionesEquipos}
+                placeholder="Equipo visitante"
+                searchPlaceholder="Buscar selección…"
+              />
+            </div>
+            <div
+              style={{
+                marginTop: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 10,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+                Útil para corregir un cruce que el cuadro armó mal. Las
+                predicciones ya hechas se conservan.
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={guardarEquipos}
+                disabled={busyEquipos || !equiposCambiados}
+              >
+                {busyEquipos ? 'Guardando…' : 'Guardar equipos'}
+              </Button>
+            </div>
           </div>
 
           {/* Editar fecha y hora */}
@@ -593,6 +919,13 @@ export default function AdminPartidos() {
               <Icon.Lock /> Recalcula puntos automáticamente
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button
+                variant="danger"
+                onClick={eliminarPartido}
+                disabled={busy}
+              >
+                <Icon.Trash /> Eliminar partido
+              </Button>
               {selected.resultado_ingresado && (
                 <Button
                   variant="danger"
@@ -677,6 +1010,36 @@ function ResultStepper({ flag, label, value, onChange, right }) {
       </div>
     </div>
   )
+}
+
+function FieldLabel({ children }) {
+  return (
+    <div
+      style={{
+        fontSize: 12,
+        color: 'var(--ink-3)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 8,
+        fontWeight: 600,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+const inputStyle = {
+  width: '100%',
+  boxSizing: 'border-box',
+  padding: '10px 12px',
+  borderRadius: 10,
+  border: '0.5px solid var(--line)',
+  background: 'var(--surface)',
+  color: 'var(--ink)',
+  fontSize: 14,
+  fontFamily: 'var(--font-sans)',
 }
 
 const qtyBtn = {

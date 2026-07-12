@@ -46,6 +46,43 @@ export async function setFechaPartido(id, fecha) {
   if (error) throw error;
 }
 
+// Crea un partido desde el panel de administración. `grupo` solo aplica a la
+// fase de grupos; en eliminatorias va null.
+export async function createPartido({ id, fase_id, grupo = null, equipo_local, equipo_visitante, fecha }) {
+  const { error } = await supabase.from("partidos").insert({
+    id,
+    fase_id,
+    grupo,
+    equipo_local,
+    equipo_visitante,
+    fecha,
+    resultado_ingresado: false,
+  });
+  if (error) throw error;
+}
+
+// Corrige los equipos de un partido ya cargado (p. ej. un cruce de
+// eliminatoria que el cuadro armó con un equipo equivocado). Si el ganador
+// registrado deja de coincidir con los nuevos equipos, se limpia para
+// mantener la consistencia del avance.
+export async function setEquiposPartido(id, equipo_local, equipo_visitante, ganadorActual = null) {
+  const campos = { equipo_local, equipo_visitante };
+  if (ganadorActual && ganadorActual !== equipo_local && ganadorActual !== equipo_visitante) {
+    campos.ganador = null;
+  }
+  const { error } = await supabase
+    .from("partidos")
+    .update(campos)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// Elimina un partido; sus predicciones se borran en cascada (FK on delete cascade).
+export async function deletePartido(id) {
+  const { error } = await supabase.from("partidos").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function clearResultadoPartido(id) {
   // El trigger en BD recalcula puntos_obtenidos de todas las predicciones.
   const { error } = await supabase
